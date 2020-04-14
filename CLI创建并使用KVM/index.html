@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在虚拟机中搭建KVM实验环境并实现KVM虚拟机之间的网络通信及分布式网站架构.实验中直接使用命令行界面实现虚拟机中系统的安装和配置,免去了图形化界面操作的步骤.系统安装完成之后配置虚拟网卡,配置虚拟网段及实现远程连接,分布式网站中跳板机的设置及ip过滤,模拟了一个小型网站的架构后期可以使用docker来替代KVM以实现更好的实验效果. 整个实验从配置环境到安装虚拟机,配置软件环境,配置网络通信等方">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CLI创建并使用KVM">
+<meta property="og:url" content="http://yoursite.com/CLI%E5%88%9B%E5%BB%BA%E5%B9%B6%E4%BD%BF%E7%94%A8KVM/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="在虚拟机中搭建KVM实验环境并实现KVM虚拟机之间的网络通信及分布式网站架构.实验中直接使用命令行界面实现虚拟机中系统的安装和配置,免去了图形化界面操作的步骤.系统安装完成之后配置虚拟网卡,配置虚拟网段及实现远程连接,分布式网站中跳板机的设置及ip过滤,模拟了一个小型网站的架构后期可以使用docker来替代KVM以实现更好的实验效果. 整个实验从配置环境到安装虚拟机,配置软件环境,配置网络通信等方">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-01-03T02:22:47.000Z">
+<meta property="article:modified_time" content="2019-01-03T02:40:27.846Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/CLI%E5%88%9B%E5%BB%BA%E5%B9%B6%E4%BD%BF%E7%94%A8KVM/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>CLI创建并使用KVM | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/CLI%E5%88%9B%E5%BB%BA%E5%B9%B6%E4%BD%BF%E7%94%A8KVM/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CLI创建并使用KVM
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2019-01-03 10:22:47 / 修改时间：10:40:27" itemprop="dateCreated datePublished" datetime="2019-01-03T10:22:47+08:00">2019-01-03</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在虚拟机中搭建KVM实验环境并实现KVM虚拟机之间的网络通信及分布式网站架构.实验中直接使用命令行界面实现虚拟机中系统的安装和配置,免去了图形化界面操作的步骤.系统安装完成之后配置虚拟网卡,配置虚拟网段及实现远程连接,分布式网站中跳板机的设置及ip过滤,模拟了一个小型网站的架构后期可以使用docker来替代KVM以实现更好的实验效果.</p>
+<p>整个实验从配置环境到安装虚拟机,配置软件环境,配置网络通信等方面实现了KVM虚拟机环境配置的需求.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br></pre></td><td class="code"><pre><span class="line">1.检测是否支持KVM</span><br><span class="line">KVM 是基于 x86 虚拟化扩展(Intel VT 或者 AMD-V) 技术的虚拟机软件，所以查看 CPU 是否支持 VT 技术，</span><br><span class="line">就可以判断是否支持KVM。有返回结果，如果结果中有vmx（Intel）或svm(AMD)字样，就说明CPU的支持的。切记</span><br><span class="line">在VMware CPU选项下点击CPU虚拟化</span><br><span class="line"><span class="meta">#</span><span class="bash"> cat /proc/cpuinfo | egrep <span class="string">'vmx|svm'</span></span></span><br><span class="line">关闭 Selinux 和 firewalld </span><br><span class="line"><span class="meta">#</span><span class="bash"> vi /etc/sysconfig/selinux</span></span><br><span class="line">selinux=disabled</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl stop firewalld</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl disabled firewalld</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> iptables -F</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> iptables -vnL</span></span><br><span class="line"></span><br><span class="line">2.安装KVM环境</span><br><span class="line">yum -y install qemu-kvm python-virtinst libvirt libvirt-python virt-manager libguestfs-tools bridge-utils virt-install kvm acpid</span><br><span class="line">装载 kvm 模块</span><br><span class="line"><span class="meta">#</span><span class="bash"> modprobe kvm</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> lsmod | grep kvm</span></span><br><span class="line">开启KVM服务,并设置开机自动启动</span><br><span class="line">systemctl start acpid.service</span><br><span class="line">systemctl enable acpid.service</span><br><span class="line">systemctl start libvirtd.service</span><br><span class="line">systemctl enable libvirtd.service</span><br><span class="line"></span><br><span class="line">3.安装虚拟机</span><br><span class="line">kvm创建虚拟机，特别注意.iso镜像文件一定放到/home 或者根目录重新创建目录，不然会因为权限报</span><br><span class="line">错，无法创建虚拟机。</span><br><span class="line">首先要创建一个虚拟网桥br0,无法创建的话就删除网卡原来的配置文件,然后重新生成(记得备份)</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh iface-bridge ens33 br0</span></span><br><span class="line">然后开始创建虚拟机</span><br><span class="line">创建虚拟机之前最好先把网桥设好并规划好网段,这样下次再创建虚拟机的时候可以直接连接到网桥上.</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> virt-install \</span></span><br><span class="line">--name=centos7C1 \</span><br><span class="line">--vcpus=2 \</span><br><span class="line">--memory=4096 \</span><br><span class="line">--location=/tmp/CentOS-7-x86_64-Minimal-1511.iso \</span><br><span class="line">--disk path=/home/vms/c1/centosC1.qcow2,size=40,format=qcow2 \</span><br><span class="line">--network bridge=br0 \</span><br><span class="line">--graphics none \</span><br><span class="line">--extra-args='console=ttyS0' \</span><br><span class="line">--force</span><br><span class="line"></span><br><span class="line">选项参考:</span><br><span class="line">name: 虚拟机名</span><br><span class="line">vcpus: 虚拟cpu数量</span><br><span class="line">memory: 虚拟内存大小</span><br><span class="line">location: ios文件路径</span><br><span class="line">没有的话可以手动在 ftp 服务器上下载:</span><br><span class="line"><span class="meta">#</span><span class="bash"> wget ftp://172.20.0.1/pub/ISOs/CentOS/CentOS-7-x86_64-Minimal-1511.iso</span></span><br><span class="line">disk path: 虚拟机安装位置</span><br><span class="line">network bridge: 网桥名称</span><br><span class="line">graphics: 图形界面</span><br><span class="line"></span><br><span class="line">4.命令行配置系统:</span><br><span class="line">上面创建虚拟机命令最终需要你配置系统基础设置，带 [!] 基本都是要配置的，按照顺序往下配置，</span><br><span class="line">按对用的数字以此进行设置。</span><br><span class="line">Installation</span><br><span class="line"></span><br><span class="line"> 1) [x] Language settings                 2) [!] Timezone settings</span><br><span class="line">        (English (United States))                (Timezone is not set.)</span><br><span class="line"> 3) [!] Installation source               4) [!] Software selection</span><br><span class="line">        (Processing...)                          (Processing...)</span><br><span class="line"> 5) [!] Installation Destination          6) [x] Kdump</span><br><span class="line">        (No disks selected)                      (Kdump is enabled)</span><br><span class="line"> 7) [ ] Network configuration             8) [!] Root password</span><br><span class="line">        (Not connected)                          (Password is not set.)</span><br><span class="line"> 9) [!] User creation</span><br><span class="line">        (No user will be created)</span><br><span class="line">  Please make your choice from above ['q' to quit | 'b' to begin installation |</span><br><span class="line">  'r' to refresh]:</span><br><span class="line">  </span><br><span class="line"><span class="meta">&gt;</span><span class="bash">2 Timezone settings 时区设置选择 5) Asia亚洲，再选择城市 62) Shanghai上海</span></span><br><span class="line"></span><br><span class="line">Available regions</span><br><span class="line"> 1)  Africa                 6)  Atlantic              10)  Pacific</span><br><span class="line"> 2)  America                7)  Australia             11)  US</span><br><span class="line"> 3)  Antarctica             8)  Europe                12)  Etc</span><br><span class="line"> 4)  Arctic                 9)  Indian</span><br><span class="line"> 5)  Asia</span><br><span class="line">Please select the timezone.</span><br><span class="line">Use numbers or type names directly [b to region list, q to quit]: 5</span><br><span class="line">--------------------</span><br><span class="line"></span><br><span class="line"> 8)  Baghdad               35)  Kathmandu             61)  Seoul</span><br><span class="line"> 9)  Bahrain               36)  Khandyga              62)  Shanghai</span><br><span class="line">10)  Baku                  37)  Kolkata               63)  Singapore</span><br><span class="line">26)  Hong_Kong             53)  Pontianak</span><br><span class="line">27)  Hovd</span><br><span class="line">Please select the timezone.</span><br><span class="line">Use numbers or type names directly [b to region list, q to quit]: 62</span><br><span class="line"></span><br><span class="line">Installation source 安装源输入数字2</span><br><span class="line">Choose an installation source type.</span><br><span class="line"> 1)  CD/DVD</span><br><span class="line"> 2)  local ISO file</span><br><span class="line"> 3)  Network</span><br><span class="line">  Please make your choice from above ['q' to quit | 'c' to continue |</span><br><span class="line">  'r' to refresh]: 2</span><br><span class="line">  </span><br><span class="line">Software selection 软件选择:</span><br><span class="line">Base environment</span><br><span class="line">Software selection</span><br><span class="line"></span><br><span class="line">Base environment</span><br><span class="line"></span><br><span class="line"> 1)  [x] Minimal Install</span><br><span class="line">  Please make your choice from above ['q' to quit | 'c' to continue |</span><br><span class="line">  'r' to refresh]:</span><br><span class="line">  </span><br><span class="line">Installation Destination 安装目的地</span><br><span class="line">Installation Destination</span><br><span class="line"></span><br><span class="line">[x] 1) : 40 GiB (vda)</span><br><span class="line"></span><br><span class="line">1 disk selected; 40 GiB capacity; 40 GiB free ...</span><br><span class="line"></span><br><span class="line">  Please make your choice from above ['q' to quit | 'c' to continue |</span><br><span class="line">  'r' to refresh]: c</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Autopartitioning Options 自动分区选项</span><br><span class="line"></span><br><span class="line">[ ] 1) Replace Existing Linux system(s) 替换现有的Linux系统</span><br><span class="line"></span><br><span class="line">[x] 2) Use All Space 使用所有空间</span><br><span class="line"></span><br><span class="line">[ ] 3) Use Free Space 使用可用空间</span><br><span class="line"></span><br><span class="line">================================================================================</span><br><span class="line">Partition Scheme Options 分区方案选项</span><br><span class="line"></span><br><span class="line">[ ] 1) Standard Partition 标准分区</span><br><span class="line"></span><br><span class="line">[ ] 2) Btrfs Btrfs</span><br><span class="line"></span><br><span class="line">[x] 3) LVM LVM(逻辑卷管理)</span><br><span class="line"></span><br><span class="line">[ ] 4) LVM Thin Provisioning 精简配置</span><br><span class="line"></span><br><span class="line">Select a partition scheme configuration.</span><br><span class="line"></span><br><span class="line">  Please make your choice from above ['q' to quit | 'c' to continue |</span><br><span class="line">  'r' to refresh]: c</span><br><span class="line"></span><br><span class="line">然后输入8录入root账户的密码</span><br><span class="line">  </span><br><span class="line">此处也可以只设置 Root 密码和Installation Destination 安装目的地其它进入系统设置比如时区设置如下：</span><br><span class="line">echo "TZ='Asia/Shanghai'; export TZ" &gt;&gt; /etc/profile  </span><br><span class="line"></span><br><span class="line">选择完成后输入 b 就可以开始安装系统了.</span><br><span class="line">安装完成之后默认是在桌面环境的.直接登录并操作即可.</span><br><span class="line"></span><br><span class="line">安装完成之后第一次启动网卡eth0是获取不到ip地址的,所以需要手动启动</span><br><span class="line"><span class="meta">#</span><span class="bash"> vi /etc/sysconfig/network-scripts/ifcfg-eth0 </span></span><br><span class="line">ONBOOT=yes</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl restart network</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ip a</span></span><br><span class="line">查看到ip地址之后最好将ip地址固定下来,方便以后使用</span><br><span class="line"><span class="meta">#</span><span class="bash"> vi /etc/sysconfig/network-scripts/ifcfg-eth0 </span></span><br><span class="line">BOOTPROTO=static</span><br><span class="line">IPADDR=172.20.124.138</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">5.添加第一个网桥之后还需要对网桥进行控制划分其他的网段</span><br><span class="line"><span class="meta">#</span><span class="bash"> brctl show</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /etc/libvirt/qemu/networks</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> cp default.xml mynet1.xml </span></span><br><span class="line"></span><br><span class="line">拷贝完成之后需要对配置文件进行修改如修改网桥名称,划分子网范围</span><br><span class="line"><span class="meta">#</span><span class="bash"> vi mynet1.xml </span></span><br><span class="line">&lt;network&gt;</span><br><span class="line">  &lt;name&gt;mynet1&lt;/name&gt;</span><br><span class="line">  &lt;bridge name='mybr1' stp='on' delay='0'/&gt;</span><br><span class="line">  &lt;ip address='12.20.20.40' netmask='255.255.255.0'&gt;</span><br><span class="line">    &lt;dhcp&gt;</span><br><span class="line">      &lt;range start='12.20.20.12' end='12.20.20.100'/&gt;</span><br><span class="line">    &lt;/dhcp&gt;</span><br><span class="line">  &lt;/ip&gt;</span><br><span class="line">&lt;/network&gt;</span><br><span class="line"></span><br><span class="line">配置文件修改完成之后即可创建网桥</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh net-create mynet1.xml</span></span><br><span class="line">查看虚拟网桥信息</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh net-list</span></span><br><span class="line"></span><br><span class="line">6.VM虚拟机添加网卡并配置网络</span><br><span class="line"><span class="meta">1&gt;</span><span class="bash">手动添加网桥并插入虚拟机</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh domiflist centos7C1</span></span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet0      bridge     br0        virtio      52:54:00:8c:b8:60</span><br><span class="line"></span><br><span class="line"><span class="meta">2&gt;</span><span class="bash">成功附加接口</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C1 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> br0 </span></span><br><span class="line"></span><br><span class="line">永久添加网卡命令</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C1 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> br0  --config</span></span><br><span class="line"></span><br><span class="line"><span class="meta">3&gt;</span><span class="bash">查看添加网卡的信息</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh domiflist centos7C1</span></span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet0      bridge     br0        virtio      52:54:00:8c:b8:60</span><br><span class="line">vnet1      bridge     br0        -           52:54:00:14:86:cf</span><br><span class="line">在KVM中查看添加的信息:</span><br><span class="line">ip a</span><br><span class="line"></span><br><span class="line"><span class="meta">4&gt;</span><span class="bash">命令行增加的网卡只保存在内存中，重启就失效，所以需要保存到配置文件中</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh dumpxml centos7C1 &gt;/etc/libvirt/qemu/centos7C1.xml </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh define /etc/libvirt/qemu/centos7C1.xml </span></span><br><span class="line"></span><br><span class="line">删除网卡命令</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh detach-interface centos7C1  --<span class="built_in">type</span> bridge --mac  52:54:00:14:86:cf</span></span><br><span class="line">成功分离接口</span><br><span class="line"></span><br><span class="line">7.克隆KVM虚拟机,创建虚拟机镜像.</span><br><span class="line">暂停原始虚拟机</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh shutdown centos72</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virt-clone -o centos72 -n centos.112 -f /home/vms/centos.112.qcow2 -m 00:00:00:00:00:01</span></span><br><span class="line"></span><br><span class="line">复制第一次安装的干净系统镜像，作为基础镜像文件，</span><br><span class="line">后面创建虚拟机使用这个基础镜像</span><br><span class="line">cp /home/vms/centos.88.qcow2 /home/vms/centos7.base.qcow2</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 使用基础镜像文件，创建新的虚拟机镜像</span></span><br><span class="line">cp /home/vms/centos7.base.qcow2 /home/vms/centos7.113.qcow2</span><br><span class="line"></span><br><span class="line">8.热插拔网卡实现切换网桥</span><br><span class="line">查看当前宿主机网卡的状态</span><br><span class="line"><span class="meta">#</span><span class="bash"> brctl show</span></span><br><span class="line">查看KVM虚拟机的运行状态</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh list</span></span><br><span class="line">查看KVM虚拟机网卡列表</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh domiflist centos7C1</span></span><br><span class="line"></span><br><span class="line">添加一个网卡到物理桥myBr1上</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C1 bridge myBr1</span></span><br><span class="line">撤销网卡，撤销网卡前先关闭网卡</span><br><span class="line"><span class="meta">#</span><span class="bash"> ip link <span class="built_in">set</span> dev ens10 down</span></span><br><span class="line">注意：撤销某一块网卡要指定该网卡的MAC，要不会撤销该网卡所在网桥上所有的网卡</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh detach-interface centos7C1 bridge --mac 52:54:00:f1:22:5b</span></span><br><span class="line"></span><br><span class="line">9.分布式部署LAMP</span><br><span class="line">9.1 HTTPD的实现</span><br><span class="line"><span class="meta">#</span><span class="bash"> yum -y install httpd</span></span><br><span class="line">修改主配置文件，把php的首页加上</span><br><span class="line"><span class="meta">#</span><span class="bash"> vi httpd.conf </span></span><br><span class="line">&lt;IfModule dir_module&gt;</span><br><span class="line">    DirectoryIndex index.php index.html</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line"></span><br><span class="line">新建虚拟主机文件,对php文件做解析的服务器的地址可以暂时不写.等软件部署成功之后再补上.</span><br><span class="line">[root@web-server conf.d]# vi www.conf</span><br><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">        ServerName  www.dklwj.com</span><br><span class="line">        DocumentRoot "/vhosts/www/htdocs"</span><br><span class="line">        &lt;Directory "/vhosts/www/htdocs"&gt;</span><br><span class="line">                Options FollowSymLinks</span><br><span class="line">                AllowOverride None</span><br><span class="line">                Require all granted</span><br><span class="line">        &lt;/directory&gt;</span><br><span class="line">    ProxyRequests Off</span><br><span class="line">    ProxyPassMatch ^/(.*\.php)$ fcgi://192.168.137.147:9000/vhosts/www/htdocs/$1</span><br><span class="line">&lt;/VirtualHost&gt;</span><br><span class="line"></span><br><span class="line">创建虚拟主机的目录</span><br><span class="line"><span class="meta">#</span><span class="bash"> mkdir /vhosts/www/htdocs -p</span></span><br><span class="line">修改目录的所属组的权限为apache</span><br><span class="line"><span class="meta">#</span><span class="bash"> chown -R apache.apache /vhosts/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /vhosts/www/htdocs</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"&lt;h1&gt;It works!!&lt;/h1&gt;"</span> &gt; ./index.html</span></span><br><span class="line"></span><br><span class="line">启动http服务,查看80端口有没有被监听.</span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl start httpd            </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ss -tnl </span></span><br><span class="line">State      Recv-Q Send-Q  Local Address:Port                 Peer Address:Port              </span><br><span class="line">LISTEN     0      128                 *:22                              *:*                  </span><br><span class="line">LISTEN     0      100         127.0.0.1:25                              *:*                  </span><br><span class="line">LISTEN     0      128                :::80                             :::*                  </span><br><span class="line">LISTEN     0      128                :::22                             :::*                  </span><br><span class="line">LISTEN     0      100               ::1:25                             :::*  </span><br><span class="line"></span><br><span class="line">服务启动之后可以在本机上查看访问html网页的效果,这里就不修改 hosts 文件来实现域名的跳转了</span><br><span class="line"><span class="meta">#</span><span class="bash"> curl 192.168.100.233/index.html</span></span><br><span class="line"></span><br><span class="line">9.2 php-fpm的实现</span><br><span class="line">安装php-fpm 和php-mysql模块</span><br><span class="line"><span class="meta">#</span><span class="bash"> yum -y install php-fpm php-mysql</span></span><br><span class="line"></span><br><span class="line">修改配置文件</span><br><span class="line"><span class="meta">#</span><span class="bash"> vim /etc/php-fpm.d/www.conf </span></span><br><span class="line"><span class="meta">#</span><span class="bash">作为单独服务运行需要把监听端口改成所有接口，http后续会使用反代</span></span><br><span class="line">listen = 0.0.0.0:9000  </span><br><span class="line"><span class="meta">#</span><span class="bash">只允许192.168.137.144这台服务器也就是http服务器</span></span><br><span class="line">listen.allowed_clients = 192.168.100.233</span><br><span class="line"> </span><br><span class="line">创建php程序存放路径</span><br><span class="line"><span class="meta">#</span><span class="bash"> mkdir /vhosts/www/htdocs -p</span></span><br><span class="line"></span><br><span class="line">进入目录然后创建一个php测试页面</span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /vhosts/www/htdocs/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> vim info.php</span></span><br><span class="line">&lt;?php</span><br><span class="line">        phpinfo();</span><br><span class="line">?&gt;</span><br><span class="line"></span><br><span class="line">启动PHP服务</span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl start php-fpm</span></span><br><span class="line"></span><br><span class="line">测试对php网页的反向代理是否可以实现</span><br><span class="line"><span class="meta">#</span><span class="bash"> curl 192.168.100.233/info.php</span></span><br><span class="line"></span><br><span class="line">9.3 MariaDB的实现</span><br><span class="line"><span class="meta">#</span><span class="bash"> yum -y install mariadb-server</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">配置mariadb禁止解析反向IP地址</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> vi /etc/my.cnf</span></span><br><span class="line">[mysqld]</span><br><span class="line">skip_name_resolve=on</span><br><span class="line"></span><br><span class="line">修改mysql的root密码然后删除匿名用户</span><br><span class="line">[root@mysql-server ~]# mysql</span><br><span class="line">Welcome to the MariaDB monitor.  Commands end with ; or \g.</span><br><span class="line">Your MariaDB connection id is 2</span><br><span class="line">Server version: 5.5.56-MariaDB MariaDB Server</span><br><span class="line">Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.</span><br><span class="line">Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.</span><br><span class="line">MariaDB [(none)]&gt; use mysql</span><br><span class="line">Reading table information for completion of table and column names</span><br><span class="line">You can turn off this feature to get a quicker startup with -A</span><br><span class="line">Database changed</span><br><span class="line">MariaDB [mysql]&gt; update user set password=password('123456') where user='root';</span><br><span class="line">Query OK, 4 rows affected (0.00 sec)</span><br><span class="line">Rows matched: 4  Changed: 4  Warnings: 0</span><br><span class="line">MariaDB [mysql]&gt; flush privileges;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line">MariaDB [mysql]&gt; drop user ''@'localhost';</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line">MariaDB [mysql]&gt; drop user ''@'mysql-server';</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line">MariaDB [mysql]&gt; select user,host,password from user;</span><br><span class="line">+------+--------------+-------------------------------------------+</span><br><span class="line">| user | host         | password                                  |</span><br><span class="line">+------+--------------+-------------------------------------------+</span><br><span class="line">| root | localhost    | *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |</span><br><span class="line">| root | mysql-server | *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |</span><br><span class="line">| root | 127.0.0.1    | *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |</span><br><span class="line">| root | ::1          | *6BB4837EB74329105EE4568DDA7DC67ED2CA2AD9 |</span><br><span class="line">+------+--------------+-------------------------------------------+</span><br><span class="line">4 rows in set (0.00 sec)</span><br><span class="line"></span><br><span class="line">在php服务器上创一个测试一个连接数据库的页面</span><br><span class="line">[root@php-server /vhosts/www/htdocs]#vim mysql.php</span><br><span class="line">&lt;?php</span><br><span class="line"><span class="meta">$</span><span class="bash">link=mysql_connect(<span class="string">"192.168.137.148"</span>,<span class="string">"root"</span>,<span class="string">"123456"</span>);  </span></span><br><span class="line">if(!$link) echo "FAILD,Error!";</span><br><span class="line">else echo "OK.......!";</span><br><span class="line"></span><br><span class="line">测试对php访问数据库模块是否可以正常工作</span><br><span class="line"><span class="meta">#</span><span class="bash"> curl 192.168.100.233/mysql.php</span></span><br><span class="line"></span><br><span class="line">9.4部署WordPress软件</span><br><span class="line"></span><br><span class="line">在php服务器上下载WordPress包，这里需要强调一下，目录需要添加写权限要不然回出现文件无法写入的情况.</span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /vhosts/www/</span></span><br><span class="line">wordpress文件自行在官网下载</span><br><span class="line"><span class="meta">#</span><span class="bash"> tar xf wordpress-4.9.4-zh_CN.tar.gz</span></span><br><span class="line">删除原有存放网页的 htdoc 文件夹并将其以软连接形式呈现</span><br><span class="line"><span class="meta">#</span><span class="bash"> rm -rf htdocs/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ln -sv wordpress htdocs</span></span><br><span class="line"></span><br><span class="line">在把软件包复制一份到http上去里面静态资源需要由HTTP来处理所以两台服务器得各放一份</span><br><span class="line"><span class="meta">#</span><span class="bash"> scp -r wordpress root@192.168.137.144:/vhosts/www/</span></span><br><span class="line"></span><br><span class="line">在数据库服务器上创建所需要的库和帐号</span><br><span class="line">MariaDB [(none)]&gt; create database blog;</span><br><span class="line">Query OK, 1 row affected (0.01 sec)</span><br><span class="line">MariaDB [(none)]&gt; grant all on blog.* to 'wpuser'@'%' identified by 'wppass';</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line">MariaDB [(none)]&gt; flush privileges;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">在HTTP服务器上配置</span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /vhosts/www</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ls</span></span><br><span class="line">htdocs  index.html  wordpress</span><br><span class="line"><span class="meta">#</span><span class="bash"> rm -rf htdocs/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ln -s wordpress/ htdocs</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ll </span></span><br><span class="line">lrwxrwxrwx. 1 root   root     10 Oct 29 21:51 htdocs -&gt; wordpress/</span><br><span class="line">drwxr-xr-x. 5 root   root   4096 Oct 29 21:50 wordpress</span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> ..</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> chown -R apache.apache www/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ll </span></span><br><span class="line">lrwxrwxrwx. 1 apache apache   10 Oct 29 21:51 htdocs -&gt; wordpress/</span><br><span class="line">drwxr-xr-x. 5 apache apache 4096 Oct 29 21:50 wordpress</span><br><span class="line"></span><br><span class="line">部署完成之后即可在浏览器上访问然后配置wordpress了,配置步骤不明白的可自行google,注意在php服务器上添加</span><br><span class="line">/vhosts/www/wordpress/wp-config.php 这个文件,这是wordpress的配置文件.</span><br><span class="line"></span><br><span class="line">10.隐藏真实主机网络访问控制</span><br><span class="line">现在我们一共有4台KVM虚拟机,DB服务器和php服务器不能暴露在外网环境中而实现操控和访问的httpd服务器和跳板</span><br><span class="line">机反而要对外实现通信,因此需要对网络进行设置</span><br><span class="line">10.1 网桥的准备工作</span><br><span class="line">之前已经设置好了可以访问外网桥街的br0,接下需要新建两个内网通信的网桥</span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> /etc/libvirt/qemu/networks/</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> brctl show</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> cp default.xml mynet1.xml</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> vi mynet1.xml</span></span><br><span class="line">&lt;network&gt;</span><br><span class="line">  &lt;name&gt;mynet1&lt;/name&gt;</span><br><span class="line">  &lt;bridge name='mybr1' stp='on' delay='0'/&gt;</span><br><span class="line">  &lt;ip address='10.10.10.1' netmask='255.255.255.0'&gt;</span><br><span class="line">    &lt;dhcp&gt;</span><br><span class="line">      &lt;range start='10.10.10.10' end='10.10.10.100'/&gt;</span><br><span class="line">    &lt;/dhcp&gt;</span><br><span class="line">  &lt;/ip&gt;</span><br><span class="line">&lt;/network&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh net-create mynet1.xml </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> cp mynet1.xml mynet2.xml </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> vi mynet2.xml </span></span><br><span class="line"></span><br><span class="line">&lt;network&gt;</span><br><span class="line">  &lt;name&gt;mynet2&lt;/name&gt;</span><br><span class="line">  &lt;bridge name='mybr2' stp='on' delay='0'/&gt;</span><br><span class="line">  &lt;ip address='20.20.20.1' netmask='255.255.255.0'&gt;</span><br><span class="line">    &lt;dhcp&gt;</span><br><span class="line">      &lt;range start='20.20.20.20' end='20.20.20.100'/&gt;</span><br><span class="line">    &lt;/dhcp&gt;</span><br><span class="line">  &lt;/ip&gt;</span><br><span class="line">&lt;/network&gt;</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh net-create mynet2.xml </span></span><br><span class="line">10.2为虚拟机配置网桥</span><br><span class="line">主要是对网卡的插拔操作,上文中有提到如何热插拔网卡实现切换网桥</span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C1 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> mybr1</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C2 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> mybr2</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh detach-interface centos7C2 --<span class="built_in">type</span> bridge --mac 52:54:00:9c:0f:b4</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C3 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> mybr2</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh detach-interface centos7C3 --<span class="built_in">type</span> bridge --mac 52:54:00:16:a8:a6</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C4 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> mybr2</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> virsh attach-interface centos7C4 --<span class="built_in">type</span> bridge --<span class="built_in">source</span> mybr1</span></span><br><span class="line"></span><br><span class="line">网桥插拔完成之后对虚拟机的网络接入情况进行查看:</span><br><span class="line">[root@localhost vms]# virsh domiflist centos7C1</span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet0      bridge     br0        virtio      52:54:00:13:29:30</span><br><span class="line">vnet5      bridge     mybr1      rtl8139     52:54:00:a9:b8:6c</span><br><span class="line"></span><br><span class="line">[root@localhost vms]# virsh domiflist centos7C2</span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet1      bridge     mybr1      virtio      52:54:00:f6:c9:d0</span><br><span class="line">vnet6      bridge     mybr2      rtl8139     52:54:00:87:f1:0d</span><br><span class="line"></span><br><span class="line">[root@localhost vms]# virsh domiflist centos7C3</span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet2      bridge     mybr2      rtl8139     52:54:00:1e:ab:d6</span><br><span class="line"></span><br><span class="line">[root@localhost vms]# virsh domiflist centos7C4</span><br><span class="line">Interface  Type       Source     Model       MAC</span><br><span class="line">-------------------------------------------------------</span><br><span class="line">vnet4      bridge     br0        virtio      52:54:00:6f:fa:c7</span><br><span class="line">vnet3      bridge     mybr2      rtl8139     52:54:00:78:ea:44</span><br><span class="line">vnet7      bridge     mybr1      rtl8139     52:54:00:c4:61:9b </span><br><span class="line"></span><br><span class="line">查看网桥及网卡的连接情况:</span><br><span class="line"><span class="meta">#</span><span class="bash"> brctl show</span></span><br><span class="line">bridge name     bridge id               STP enabled     interfaces</span><br><span class="line">br0             8000.000c29120c94       yes             ens33</span><br><span class="line">                                                        vnet0</span><br><span class="line">                                                        vnet4</span><br><span class="line">mybr1           8000.525400c30ff7       yes             mybr1-nic</span><br><span class="line">                                                        vnet1</span><br><span class="line">                                                        vnet5</span><br><span class="line">                                                        vnet7</span><br><span class="line">mybr2           8000.525400dc598f       yes             mybr2-nic</span><br><span class="line">                                                        vnet2</span><br><span class="line">                                                        vnet3</span><br><span class="line">                                                        vnet6</span><br><span class="line">virbr0          8000.525400a975d4       yes             virbr0-nic</span><br><span class="line"> </span><br><span class="line">然后按照下面定义的网络地址来配置虚拟机的网络,网卡名有改变,但是不影响操作.</span><br><span class="line">Mysql(C3)</span><br><span class="line">ens8:20.20.20.35</span><br><span class="line">FPM(C2)</span><br><span class="line">ens9:20.20.20.63</span><br><span class="line">eth0:10.10.10.12</span><br><span class="line">HTTPD(C1)</span><br><span class="line">eth8:10.10.10.95</span><br><span class="line">eth1:172.20.124.138</span><br><span class="line">JUMPS(C4):16.40.40.80</span><br><span class="line">ens9:10.10.10.73 e78fde6e-933c-4ee4-851b-4b4a5fe7e744</span><br><span class="line">ens8:20.20.20.87 8bad1d1e-2247-4c54-a4e0-60094beddcdd</span><br><span class="line">eth0:172.20.124.151</span><br><span class="line">网桥设置:</span><br><span class="line">mybr1(host only):</span><br><span class="line">ip:10.10.10.1/24</span><br><span class="line">dhcp range:10.10.10.10 10.10.10.100</span><br><span class="line">mybr2(host only):</span><br><span class="line">ip:20.20.20.1/24</span><br><span class="line">dhcp range:20.20.20.20 20.20.20.100</span><br><span class="line">br0(nat):</span><br><span class="line">ip:192.168.122.1/24</span><br><span class="line">dhcp range: 192.168.122.2 192.168.122.254</span><br><span class="line">这样设置的话不同的主机就存在与不同的网域中,外界就没法直接访问敏感服务器咯.</span><br><span class="line"></span><br><span class="line">跳板机的网络设置</span><br><span class="line"></span><br><span class="line">mysql iptables rule</span><br><span class="line">	允许跳板机的ssh</span><br><span class="line">      iptables -A INPUT -d 10.10.20.20 -s 10.10.20.100 -p tcp --dport 22 -j ACCEPT</span><br><span class="line">      iptables -A OUTPUT -s 10.10.20.20 -d 10.10.20.100 -p tcp --sport 22 -j ACCEPT</span><br><span class="line">    拒绝所有连接</span><br><span class="line">     iptables -A INPUT -j DROP</span><br><span class="line">     iptables -A OUTPUT -j DROP</span><br><span class="line">    允许php的IP连接数据库</span><br><span class="line">     iptables -I INPUT -d 10.10.20.20 -s 10.10.20.30 -p tcp --dport 3306 -j ACCEPT </span><br><span class="line">     iptables -I OUTPUT -s 10.10.20.20 -d 10.10.20.30 -p tcp --sport 3306 -j ACCEPT    	</span><br><span class="line"></span><br><span class="line">PHP iptables rule</span><br><span class="line">   允许跳板机的ssh</span><br><span class="line">     iptables -A INPUT -d 172.30.20.30 -s 172.30.20.100 -p tcp --dport 22 -j ACCEPT</span><br><span class="line">     iptables -A OUTPUT -s 172.30.20.30 -d 172.30.20.100 -p tcp --sport 22 -j ACCEPT</span><br><span class="line"></span><br><span class="line">    拒绝所有连接</span><br><span class="line">     iptables -A INPUT -j ACCEPT</span><br><span class="line">     iptables -A OUTPUT -j ACCEPT</span><br><span class="line"></span><br><span class="line">    允许httpd的反代端口9000通过</span><br><span class="line"><span class="meta">	#</span><span class="bash"> iptables -I INPUT -d 172.30.20.30 -s 172.30.20.152 -p tcp --dport 9000 -j ACCEPT</span></span><br><span class="line"><span class="meta">	#</span><span class="bash"> iptables -I OUTPUT -s 172.30.20.30 -d 172.30.20.152 -p tcp --sport 9000 -j ACCEPT </span></span><br><span class="line">      </span><br><span class="line"><span class="meta">	#</span><span class="bash"> iptables -I OUTPUT -d 10.10.20.20 -s 10.10.20.30 -p tcp --dport 3306 -j ACCEPT</span></span><br><span class="line"><span class="meta">	#</span><span class="bash"> iptables -I INPUT -d 10.10.20.30 -s 10.10.20.20 -p tcp --sport 3306 -j ACCEPT</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">HTTPD iptables rule</span><br><span class="line"> 允许跳板机的ssh</span><br><span class="line">    # iptables -A INPUT -d 172.30.20.152 -s 172.30.20.100 -p tcp --dport 22 -j ACCEPT</span><br><span class="line">    #iptables -A OUTPUT -s 172.30.20.152 -d 172.30.20.100 -p tcp --sport 22 -j ACCEPT</span><br><span class="line"> 拒绝所有连接</span><br><span class="line">    # iptables -A INPUT -j DROP</span><br><span class="line">    # iptables -A OUTPUT -j DROP</span><br><span class="line"> 允许客户端通过外网接口访问80和443接口</span><br><span class="line"> 	进口配置</span><br><span class="line">    # iptables -I INPUT -d 192.168.137.152 -i eth0 -p tcp -m multiport --dports 80,443 -j ACCEPT</span><br><span class="line">   出口设置</span><br><span class="line">    # iptables -I OUTPUT -s 192.168.137.152 -o eth0 -p tcp -m multiport --sports 80,443 -j ACCEPT</span><br><span class="line"></span><br><span class="line">   允许http能连接到后端的PHP服务器的9000端口</span><br><span class="line">    # iptables -I OUTPUT -d 172.30.20.30 -s 172.30.20.152 -p tcp --dport 9000 -j ACCEPT</span><br><span class="line">    # iptables -I INPUT -d 172.30.20.152 -s 172.30.20.30 -p tcp --sport 9000 -j ACCEPT</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">补充:</span><br><span class="line">使用dhcp分配网络地址之后没有相应的网络配置文件</span><br><span class="line">解决方案:</span><br><span class="line">1.使用nmcli con show命令，查看网卡的UUID信息，记下UUID值</span><br><span class="line"><span class="meta">#</span><span class="bash"> nmcli con show</span></span><br><span class="line">2.使用ip addr命令查看网卡信息，记下ens37网卡的MAC地址</span><br><span class="line">3.将 /etc/sysconfig/network-scripts/目录中ifcfg-ens33文件复制一份，并命名为 ifcfg-ens37，</span><br><span class="line">重新修改配置文件，注意修改必要的硬件信息</span><br><span class="line">4.最后重启网络即可</span><br><span class="line"><span class="meta">#</span><span class="bash"> systemctl restart network</span></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B9%8BANSIBLE/" rel="prev" title="运维自动化之ANSIBLE(一)">
+      <i class="fa fa-chevron-left"></i> 运维自动化之ANSIBLE(一)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F/" rel="next" title="Linux进程间通信的几种方式">
+      Linux进程间通信的几种方式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

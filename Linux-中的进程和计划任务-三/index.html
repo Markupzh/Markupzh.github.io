@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Linux 中进程的管理进程管理工具 killkill命令:  向进程发送控制信号,以实现对进程管理,每个信号对应一个数字,信号名称以SIG开头 (可省略),不区分大小写   显示当前系统可用信号: kill –l,trap -l ​    常用信号:man 7 signal  ​    1) SIGHUP: 无须关闭进程而让其重读配置文件  ​    2) SIGINT: 中止正在运行的进程;相">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 中的进程和计划任务(三)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%89/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="Linux 中进程的管理进程管理工具 killkill命令:  向进程发送控制信号,以实现对进程管理,每个信号对应一个数字,信号名称以SIG开头 (可省略),不区分大小写   显示当前系统可用信号: kill –l,trap -l ​    常用信号:man 7 signal  ​    1) SIGHUP: 无须关闭进程而让其重读配置文件  ​    2) SIGINT: 中止正在运行的进程;相">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-11-03T13:40:53.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:54:50.007Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 中的进程和计划任务(三) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 中的进程和计划任务(三)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-11-03 21:40:53" itemprop="dateCreated datePublished" datetime="2015-11-03T21:40:53+08:00">2015-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:54:50" itemprop="dateModified" datetime="2019-01-02T23:54:50+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Linux-中进程的管理"><a href="#Linux-中进程的管理" class="headerlink" title="Linux 中进程的管理"></a>Linux 中进程的管理</h2><h3 id="进程管理工具-kill"><a href="#进程管理工具-kill" class="headerlink" title="进程管理工具 kill"></a>进程管理工具 kill</h3><p><strong>kill命令:</strong> </p>
+<pre><code>向进程发送控制信号,以实现对进程管理,每个信号对应一个数字,信号名称以SIG开头 (可省略),不区分大小写 
+
+显示当前系统可用信号: kill –l,trap -l </code></pre><p>​    常用信号:man 7 signal </p>
+<p>​    1) SIGHUP: 无须关闭进程而让其重读配置文件 </p>
+<p>​    2) SIGINT: 中止正在运行的进程;相当于Ctrl+c </p>
+<p>​    3) SIGQUIT:相当于ctrl+\ </p>
+<pre><code>9) SIGKILL: 强制杀死正在运行的进程 </code></pre><p>​    15) SIGTERM:终止正在运行的进程 </p>
+<p>​    18) SIGCONT:继续运行 </p>
+<p>​    19) SIGSTOP:后台休眠 </p>
+<pre><code>指定信号的方法: 
+
+(1) 信号的数字标识:1, 2, 9 
+
+(2) 信号完整名称:SIGHUP 
+
+(3) 信号的简写名称:HUP </code></pre><p>按PID:kill [-SIGNAL] pid … </p>
+<pre><code>kill –n SIGNAL pid;kill –s SIGNAL pid </code></pre><p>按名称:killall [-SIGNAL] comm… </p>
+<p>按模式:pkill [options] pattern </p>
+<pre><code>-SIGNAL </code></pre><p>​    -u uid: effective user,生效者 </p>
+<pre><code>-U uid: real user,真正发起运行命令者 </code></pre><p>​    -t terminal: 与指定终端相关的进程 </p>
+<pre><code>-l: 显示进程名(pgrep可用) 
+
+-a: 显示完整格式的进程名(pgrep可用) </code></pre><p>​    -P pid: 显示指定进程的子进程 </p>
+<h3 id="作业管理"><a href="#作业管理" class="headerlink" title="作业管理"></a>作业管理</h3><p> Linux的作业控制 </p>
+<pre><code>前台作业:通过终端启动,且启动后一直占据终端 
+
+后台作业:可通过终端启动,但启动后即转入后台运行(释放终端) </code></pre><p> 让作业运行于后台 </p>
+<pre><code>(1) 运行中的作业: Ctrl+z 
+
+(2) 尚未启动的作业: COMMAND &amp; </code></pre><p> 后台作业虽然被送往后台运行,但其依然与终端相关;退出终端,将关闭后台作业。如果希望 送往后台后,剥离与终端的关系 </p>
+<pre><code>nohup COMMAND &amp;&gt;/dev/null &amp; 
+
+screen;COMMAND </code></pre><p> 查看当前终端所有作业:jobs </p>
+<p> 作业控制: </p>
+<pre><code>fg [[%]JOB_NUM]:把指定的后台作业调回前台 
+
+bg [[%]JOB_NUM]:让送往后台的作业在后台继续运行 
+
+kill [%JOB_NUM]: 终止指定的作业 </code></pre><h3 id="并行运行"><a href="#并行运行" class="headerlink" title="并行运行"></a>并行运行</h3><p>同时运行多个进程,提高效率 </p>
+<p>方法1 </p>
+<pre><code>vi all.sh 
+
+f1.sh&amp; 
+
+f2.sh&amp; 
+
+f3.sh&amp; </code></pre><p>方法2 </p>
+<pre><code>(f1.sh&amp;);(f2.sh&amp;);(f3.sh&amp;) </code></pre><p>方法3 </p>
+<pre><code>{ f1.sh&amp; f2.sh&amp; f3.sh&amp; } </code></pre><h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p>Linux任务计划、周期性任务执行 </p>
+<pre><code>• 未来的某时间点执行一次任务 
+
+    at 
+
+    batch:系统自行选择空闲时间去执行此处指定的任务 
+
+• 周期性运行某任务 
+
+    cron </code></pre><h4 id="at任务"><a href="#at任务" class="headerlink" title="at任务"></a>at任务</h4><p>包:at </p>
+<p> at命令:at [option] TIME </p>
+<p> 常用选项: </p>
+<pre><code>-V 显示版本信息: 
+
+-l 列出指定队列中等待运行的作业;相当于atq 
+
+-d 删除指定的作业;相当于atrm 
+
+-c 查看具体作业任务 
+
+-f /path/file 指定的文件中读取任务 
+
+-m 当任务被完成之后,将给用户发送邮件,即使没有标准输出 </code></pre><p> 注意:作业执行命令的结果中的标准输出和错误以邮件通知给相关用户 </p>
+<p> TIME:定义出什么时候进行 at 这项任务的时间 </p>
+<pre><code>HH:MM [YYYY-mm-dd] 
+
+noon, midnight, teatime(4pm) 
+
+tomorrow 
+
+now+#{minutes,hours,days, OR weeks} </code></pre><h4 id="at时间格式"><a href="#at时间格式" class="headerlink" title="at时间格式"></a>at时间格式</h4><p>HH:MM 02:00 </p>
+<pre><code>在今日的 HH:MM 进行,若该时刻已过,则明天此时执行任务 </code></pre><p>HH:MM YYYY-MM-DD 02:00 2016-09-20 </p>
+<pre><code>规定在某年某月的某一天的特殊时刻进行该项任务 HH:MM[am|pm]/[Month]/[Date] 0
+
+4pm March 17 
+
+17:20 tomorrow </code></pre><p>HH:MM[am|pm] + number [minutes|hours|days|weeks]</p>
+<pre><code>在某个时间点再加几个时间后才进行该项任务 
+
+now + 5 min 
+
+02pm + 3 days </code></pre><h4 id="at任务-1"><a href="#at任务-1" class="headerlink" title="at任务"></a>at任务</h4><p>执行方式: </p>
+<pre><code>1)交互式 2)输入重定向 3)at –f 文件 </code></pre><p>依赖与atd服务,需要启动才能实现at任务 </p>
+<p>at队列存放在/var/spool/at目录中 </p>
+<p>/etc/at.{allow,deny}控制用户是否能执行at任务 </p>
+<pre><code>白名单:/etc/at.allow 默认不存在,只有该文件中的用户才能执行at命令 
+
+黑名单:/etc/at.deny 默认存在,拒绝该文件中用户执行at命令,而没有在 at.deny 文件中的使用者则可执行 
+
+如果两个文件都不存在,只有 root 可以执行 at 命令 </code></pre><hr>
+<h4 id="周期性任务计划-cron"><a href="#周期性任务计划-cron" class="headerlink" title="周期性任务计划 cron"></a>周期性任务计划 cron</h4><p>相关的程序包: </p>
+<pre><code>cronie: 主程序包,提供crond守护进程及相关辅助工具 
+
+cronie-anacron:cronie的补充程序,用于监控cronie任务执行状况,如 cronie中的任务在过去该运行的时间点未能正常运行,则anacron会随后启动一次 此任务 
+
+crontabs:包含CentOS提供系统维护任务 </code></pre><h4 id="计划任务-1"><a href="#计划任务-1" class="headerlink" title="计划任务"></a>计划任务</h4><p>确保crond守护处于运行状态: </p>
+<pre><code>CentOS 7: 
+
+    systemctl status crond 
+
+CentOS 6: 
+
+    service crond status </code></pre><p>计划周期性执行的任务提交给crond,到指定时间会自动运行 </p>
+<pre><code>系统cron任务:系统维护作业 
+
+    /etc/crontab 
+
+用户cron任务: 
+
+    crontab命令 </code></pre><p>日志:/var/log/cron </p>
+<p>系统cron任务:/etc/crontab<br>注释行以 # 开头<br>详情参见 man 5 crontab</p>
+<p>#Example of job definition:</p>
+<p>#.—————- minute (0 - 59)</p>
+<p>#| .————- hour (0 - 23)</p>
+<p>#| | .———- day of month (1 - 31)</p>
+<p>#| | | .——- month (1 - 12) OR jan,feb,mar,apr …</p>
+<p>#| | | | .—- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat</p>
+<p>#| | | | |</p>
+<p>#* * * * * user-name command to be executed</p>
+<p>例如:晚上9点10分运行echo命令<br>10 21 * * * wang /bin/echo “Howdy!”</p>
+<p>时间表示法: </p>
+<pre><code>(1) 特定值 给定时间点有效取值范围内的值 
+
+(2) 给定时间点上有效取值范围内的所有值 表示“每...” 
+
+(3) 离散取值 
+
+   #,#,# 
+
+(4) 连续取值 
+
+   #-# 
+
+(5) 在指定时间范围上,定义步长 
+
+   /#: #即为步长 </code></pre><h4 id="时间格式"><a href="#时间格式" class="headerlink" title="时间格式"></a>时间格式</h4><p>@reboot         Run once after reboot </p>
+<p>@yearly         0 0 1 1 * </p>
+<p>@annually         0 0 1 1 * </p>
+<p>@monthly         0 0 1 * * </p>
+<p>@weekly         0 0 * * 0 </p>
+<p>@daily         0 0 * * * </p>
+<p>@hourly         0 * * * * </p>
+<p>示例:每3小时echo和wall命令 </p>
+<pre><code>0 */3 * * * centos /bin/echo “howdy”;/usr/bin/wall “show time!” </code></pre><p><strong>系统的计划任务</strong></p>
+<p>/etc/crontab             配置文件 </p>
+<p>/etc/cron.d/             配置文件 </p>
+<p>/etc/cron.hourly/         脚本 </p>
+<p>/etc/cron.daily/         脚本 </p>
+<p>/etc/cron.weekly/     脚本 </p>
+<p>/etc/cron.monthly/     脚本 </p>
+<h4 id="anacron-系统"><a href="#anacron-系统" class="headerlink" title="anacron 系统"></a>anacron 系统</h4><p>运行计算机关机时cron不运行的任务,CentOS6以后版本取消anacron服务,由 crond服务管理 </p>
+<p>对笔记本电脑、台式机、工作站、偶尔要关机的服务器及其它不一直开机的系统 很重要对很有用 </p>
+<p>配置文件:/etc/anacrontab,负责执行/etc/ cron.daily /etc/cron.weekly /etc/cron.monthly中系统任务 </p>
+<pre><code>• 字段1:如果在这些日子里没有运行这些任务…… 
+
+• 字段2:在重新引导后等待这么多分钟后运行它 
+
+• 字段3:任务识别器,在日志文件中标识 
+
+• 字段4:要执行的任务 </code></pre><p>由/etc/cron.hourly/0anacron执行 </p>
+<p>当执行任务时,更新/var/spool/anacron/cron.daily 文件的时间戳 </p>
+<h4 id="管理临时文件"><a href="#管理临时文件" class="headerlink" title="管理临时文件"></a>管理临时文件</h4><p>CentOS6使用</p>
+<pre><code>/etc/cron.daily/tmpwatch定时清除临时文件 </code></pre><p>CentOS7使用</p>
+<pre><code>systemd-tmpfiles-setup服务实现 </code></pre><p>配置文件: </p>
+<pre><code>/etc/tmpfiles.d/*.conf *
+
+/run/tmpfiles.d/*.conf *
+
+/usr/lib/tmpfiles/*.conf </code></pre><p>/usr/lib/tmpfiles.d/tmp.conf </p>
+<pre><code>d /tmp 1777 root root 10d 
+
+d /var/tmp 1777 root root 30d </code></pre><p>命令: </p>
+<pre><code>systemd-tmpfiles –clean|remove|create configfile </code></pre><h4 id="用户计划任务"><a href="#用户计划任务" class="headerlink" title="用户计划任务"></a>用户计划任务</h4><p>crontab命令定义 </p>
+<pre><code>每个用户都有专用的cron任务文件: 
+
+    /var/spool/cron/USERNAME </code></pre><p>crontab命令: </p>
+<pre><code>crontab [-u user]/[-l | -r | -e]/[-i] 
+
+-l: 列出所有任务 
+
+-e: 编辑任务 
+
+-r: 移除所有任务 
+
+-i:同-r一同使用,以交互式模式移除指定任务 
+
+-u user: 仅root可运行,指定用户管理cron任务 </code></pre><p>控制用户执行计划任务: </p>
+<pre><code>/etc/cron.{allow,deny} </code></pre><p><strong>at和crontab</strong></p>
+<p>一次性作业使用 at </p>
+<p>重复性作业使用crontab </p>
+<p>Create         at time             crontab -e </p>
+<p>List             at -l             crontab -l </p>
+<p>Details         at -c jobnum     N/A </p>
+<p>Remove         at -d jobnum     crontab -r </p>
+<p>Edit         N/A             crontab -e </p>
+<p>没有被重定向的输出会被邮寄给用户 </p>
+<p>root能够修改其它用户的作业 </p>
+<p>注意:运行结果的标准输出和错误以邮件通知给相关用户 </p>
+<pre><code>(1) COMMAND &gt; /dev/null 
+
+(2) COMMAND &amp;&gt; /dev/null </code></pre><p>对于cron任务来讲,%有特殊用途;如果在命令中要使用%,则需要转义,将% 放置于单引号中,则可不用转义 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%BA%8C/" rel="prev" title="Linux 中的进程和计划任务(二)">
+      <i class="fa fa-chevron-left"></i> Linux 中的进程和计划任务(二)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E4%B8%80/" rel="next" title="Linux 网络管理(一)">
+      Linux 网络管理(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-中进程的管理"><span class="nav-number">1.</span> <span class="nav-text">Linux 中进程的管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进程管理工具-kill"><span class="nav-number">1.1.</span> <span class="nav-text">进程管理工具 kill</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作业管理"><span class="nav-number">1.2.</span> <span class="nav-text">作业管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并行运行"><span class="nav-number">1.3.</span> <span class="nav-text">并行运行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#计划任务"><span class="nav-number">1.4.</span> <span class="nav-text">计划任务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#at任务"><span class="nav-number">1.4.1.</span> <span class="nav-text">at任务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#at时间格式"><span class="nav-number">1.4.2.</span> <span class="nav-text">at时间格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#at任务-1"><span class="nav-number">1.4.3.</span> <span class="nav-text">at任务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#周期性任务计划-cron"><span class="nav-number">1.4.4.</span> <span class="nav-text">周期性任务计划 cron</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#计划任务-1"><span class="nav-number">1.4.5.</span> <span class="nav-text">计划任务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#时间格式"><span class="nav-number">1.4.6.</span> <span class="nav-text">时间格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#anacron-系统"><span class="nav-number">1.4.7.</span> <span class="nav-text">anacron 系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#管理临时文件"><span class="nav-number">1.4.8.</span> <span class="nav-text">管理临时文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#用户计划任务"><span class="nav-number">1.4.9.</span> <span class="nav-text">用户计划任务</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

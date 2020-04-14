@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="安装Linux系统CentOS系统安装系统启动流程：    bootloader–&gt;kernel(initramfs)–&gt;rootfs–&gt;&#x2F;sbin&#x2F;init anaconda: 系统安装程序    gui：图形窗口    tui: 基于图形库curses的文本窗口 安装程序启动过程MBR：isolinux&#x2F;boot.catstage2: isolinux&#x2F;isolinux.bi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="运维自动化-系统部署(一)">
+<meta property="og:url" content="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="安装Linux系统CentOS系统安装系统启动流程：    bootloader–&gt;kernel(initramfs)–&gt;rootfs–&gt;&#x2F;sbin&#x2F;init anaconda: 系统安装程序    gui：图形窗口    tui: 基于图形库curses的文本窗口 安装程序启动过程MBR：isolinux&#x2F;boot.catstage2: isolinux&#x2F;isolinux.bi">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-09-20T11:35:31.000Z">
+<meta property="article:modified_time" content="2018-09-20T12:46:52.809Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Ops">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>运维自动化-系统部署(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          运维自动化-系统部署(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-20 19:35:31 / 修改时间：20:46:52" itemprop="dateCreated datePublished" datetime="2018-09-20T19:35:31+08:00">2018-09-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="安装Linux系统"><a href="#安装Linux系统" class="headerlink" title="安装Linux系统"></a>安装Linux系统</h3><p>CentOS系统安装系统启动流程：<br>    bootloader–&gt;kernel(initramfs)–&gt;rootfs–&gt;/sbin/init</p>
+<p>anaconda: 系统安装程序<br>    gui：图形窗口<br>    tui: 基于图形库curses的文本窗口</p>
+<h4 id="安装程序启动过程"><a href="#安装程序启动过程" class="headerlink" title="安装程序启动过程"></a>安装程序启动过程</h4><p>MBR：isolinux/boot.cat<br>stage2: isolinux/isolinux.bin<br>配置文件：isolinux/isolinux.cfg<br>    每个对应的菜单选项：<br>        加载内核：isolinuz/vmlinuz<br>        向内核传递参数：append initrd=initrd.img …<br>装载根文件系统，并启动anaconda<br>    默认启动GUI接口<br>    若是显式指定使用TUI接口：向内核传递text参数即可<br>    (1)按tab键,在后面增加text<br>    (2)按ESC键：boot: linux text</p>
+<h3 id="anaconda工作过程"><a href="#anaconda工作过程" class="headerlink" title="anaconda工作过程"></a>anaconda工作过程</h3><p>Anaconda安装系统分成三个阶段：<br><strong>安装前配置阶段</strong><br>    安装过程使用的语言键盘类型<br>    安装目标存储设备<br>        Basic Storage：本地磁盘<br>        特殊设备：iSCSI<br>    设定主机名<br>    配置网络接口时区<br>    管理员密码<br>    设定分区方式及MBR的安装位置<br>    创建一个普通用户<br>    选定要安装的程序包</p>
+<p><strong>安装阶段</strong><br>    在目标磁盘创建分区，执行格式化操作等<br>    将选定的程序包安装至目标位置<br>    安装bootloader和initramfs</p>
+<p><strong>图形模式首次启动</strong><br>    iptables<br>    selinux<br>    core dump</p>
+<h4 id="系统安装"><a href="#系统安装" class="headerlink" title="系统安装"></a>系统安装</h4><p>启动安装过程一般应位于引导设备；后续的anaconda及其安装用到的程序包等可来自下面几种方式:<br>    本地光盘<br>    本地硬盘<br>    NFS<br>    URL:<br>        ftp server: yum repository<br>        http server: yum repostory<br>如果想手动指定安装源：<br>    boot: linux askmethod</p>
+<h4 id="指定安装源"><a href="#指定安装源" class="headerlink" title="指定安装源"></a>指定安装源</h4><p><strong>centos6</strong><br>    DVD drive        repo=cdrom :device<br>    Hard Drive        repo=hd:device/path<br>    HTTP Server        repo=<a href="http://host/path" target="_blank" rel="noopener">http://host/path</a><br>    HTTPS Server    repo=<a href="https://host/path" target="_blank" rel="noopener">https://host/path</a><br>    FTP Server        repo=<a href="ftp://username:password@">ftp://username:password@</a> host/path<br>    NFS Server        repo=nfs:server:/path<br>    ISO images on an NFS Server repo=nfsiso:server:/path</p>
+<p><strong>centos7</strong><br>    Any CD/DVD drive    inst.repo=cdrom<br>    Hard Drive            inst.repo=hd:device:/path<br>    HTTP Server            inst.repo=<a href="http://host/path" target="_blank" rel="noopener">http://host/path</a><br>    HTTPS Server        inst.repo=<a href="https://host/path" target="_blank" rel="noopener">https://host/path</a><br>    FTP Server            inst.repo=<a href="ftp://username:password@">ftp://username:password@</a> host/path<br>    NFS Server            inst.repo=nfs:[options:]server:/path</p>
+<h4 id="系统安装-1"><a href="#系统安装-1" class="headerlink" title="系统安装"></a>系统安装</h4><p>anaconda的配置方式：<br>    (1)    交互式配置方式<br>    (2)    通过读取事先给定的配置文件自动完成配置按特定语法给出的配置选项kickstart文件</p>
+<p>安装boot引导选项：boot:<br>    text: 文本安装方式<br>    askmethod: 手动指定使用的安装方法</p>
+<p>与网络相关的引导选项：<br>ip=IPADDR<br>netmask=MASK<br>gateway=GW<br>dns=DNS_SERVER_IP<br>ifname=NAME:MAC_ADDR    </p>
+<p>与远程访问功能相关的引导选项：<br>    vnc<br>    vncpassword=’PASSWORD’</p>
+<p>指明kickstart文件的位置： ks=<br>    DVD drive: ks=cdrom:/PATH/TO/KICKSTART_FILE<br>    Hard drive: ks=hd:device:/directory/KICKSTART_FILE<br>    HTTP server: ks=<a href="http://host:port/path/to/KICKSTART_FILE">http://host:port/path/to/KICKSTART_FILE</a><br>    FTP server: ks=<a href="ftp://host:port/path/to/KICKSTART_FILE">ftp://host:port/path/to/KICKSTART_FILE</a><br>    HTTPS server: ks=<a href="https://host:port/path/to/KICKSTART_FILE">https://host:port/path/to/KICKSTART_FILE</a><br>    NFS server:ks=nfs:host:/path/to/KICKSTART_FILE</p>
+<p>启动紧急救援模式：<br>    rescue</p>
+<p>官方文档：《Installation Guide》</p>
+<h4 id="kickstart文件的格式"><a href="#kickstart文件的格式" class="headerlink" title="kickstart文件的格式"></a>kickstart文件的格式</h4><p>命令段：指明各种安装前配置，如键盘类型等<br>程序包段：指明要安装的程序包组或程序包，不安装的程序包等<br>    %packages<br>    @group_name<br>    package<br>    -package<br>    %end</p>
+<p>脚本段：<br>%pre: 安装前脚本<br>    运行环境：运行于安装介质上的微型Linux环境</p>
+<p>%post: 安装后脚本<br>    运行环境：安装完成的系统</p>
+<p>命令段中的命令：<br>必备命令<br>    authconfig: 认证方式配置<br>        authconfig –useshadow –passalgo=sha512<br>    bootloader：bootloader的安装位置及相关配置<br>        bootloader –location=mbr –driveorder=sda – append=”crashkernel=auto rhgb quiet”<br>    keyboard: 设定键盘类型<br>    lang: 语言类型<br>    part: 创建分区<br>    rootpw: 指明root的密码<br>    timezone: 时区</p>
+<p>可选命令<br>    install OR upgrade<br>    text: 文本安装界面<br>    network<br>    firewall<br>    selinux<br>    halt<br>    poweroff<br>    reboot<br>    repo<br>    user：安装完成后为系统创建新用户<br>    url: 指明安装源<br>    key –skip 跳过安装号码,适用于rhel版本</p>
+<p>创建kickstart文件的方式<br>    直接手动编辑<br>        依据某模板修改<br>    可使用创建工具：system-config-kickstart<br>        依据某模板修改并生成新配置<br>        /root/anaconda-ks.cfg<br>    检查ks文件的语法错误：ksvalidator<br>        ksvalidator /PATH/TO/KICKSTART_FILE</p>
+<p>系统光盘中isolinux目录列表<br>    solinux.bin：光盘引导程序，在mkisofs的选项中需要明确给出文件路径，这个文件属于SYSLINUX项目<br>    isolinux.cfg：isolinux.bin的配置文件，当光盘启动后（即运行isolinux.bin），会自动去找isolinux.cfg文件<br>    vesamenu.c32：是光盘启动后的安装图形界面，也属于SYSLINUX项目，menu.c32版本是纯文本的菜单<br>    Memtest：内存检测，这是一个独立的程序<br>    splash.jgp：光盘启动界面的背景图<br>    vmlinuz是内核映像<br>    initrd.img是ramfs (先cpio，再gzip压缩)</p>
+<h4 id="制作引导光盘和U盘"><a href="#制作引导光盘和U盘" class="headerlink" title="制作引导光盘和U盘"></a>制作引导光盘和U盘</h4><p>创建引导光盘：<br>    mkdir –pv /app/myiso<br>    cp -r /misc/cd/isolinux/ /app/myiso/<br>    vim /app/myiso/isolinux/isolinux.cfg initrd=initrd.img text ks=cdrom:/myks.cfg<br>    cp /root/myks.cfg /app/myiso/<br>    mkisofs -R -J -T -v –no-emul-boot –boot-load-size 4 –boot-info-table -V “CentOS 6.9 x86_64 boot” -b isolinux/isolinux.bin -c isolinux/boot.cat -o /root/boot.iso /app/myiso/<br>    注意：以上相对路径都是相对于光盘的根，和工作目录无关</p>
+<p>创建U盘启动盘<br>    dd if=/dev/sr0 of=/dev/sdb</p>
+<h5 id="mkisofs选项"><a href="#mkisofs选项" class="headerlink" title="mkisofs选项"></a>mkisofs选项</h5><pre><code>-o 指定映像文件的名称。
+-b 指定在制作可开机光盘时所需的开机映像文件。
+-c 制作可开机光盘时，会将开机映像文件中的 no-eltorito-catalog 全部内容作成一个文件。
+-no-emul-boot 非模拟模式启动。
+-boot-load-size 4 设置载入部分的数量
+-boot-info-table 在启动的图像中现实信息
+-R 或 -rock   使用 Rock RidgeExtensions
+-J 或 -joliet   使用 Joliet 格式的目录与文件名称
+-v 或 -verbose   执行时显示详细的信息
+-T 或 -translation-table 建立文件名的转换表，适用于不支持 Rock Ridge Extensions 的系统上</code></pre><h3 id="DHCP服务"><a href="#DHCP服务" class="headerlink" title="DHCP服务"></a>DHCP服务</h3><p>网络配置<br>    静态指定<br>    动态获取: bootp:boot protocol MAC与IP一一静态对应dhcp:增强的bootp，动态</p>
+<p>DHCP: （Dynamic Host Configuration Protocol）<br>    动态主机配置协议<br>    局域网协议，UDP协议</p>
+<p>主要用途：<br>    用于内部网络和网络服务供应商自动分配IP地址给用户<br>    用于内部网络管理员作为对所有电脑作集中管理的手段</p>
+<p>使用场景<br>    自动化安装系统<br>    解决IPV4资源不足问题</p>
+<p>DHCP共有八种报文<br>    DHCP DISCOVER：客户端到服务器<br>    DHCP OFFER ：服务器到客户端<br>    DHCP REQUEST：客户端到服务器<br>    DHCP ACK ：服务器到客户端<br>    DHCP NAK：服务器到客户端,通知用户无法分配合适的IP地址<br>    DHCP DECLINE ：客户端到服务器，指示地址已被使用<br>    DHCP RELEASE：客户端到服务器，放弃网络地址和取消剩余的租约时间<br>    DHCP INFORM：客户端到服务器, 客户端如果需要从DHCP服务器端获取更为详细的配置信息，则发送Inform报文向服务器进行请求，极少用到</p>
+<p>续租<br>    50% ：租赁时间达到50%时来续租，刚向DHCP服务器发向新的DHCPREQUEST请求。如果dhcp服务没有拒绝的理由，则回应DHCPACK信息。当DHCP客户端收到该应答信息后，就重新开始新的租用周期<br>    87.5%：如果之前DHCP Server没有回应续租请求，等到租约期的7/8时，主机会再发送一次广播请求</p>
+<h4 id="DHCP服务简介"><a href="#DHCP服务简介" class="headerlink" title="DHCP服务简介"></a>DHCP服务简介</h4><p>同网段多DHCP服务<br>    DHCP服务必须基于本地<br>    先到先得的原则</p>
+<p>跨网段<br>    RFC 1542 Compliant Routers<br>    dhcrelay: 中继</p>
+<p>相关协议<br>    Arp<br>    rarp</p>
+<h4 id="DHCP实现"><a href="#DHCP实现" class="headerlink" title="DHCP实现"></a>DHCP实现</h4><p>Linux DHCP协议的实现程序：dhcp, dnsmasq（dhcp,dns）</p>
+<p>Dhcp Server<br>    /usr/sbin/dhcpd<br>    /etc/dhcp/dhcpd.conf –&gt; /etc/rc.d/init.d/dhcpd<br>    /etc/dhcp/dhcpd6.conf–&gt; /etc/rc.d/init.d/dhcpd6<br>    /usr/sbin/dhcrelay<br>    /etc/rc.d/init.d/dhcrelay<br>    dhcp server:67/udp<br>    dhcp client: 68/udp<br>    dhcpv6 client:546/udp</p>
+<p>Dhcp client<br>    dhclient<br>    自动获取的IP信息：    /var/lib/dhclient</p>
+<h4 id="DHCP配置文件"><a href="#DHCP配置文件" class="headerlink" title="DHCP配置文件"></a>DHCP配置文件</h4><p>dhcpd.conf:<br>    帮助参考：man 5 dhcpd.conf<br>    全局配置<br>    subnet {<br>        …<br>    }<br>    host {</p>
+<p>​    }</p>
+<p>地址分配记录<br>    /var/lib/dhcpd/dhcpd.leases</p>
+<h4 id="dhcpd-conf示例"><a href="#dhcpd-conf示例" class="headerlink" title="dhcpd.conf示例"></a>dhcpd.conf示例</h4><p>option domain-name “magedu.com”;<br>option domain-name-servers 192.168.0.1,8.8.8.8;<br>default-lease-time 86400;<br>max-lease-time 86400;<br>subnet 192.168.100.0 netmask 255.255.255.0 {<br>    range 192.168.100.1 192.168.100.200;<br>    option routers 192.168.100.1;<br>}</p>
+<p>其它配置选项：<br>    filename: 指明引导文件名称<br>    next-server：提供引导文件的服务器IP地址<br>示例：<br>    filename “pxelinux.0”;<br>    next-server 192.168.100.100;<br>检查语法<br>    service dhcpd configtest</p>
+<h3 id="PXE介绍"><a href="#PXE介绍" class="headerlink" title="PXE介绍"></a>PXE介绍</h3><p>PXE：<br>    Preboot Excution Environment 预启动执行环境<br>    Intel公司研发<br>    基于Client/Server的网络模式，支持远程主机通过网络从远端服务器下载映像，并由此支持通过网络启动操作系统<br>    PXE可以引导和安装Windows,linux等多种操作系统</p>
+<p>PXE工作原理<br>    Client向PXE Server上的DHCP发送IP地址请求消息，DHCP检测Client是否合法（主要是检测Client的网卡MAC地址），如果合法则返回Client的IP地址，同时将启动文件pxelinux.0的位置信息一并传送给Client<br>    Client向PXE Server上的TFTP发送获取pxelinux.0请求消息，TFTP接收到消息之后再向Client<br>发送pxelinux.0大小信息，试探Client是否满意，当TFTP收到Client发回的同意大小信息之后，正式向Client发送pxelinux.0<br>    Client执行接收到的pxelinux.0文件<br>    Client向TFTP Server发送针对本机的配置信息文件（在TFTP 服务的pxelinux.cfg目录下），<br>TFTP将配置文件发回Client，继而Client根据配置文件执行后续操作。<br>    Client向TFTP发送Linux内核请求信息，TFTP接收到消息之后将内核文件发送给Client<br>    Client向TFTP发送根文件请求信息，TFTP接收到消息之后返回Linux根文件系统<br>    Client启动Linux内核<br>    Client下载安装源文件，读取自动化安装脚本</p>
+<h4 id="PXE自动化安装CentOS-7"><a href="#PXE自动化安装CentOS-7" class="headerlink" title="PXE自动化安装CentOS 7"></a>PXE自动化安装CentOS 7</h4><p>安装前准备：关闭防火墙和SELINUX，DHCP服务器静态IP<br>安装软件包<br>    httpd tftp-server dhcp syslinux system-config-kickstart<br>配置文件共享服务：<br>    systemctl enable httpd<br>    systemctl start httpd<br>    mkdir /var/www/html/centos/7<br>    mount /dev/sr0 /var/www/html/centos/7<br>准备kickstart文件<br>    /var/www/html/ks/centos7.cfg 注意：权限<br>配置tftp服务<br>    systemctl enable tftp.socket<br>    systemctl start tftp.socket<br>配置DHCP服务<br>    vim /etc/dhcp/dhcpd.conf<br>    option domain-name “example.com”;<br>    default-lease-time 600;<br>    max-lease-time 7200;<br>    subnet 192.168.100.0 netmask 255.255.255.0 {<br>        range 192.168.100.1 192.168.100.200;<br>        filename “pxelinux.0”;<br>        next-server 192.168.100.100;<br>    }<br>    systemctl enable dhcpd<br>    systemctl start dhcpd</p>
+<p>准备相关文件<br>mkdir /var/lib/tftpboot/pxelinux.cfg/<br>cp /usr/share/syslinux/{pxelinux.0,menu.c32} /var/lib/tftpboot/<br>cp /misc/cd/isolinux/{vmlinuz,initrd.img} /var/lib/tftpboot/<br>cp /misc/cd/isolinux/isolinux.cfg  /var/lib/tftpboot/pxelinux.cfg/default</p>
+<p>文件列表如下：</p>
+<p>/var/lib/tftpboot/<br>├── initrd.img<br>├── menu.c32<br>├── pxelinux.0<br>├── pxelinux.cfg<br>│    └── default<br>└── vmlinuz</p>
+<p>准备启动菜单<br>    Vim /var/lib/tftpboot/pxelinux.cfg/default<br>    default menu.c32<br>    timeout 600<br>    menu title PXE INSTALL MENU<br>    label auto<br>        menu label Auto Install CentOS 7<br>        kernel vmlinuz<br>        append initrd=initrd.img ks=<a href="http://192.168.100.100/ks/centos7.cfg" target="_blank" rel="noopener">http://192.168.100.100/ks/centos7.cfg</a><br>    label manual<br>        menu label Manual Install CentOS 7<br>        kernel vmlinuz<br>        append initrd=initrd.img inst.repo=<a href="http://192.168.100.100/centos/7" target="_blank" rel="noopener">http://192.168.100.100/centos/7</a><br>    label local<br>        menu default<br>        menu label ^Boot from local drive<br>        localboot 0xffff</p>
+<p>安装前准备：关闭防火墙和SELINUX，DHCP服务器静态IP</p>
+<h5 id="1-安装相应软件包"><a href="#1-安装相应软件包" class="headerlink" title="1 安装相应软件包"></a>1 安装相应软件包</h5><pre><code>yum install dhcp httpd tftp-server syslinux chkconfig tftp on
+chkconfig xinetd on 
+chkconfig httpd on 
+chkconfig dhcpd on 
+service httpd start 
+service xneted start</code></pre><h5 id="2-准备Yum-源和相关目录"><a href="#2-准备Yum-源和相关目录" class="headerlink" title="2 准备Yum 源和相关目录"></a>2 准备Yum 源和相关目录</h5><pre><code>mkdir -pv /var/www/html/centos/{6,ks} 
+mount /dev/sr0 /var/www/html/centos/6</code></pre><h5 id="3-准备kickstart文件"><a href="#3-准备kickstart文件" class="headerlink" title="3 准备kickstart文件"></a>3 准备kickstart文件</h5><pre><code>/var/www/html/centos/ks/centos6.cfg</code></pre><p>注意权限：<br>    chmod 644 /var/www/html/centos/ks/centos6.cfg</p>
+<h5 id="4-准备相关的启动文件"><a href="#4-准备相关的启动文件" class="headerlink" title="4 准备相关的启动文件"></a>4 准备相关的启动文件</h5><pre><code>mkdir /var/lib/tftpboot/pxelinux.cfg/
+cp /usr/share/syslinux/pxelinux.0 /var/lib/tftpboot/ 
+cd /misc/cd/images/pxeboot/
+cp vmlinuz initrd.img /var/lib/tftpboot 
+cd /misc/cd/isolinux/
+cp boot.msg vesamenu.c32 splash.jpg /var/lib/tftpboot</code></pre><h5 id="5-准备启动菜单文件"><a href="#5-准备启动菜单文件" class="headerlink" title="5 准备启动菜单文件"></a>5 准备启动菜单文件</h5><pre><code>cp /misc/cd/isolinux/isolinux.cfg /var/lib/tftpboot/pxelinux.cfg/default
+vim /var/lib/tftpboot/pxelinux.cfg/default 
+default vesamenu.c32 指定菜单风格 
+#prompt 1
+timeout 600 
+display boot.msg
+menu background splash.jpg
+menu title Welcome to wang CentOS 6 
+menu color border 0 #ffffffff #00000000 
+menu color sel 7 #ffffffff #ff000000 
+menu color title 0 #ffffffff #00000000 
+menu color tabmsg 0 #ffffffff #00000000 
+menu color unsel 0 #ffffffff #00000000 
+menu color hotsel 0 #ff000000 #ffffffff 
+menu color hotkey 7 #ffffffff #ff000000 
+menu color scrollbar 0 #ffffffff #00000000
+label auto
+    menu label ^Automatic Install Centos6
+    kernel vmlinuz
+    append initrd=initrd.img ks=http://192.168.100.100/centos/ks/centos6.cfg
+label manual
+    menu label ^Manual Install Centos
+    kernel vmlinuz
+    append initrd=initrd.img inst.repo=http://192.168.100.100/centos/6
+label local
+    menu default
+    menu label Boot from ^local drive
+    localboot 0xffff</code></pre><p>目录结构如下：<br>    tree /var/lib/tftpboot/<br>    /var/lib/tftpboot/<br>    ├── boot.msg<br>    ├── initrd.img<br>    ├── pxelinux.0<br>    ├── pxelinux.cfg<br>    │    └── default<br>    ├── splash.jpg<br>    ├── vesamenu.c32<br>    └── vmlinuz</p>
+<p>​    1 directory, 7 files</p>
+<h5 id="6-配置dhcp服务"><a href="#6-配置dhcp服务" class="headerlink" title="6 配置dhcp服务"></a>6 配置dhcp服务</h5><p>​    cp /usr/share/doc/dhcp-4.1.1/dhcpd.conf.sample /etc/dhcp/dhcpd.conf<br>    vim /etc/dhcp/dhcpd.conf<br>    option domain-name “magedu.com”;<br>    option domain-name-servers 192.168.100.1;<br>    subnet 192.168.100.0 netmask 255.255.255.0 {<br>        range 192.168.100.1 192.168.100.200;<br>        option routers 192.168.100.1;<br>        filename “pxelinux.0”;<br>        next-server 192.168.100.100;<br>    }</p>
+<p>​    service dhcpd start</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Ops/" rel="tag"># Ops</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%94/" rel="prev" title="加密与安全(五)">
+      <i class="fa fa-chevron-left"></i> 加密与安全(五)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%BA%8C/" rel="next" title="运维自动化-系统部署(二)">
+      运维自动化-系统部署(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装Linux系统"><span class="nav-number">1.</span> <span class="nav-text">安装Linux系统</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#安装程序启动过程"><span class="nav-number">1.1.</span> <span class="nav-text">安装程序启动过程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#anaconda工作过程"><span class="nav-number">2.</span> <span class="nav-text">anaconda工作过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#系统安装"><span class="nav-number">2.1.</span> <span class="nav-text">系统安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#指定安装源"><span class="nav-number">2.2.</span> <span class="nav-text">指定安装源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#系统安装-1"><span class="nav-number">2.3.</span> <span class="nav-text">系统安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kickstart文件的格式"><span class="nav-number">2.4.</span> <span class="nav-text">kickstart文件的格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#制作引导光盘和U盘"><span class="nav-number">2.5.</span> <span class="nav-text">制作引导光盘和U盘</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#mkisofs选项"><span class="nav-number">2.5.1.</span> <span class="nav-text">mkisofs选项</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DHCP服务"><span class="nav-number">3.</span> <span class="nav-text">DHCP服务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCP服务简介"><span class="nav-number">3.1.</span> <span class="nav-text">DHCP服务简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCP实现"><span class="nav-number">3.2.</span> <span class="nav-text">DHCP实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DHCP配置文件"><span class="nav-number">3.3.</span> <span class="nav-text">DHCP配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#dhcpd-conf示例"><span class="nav-number">3.4.</span> <span class="nav-text">dhcpd.conf示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PXE介绍"><span class="nav-number">4.</span> <span class="nav-text">PXE介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#PXE自动化安装CentOS-7"><span class="nav-number">4.1.</span> <span class="nav-text">PXE自动化安装CentOS 7</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-安装相应软件包"><span class="nav-number">4.1.1.</span> <span class="nav-text">1 安装相应软件包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-准备Yum-源和相关目录"><span class="nav-number">4.1.2.</span> <span class="nav-text">2 准备Yum 源和相关目录</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-准备kickstart文件"><span class="nav-number">4.1.3.</span> <span class="nav-text">3 准备kickstart文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-准备相关的启动文件"><span class="nav-number">4.1.4.</span> <span class="nav-text">4 准备相关的启动文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#5-准备启动菜单文件"><span class="nav-number">4.1.5.</span> <span class="nav-text">5 准备启动菜单文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#6-配置dhcp服务"><span class="nav-number">4.1.6.</span> <span class="nav-text">6 配置dhcp服务</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

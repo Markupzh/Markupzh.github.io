@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="抽取文本的工具文件内容:less和 cat 文件截取:head和tail  按列抽取:cut  按关键字抽取:grep 文件查看文件查看命令 :  cat ,tac ,rev  cat [OPTION]… [FILE]…  -E: 显示行结束符$   -n: 对显示出的每一行进行编号   -A:显示所有控制符   -b:非空行编号   -s:压缩连续的空行成一行 tac  rev  分页查看文件内">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 文本处理工具(一)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="抽取文本的工具文件内容:less和 cat 文件截取:head和tail  按列抽取:cut  按关键字抽取:grep 文件查看文件查看命令 :  cat ,tac ,rev  cat [OPTION]… [FILE]…  -E: 显示行结束符$   -n: 对显示出的每一行进行编号   -A:显示所有控制符   -b:非空行编号   -s:压缩连续的空行成一行 tac  rev  分页查看文件内">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-08-10T12:18:34.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:27:42.086Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 文本处理工具(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 文本处理工具(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-08-10 20:18:34" itemprop="dateCreated datePublished" datetime="2015-08-10T20:18:34+08:00">2015-08-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:27:42" itemprop="dateModified" datetime="2019-01-02T23:27:42+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="抽取文本的工具"><a href="#抽取文本的工具" class="headerlink" title="抽取文本的工具"></a>抽取文本的工具</h3><p>文件内容:less和 cat</p>
+<p>文件截取:head和tail </p>
+<p>按列抽取:cut </p>
+<p>按关键字抽取:grep</p>
+<h4 id="文件查看"><a href="#文件查看" class="headerlink" title="文件查看"></a>文件查看</h4><p>文件查看命令 : </p>
+<p>cat ,tac ,rev </p>
+<p>cat [OPTION]… [FILE]… </p>
+<pre><code>-E: 显示行结束符$ 
+
+-n: 对显示出的每一行进行编号 
+
+-A:显示所有控制符 
+
+-b:非空行编号 
+
+-s:压缩连续的空行成一行 </code></pre><p>tac </p>
+<p>rev </p>
+<h4 id="分页查看文件内容"><a href="#分页查看文件内容" class="headerlink" title="分页查看文件内容"></a>分页查看文件内容</h4><p>more: 分页查看文件 </p>
+<p>more [OPTIONS…] FILE… </p>
+<pre><code>-d: 显示翻页及退出提示 </code></pre><p>less:一页一页地查看文件或STDIN输出 </p>
+<p>查看时有用的命令包括: </p>
+<pre><code>/文本 搜索 文本 
+
+n/N 跳到下一个 或 上一个匹配 </code></pre><p>less 命令是man命令使用的分页器 </p>
+<h4 id="显示文本前或后行内容"><a href="#显示文本前或后行内容" class="headerlink" title="显示文本前或后行内容"></a>显示文本前或后行内容</h4><p>head [OPTION]… [FILE]… </p>
+<pre><code>-c #: 指定获取前#字节 
+
+-n #: 指定获取前#行 
+
+-#: 指定行数 </code></pre><p>tail [OPTION]… [FILE]… </p>
+<pre><code>-c #: 指定获取后#字节 </code></pre><p>​    -n #: 指定获取后#行 </p>
+<pre><code>-f: 跟踪显示文件fd新追加的内容,常用日志监控 
+
+相当于 --follow=descriptor 
+
+-F: 跟踪文件名,相当于—follow=name --retry     </code></pre><p>tailf 类似tail –f,当文件不增长时并不访问文件 </p>
+<h4 id="按列抽取文本cut和合并文件paste"><a href="#按列抽取文本cut和合并文件paste" class="headerlink" title="按列抽取文本cut和合并文件paste"></a>按列抽取文本cut和合并文件paste</h4><p>cut [OPTION]… [FILE]… </p>
+<pre><code>-d DELIMITER: 指明分隔符,默认tab </code></pre><p>​    -f FILEDS:     </p>
+<p>​        #: 第#个字段 </p>
+<p>​        #,#[,#]:离散的多个字段,例如1,3,6     </p>
+<pre><code>#-#:连续的多个字段, 例如1-6 </code></pre><p>混合使用:1-3,7 </p>
+<p>-c 按字符切割 </p>
+<p>–output-delimiter=STRING指定输出分隔符 </p>
+<h4 id="cut和paste"><a href="#cut和paste" class="headerlink" title="cut和paste"></a>cut和paste</h4><p>显示文件或STDIN数据的指定列 </p>
+<p>​    cut -d: -f1 /etc/passwd        //以 : 为分隔符取出第一个参数</p>
+<pre><code>cat /etc/passwd | cut -d: -f7 </code></pre><p>​    cut -c2-5 /usr/share/dict/words </p>
+<p>paste 合并两个文件同行号的列到一行 </p>
+<pre><code>paste [OPTION]... [FILE]... </code></pre><p>​    -d 分隔符:指定分隔符,默认用TAB </p>
+<p>​    -s : 所有行合成一行显示 </p>
+<p>​    paste f1 f2 </p>
+<p>​    paste -s f1 f2         </p>
+<h3 id="分析文本的工具"><a href="#分析文本的工具" class="headerlink" title="分析文本的工具"></a>分析文本的工具</h3><p>文本数据统计:wc </p>
+<p>整理文本:sort </p>
+<p>比较文件:diff和patch </p>
+<h4 id="收集文本统计数据wc"><a href="#收集文本统计数据wc" class="headerlink" title="收集文本统计数据wc"></a>收集文本统计数据wc</h4><p>计数单词总数、行总数、字节总数和字符总数 </p>
+<p>可以对文件或STDIN中的数据运行 </p>
+<pre><code>wc story.txt 
+
+39     237 1901     story.txt 
+
+行数 字数 字节数  文件名</code></pre><p>常用选项 </p>
+<p>​    -l    只计数行数 </p>
+<p>​    -w     只计数单词总数 </p>
+<p>​    -c     只计数字节总数 </p>
+<p>​    -m     只计数字符总数 </p>
+<p>​    -L     显示文件中最长行的长度     </p>
+<h4 id="文本排序sort"><a href="#文本排序sort" class="headerlink" title="文本排序sort"></a>文本排序sort</h4><p>把整理过的文本显示在STDOUT,不改变原始文件 </p>
+<pre><code>sort [options] file(s) </code></pre><p>常用选项 </p>
+<p>​    -r     执行反方向(由上至下)整理 </p>
+<p>​    -R     随机排序 </p>
+<p>​    -n     执行按数字大小整理 </p>
+<p>​    -f     选项忽略(fold)字符串中的字符大小写 </p>
+<p>​    -u     选项(独特,unique)删除输出中的重复行 </p>
+<p>​    -t c     选项使用c做为字段界定符 </p>
+<p>​    -k X 选项按照使用c字符分隔的X列来整理能够使用多次     </p>
+<h4 id="uniq"><a href="#uniq" class="headerlink" title="uniq"></a>uniq</h4><p>uniq命令:从输入中删除前后相接的重复的行 </p>
+<p>uniq [OPTION]… [FILE]… </p>
+<p>​    -c:     显示每行重复出现的次数 </p>
+<p>​    -d:     仅显示重复过的行 </p>
+<p>​    -u:     仅显示不曾重复的行 </p>
+<p>​    注:连续且完全相同方为重复     </p>
+<p>常和sort 命令一起配合使用: </p>
+<pre><code>sort userlist.txt | uniq -c </code></pre><h4 id="比较文件"><a href="#比较文件" class="headerlink" title="比较文件"></a>比较文件</h4><p>比较两个文件之间的区别 </p>
+<pre><code>diff foo.conf foo2.conf 
+
+5c5 
+
+&lt; use_widgets = no 
+
+--- 
+
+&gt; use_widgets = yes </code></pre><p>注明第5行有区别(改变) </p>
+<h4 id="复制对文件改变patch"><a href="#复制对文件改变patch" class="headerlink" title="复制对文件改变patch"></a>复制对文件改变patch</h4><p>diff 命令的输出被保存在一种叫做”补丁”的文件中 </p>
+<pre><code>使用 -u 选项来输出&quot;统一的(unified)&quot;diff格式文件,最适用于补丁文件 </code></pre><p>patch 复制在其它文件中进行的改变(要谨慎使用) </p>
+<pre><code>适用 -b 选项来自动备份改变了的文件 
+
+$ diff -u foo.conf foo2.conf &gt; foo.patch 
+
+$ patch -b foo.conf foo.patch </code></pre><h3 id="Linux文本处理三剑客"><a href="#Linux文本处理三剑客" class="headerlink" title="Linux文本处理三剑客"></a>Linux文本处理三剑客</h3><p>grep:文本过滤(模式:pattern)工具 </p>
+<pre><code>grep, egrep, fgrep(不支持正则表达式搜索) </code></pre><p>sed:stream editor,文本编辑工具 </p>
+<p>awk:Linux上的实现gawk,文本报告生成器 </p>
+<h4 id="grep"><a href="#grep" class="headerlink" title="grep"></a>grep</h4><p>grep: Global search REgular expression and Print out the line </p>
+<p>作用:文本搜索工具,根据用户指定的”模式”对目标文本逐行进行匹配检 查；打印匹配到的行 </p>
+<p>模式:由正则表达式字符及文本字符所编写的过滤条件     </p>
+<p>grep [OPTIONS] PATTERN [FILE…] </p>
+<pre><code>grep root /etc/passwd 
+
+grep &quot;$USER&quot; /etc/passwd 
+
+grep &apos;$USER&apos; /etc/passwd 
+
+grep \`whoami` /etc/passwd </code></pre><h4 id="grep命令选项"><a href="#grep命令选项" class="headerlink" title="grep命令选项"></a>grep命令选项</h4><pre><code>--color=auto: 对匹配到的文本着色显示 
+
+-v: 显示不被pattern匹配到的行 
+
+-i: 忽略字符大小写 
+
+-n:显示匹配的行号 
+
+-c: 统计匹配的行数 
+
+-o: 仅显示匹配到的字符串 
+
+-q: 静默模式,不输出任何信息 
+
+-A #: after, 后#行 
+
+-B #: before, 前#行 
+
+-C #:context, 前后各#行 
+
+-e:实现多个选项间的逻辑or关系 
+
+   grep –e ‘cat ’ -e ‘dog’ file 
+
+-w:匹配整个单词 
+
+-E:使用ERE 
+
+   使用正则表达式
+
+-F:相当于fgrep,不支持正则表达式 
+
+   可以测试文件1和文件2的包含关系</code></pre><h4 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h4><p>REGEXP:由一类特殊字符及文本字符所编写的模式,其中有些字符(元字符)不表示字符字面意义,而表示控制或通配的功能 </p>
+<p>程序支持:grep,sed,awk,vim, less,nginx,varnish等 </p>
+<p>分两类: </p>
+<p>基本正则表达式:BRE </p>
+<p>扩展正则表达式:ERE </p>
+<pre><code>grep -E, egrep </code></pre><p>正则表达式引擎: </p>
+<p>采用不同算法,检查处理正则表达式的软件模块 </p>
+<p>PCRE(Perl Compatible Regular Expressions) </p>
+<p>元字符分类:字符匹配、匹配次数、位置锚定、分组 </p>
+<p>man 7 regex </p>
+<h4 id="基本正则表达式元字符"><a href="#基本正则表达式元字符" class="headerlink" title="基本正则表达式元字符"></a>基本正则表达式元字符</h4><p> 字符匹配:<br>​    . 匹配任意单个字符<br>​    [] 匹配指定范围内的任意单个字符<br>​    [^] 匹配指定范围外的任意单个字符<br>​    [:alnum:] 字母和数字<br>​    [:alpha:] 代表任何英文大小写字符,亦即 A-Z, a-z<br>​    [:lower:] 小写字母 [:upper:] 大写字母<br>​    [:blank:] 空白字符(空格和制表符)<br>​    [:space:] 水平和垂直的空白字符(比[:blank:]包含的范围广)<br>​    [:cntrl:] 不可打印的控制字符(退格、删除、警铃…)<br>​    [:digit:] 十进制数字 [:xdigit:]十六进制数字<br>​    [:graph:] 可打印的非空白字符<br>​    [:print:] 可打印字符<br>​    [:punct:] 标点符号</p>
+<h4 id="正则表达式-1"><a href="#正则表达式-1" class="headerlink" title="正则表达式"></a>正则表达式</h4><p>匹配次数:用在要指定次数的字符后面,用于指定前面的字符要出现的次数 </p>
+<p>位置锚定:定位出现的位置 </p>
+<p>^                 行首锚定,用于模式的最左侧 </p>
+<p>$                行尾锚定,用于模式的最右侧 </p>
+<p>^PATTERN$         用于模式匹配整行 </p>
+<p>^$                 空行 </p>
+<p>^[[:space:]]*$     空白行 </p>
+<p>&lt; 或 \b             词首锚定,用于单词模式的左侧 </p>
+<p>&gt; 或 \b             词尾锚定；用于单词模式的右侧 </p>
+<p>&lt;PATTERN\&gt;         匹配整个单词 </p>
+<p>分组:\(\)             将一个或多个字符捆绑在一起,当作一个整体进行处理,如: \(root\)\+ </p>
+<p>分组括号中的模式匹配到的内容会被正则表达式引擎记录于内部的变量中,这 些变量的命名方式为: \1, \2, \3, … </p>
+<p>\1 表示从左侧起第一个左括号以及与之匹配右括号之间的模式所匹配到的字符 </p>
+<p>示例: \(string1\+\(string2\)*\) </p>
+<pre><code>\1 :string1\\+\\(string2\\)* 
+
+\2 :string2 </code></pre><p>后向引用:引用前面的分组括号中的模式所匹配字符,而非模式本身 </p>
+<p>或者:\| </p>
+<pre><code>示例:a\\|b: a或b C\\|cat: C或cat \\(C\\|c\\)at:Cat或cat </code></pre><table>
+<thead>
+<tr>
+<th>元字符</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>^</td>
+<td>行首</td>
+</tr>
+<tr>
+<td>$</td>
+<td>行尾</td>
+</tr>
+<tr>
+<td>.</td>
+<td>任意单一字符</td>
+</tr>
+<tr>
+<td>[]</td>
+<td>[]内任意单一字符</td>
+</tr>
+<tr>
+<td>[^]</td>
+<td>除[]内任意单一字符</td>
+</tr>
+<tr>
+<td>*</td>
+<td>*前面字符重复不确定次数</td>
+</tr>
+<tr>
+<td>\+</td>
+<td>\+前面字符重复一次以上不确定次数</td>
+</tr>
+<tr>
+<td>?</td>
+<td>? 前面字符重复0或1次</td>
+</tr>
+<tr>
+<td>\</td>
+<td>转义符</td>
+</tr>
+<tr>
+<td>.*</td>
+<td>任意长度字符</td>
+</tr>
+<tr>
+<td>\{n\}</td>
+<td>前面字符重复n次</td>
+</tr>
+<tr>
+<td>\{n,\}</td>
+<td>前面字符重复n次以上</td>
+</tr>
+<tr>
+<td>\{m,n\}</td>
+<td>前面字符重复m次和n次之间</td>
+</tr>
+<tr>
+<td>[:alnum:]</td>
+<td>字母和数字</td>
+</tr>
+<tr>
+<td>[:alpha:]</td>
+<td>代表任何英文大小写字符,即 A-Z,a-z</td>
+</tr>
+<tr>
+<td>[:lower:]</td>
+<td>小写字母</td>
+</tr>
+<tr>
+<td>[:upper:]</td>
+<td>大写字母</td>
+</tr>
+<tr>
+<td>[:blank:]</td>
+<td>水平空白字符(空格和制表符)</td>
+</tr>
+<tr>
+<td>[:space:]</td>
+<td>所有水平和垂直的空白字符(比[:blank:]包含的范围广)</td>
+</tr>
+<tr>
+<td>[:cntrl:]</td>
+<td>不可打印的控制字符(退格,删除,警铃)</td>
+</tr>
+<tr>
+<td>[:digit:]</td>
+<td>十进制数字</td>
+</tr>
+<tr>
+<td>[:graph:]</td>
+<td>可打印的非空白字符</td>
+</tr>
+<tr>
+<td>[:punct:]</td>
+<td>标点符号</td>
+</tr>
+<tr>
+<td>[:xdigit:]</td>
+<td>十六进制数字</td>
+</tr>
+</tbody></table>
+<h4 id="egrep及扩展的正则表达式"><a href="#egrep及扩展的正则表达式" class="headerlink" title="egrep及扩展的正则表达式"></a>egrep及扩展的正则表达式</h4><p>egrep = grep -E </p>
+<p>egrep [OPTIONS] PATTERN [FILE…] </p>
+<p>扩展正则表达式的元字符: </p>
+<p>字符匹配: </p>
+<pre><code>. 任意单个字符 
+
+[] 指定范围的字符 
+
+[^] 不在指定范围的字符     </code></pre><h4 id="扩展正则表达式"><a href="#扩展正则表达式" class="headerlink" title="扩展正则表达式"></a>扩展正则表达式</h4><p>次数匹配:</p>
+<pre><code> *:匹配前面字符任意次 
+
+?: 0或1次 
+
++:1次或多次 
+
+{m}:匹配m次 
+
+{m,n}:至少m,至多n次     </code></pre><p>位置锚定:</p>
+<pre><code> ^ :行首 
+
+$ :行尾 
+
+\&lt;, \b :语首 
+
+\&gt;, \b :语尾     </code></pre><p>分组: </p>
+<pre><code>() 
+
+后向引用:\1, \2, ...     </code></pre><p>或者: </p>
+<pre><code>a|b: a或b 
+
+C|cat: C或cat 
+
+(C|c)at:Cat或cat    </code></pre><h4 id="sed工具"><a href="#sed工具" class="headerlink" title="sed工具"></a>sed工具</h4><p>用法: </p>
+<pre><code>sed [option]... &apos;script&apos; inputfile... </code></pre><p>常用选项: </p>
+<pre><code>-n:不输出模式空间内容到屏幕,即不自动打印 
+
+-e: 多点编辑 
+
+-f:/PATH/SCRIPT_FILE: 从指定文件中读取编辑脚本 
+
+-r: 支持使用扩展正则表达式 
+
+-i.bak: 备份文件并原处编辑     </code></pre><p>script: </p>
+<pre><code>&apos;地址命令&apos; </code></pre><p>地址定界:<br>(1) 不给地址:对全文进行处理<br>(2) 单地址:<br>​    #: 指定的行,$:最后一行<br>​    /pattern/:被此处模式所能够匹配到的每一行<br>(3) 地址范围:<br>​    #,#<br>​    #,+#<br>​    /pat1/,/pat2/<br>​    #,/pat1/<br>(4) <del>:步进<br>​    1</del>2 奇数行<br>​    2~2 偶数行</p>
+<p>编辑命令: </p>
+<pre><code>d             删除模式空间匹配的行,并立即启用下一轮循环 
+
+p             打印当前模式空间内容,追加到默认输出之后 
+
+a [\\]text         在指定行后面追加文本,支持使用\n实现多行追加 
+
+i [\\\]text         在行前面插入文本 
+
+c [\]text         替换行为单行或多行文本 
+
+w /path/file     保存模式匹配的行至指定文件 
+
+r /path/file     读取指定文件的文本至模式空间中匹配到的行后 
+
+=             为模式空间中的行打印行号 
+
+!             模式空间中匹配行取反处理     </code></pre><p>s/// 查找替换,支持使用其它分隔符,s@@@,s### </p>
+<p>替换标记: </p>
+<pre><code>g         行内全局替换 
+
+p         显示替换成功的行 
+
+w         /PATH/FILE 将替换成功的行保存至文件中     </code></pre><h4 id="高级编辑命令"><a href="#高级编辑命令" class="headerlink" title="高级编辑命令"></a>高级编辑命令</h4><pre><code>P: 打印模式空间开端至\n内容,并追加到默认输出之前 
+
+h: 把模式空间中的内容覆盖至保持空间中 
+
+H:把模式空间中的内容追加至保持空间中 
+
+g: 从保持空间取出数据覆盖至模式空间 
+
+G:从保持空间取出内容追加至模式空间 
+
+x: 把模式空间中的内容与保持空间中的内容进行互换 
+
+n: 读取匹配到的行的下一行覆盖至模式空间 
+
+N:读取匹配到的行的下一行追加至模式空间 
+
+d: 删除模式空间中的行 
+
+D:如果模式空间包含换行符,则删除直到第一个换行符的模式空间中的文本, 并不会读取新的输入行,而使用合成的模式空间重新启动循环。如果模式空间 不包含换行符,则会像发出d命令那样启动正常的新循环 </code></pre>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%94%A8%E6%88%B7%E5%92%8C%E7%BB%84/" rel="prev" title="Linux 用户和组">
+      <i class="fa fa-chevron-left"></i> Linux 用户和组
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7-%E4%BA%8C/" rel="next" title="Linux 文本处理工具(二)">
+      Linux 文本处理工具(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#抽取文本的工具"><span class="nav-number">1.</span> <span class="nav-text">抽取文本的工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#文件查看"><span class="nav-number">1.1.</span> <span class="nav-text">文件查看</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分页查看文件内容"><span class="nav-number">1.2.</span> <span class="nav-text">分页查看文件内容</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#显示文本前或后行内容"><span class="nav-number">1.3.</span> <span class="nav-text">显示文本前或后行内容</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#按列抽取文本cut和合并文件paste"><span class="nav-number">1.4.</span> <span class="nav-text">按列抽取文本cut和合并文件paste</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cut和paste"><span class="nav-number">1.5.</span> <span class="nav-text">cut和paste</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分析文本的工具"><span class="nav-number">2.</span> <span class="nav-text">分析文本的工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#收集文本统计数据wc"><span class="nav-number">2.1.</span> <span class="nav-text">收集文本统计数据wc</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文本排序sort"><span class="nav-number">2.2.</span> <span class="nav-text">文本排序sort</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#uniq"><span class="nav-number">2.3.</span> <span class="nav-text">uniq</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#比较文件"><span class="nav-number">2.4.</span> <span class="nav-text">比较文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#复制对文件改变patch"><span class="nav-number">2.5.</span> <span class="nav-text">复制对文件改变patch</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux文本处理三剑客"><span class="nav-number">3.</span> <span class="nav-text">Linux文本处理三剑客</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#grep"><span class="nav-number">3.1.</span> <span class="nav-text">grep</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#grep命令选项"><span class="nav-number">3.2.</span> <span class="nav-text">grep命令选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#正则表达式"><span class="nav-number">3.3.</span> <span class="nav-text">正则表达式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#基本正则表达式元字符"><span class="nav-number">3.4.</span> <span class="nav-text">基本正则表达式元字符</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#正则表达式-1"><span class="nav-number">3.5.</span> <span class="nav-text">正则表达式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#egrep及扩展的正则表达式"><span class="nav-number">3.6.</span> <span class="nav-text">egrep及扩展的正则表达式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#扩展正则表达式"><span class="nav-number">3.7.</span> <span class="nav-text">扩展正则表达式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sed工具"><span class="nav-number">3.8.</span> <span class="nav-text">sed工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#高级编辑命令"><span class="nav-number">3.9.</span> <span class="nav-text">高级编辑命令</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

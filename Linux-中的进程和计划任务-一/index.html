@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Linux 中进程的查看进程的相关概念内核的功用:进程管理、文件系统、网络功能、内存管理、驱动程序、安全功能等  Process: 运行中的程序的一个副本,是被载入内存的一个指令集合  ​    进程ID(Process ID,PID)号码被用来标记各个进程UID、GID、和SELinux语境决定对文件系统的存取和访问权限,通常从执行进程的用户来继承存在生命周期  task struct:Linu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 中的进程和计划任务(一)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="Linux 中进程的查看进程的相关概念内核的功用:进程管理、文件系统、网络功能、内存管理、驱动程序、安全功能等  Process: 运行中的程序的一个副本,是被载入内存的一个指令集合  ​    进程ID(Process ID,PID)号码被用来标记各个进程UID、GID、和SELinux语境决定对文件系统的存取和访问权限,通常从执行进程的用户来继承存在生命周期  task struct:Linu">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-10-28T12:05:09.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:53:28.120Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 中的进程和计划任务(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 中的进程和计划任务(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-10-28 20:05:09" itemprop="dateCreated datePublished" datetime="2015-10-28T20:05:09+08:00">2015-10-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:53:28" itemprop="dateModified" datetime="2019-01-02T23:53:28+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Linux-中进程的查看"><a href="#Linux-中进程的查看" class="headerlink" title="Linux 中进程的查看"></a>Linux 中进程的查看</h2><h3 id="进程的相关概念"><a href="#进程的相关概念" class="headerlink" title="进程的相关概念"></a>进程的相关概念</h3><p>内核的功用:进程管理、文件系统、网络功能、内存管理、驱动程序、安全功能等 </p>
+<p>Process: 运行中的程序的一个副本,是被载入内存的一个指令集合 </p>
+<p>​    进程ID(Process ID,PID)号码被用来标记各个进程UID、GID、和SELinux语境决定对文件系统的存取和访问权限,通常从执行进程的用户来继承存在生命周期 </p>
+<p>task struct:Linux内核存储进程信息的数据结构格式 </p>
+<p>task list:多个任务的的task struct组成的链表 </p>
+<p>进程创建: </p>
+<p>​    init:第一个进程 </p>
+<p>​    进程:都由其父进程创建,父子关系,CoW fork(), clone() </p>
+<h4 id="进程的基本状态和转换"><a href="#进程的基本状态和转换" class="headerlink" title="进程的基本状态和转换"></a>进程的基本状态和转换</h4><p><strong>创建状态:</strong></p>
+<p>​    进程在创建时需要申请一个空白PCB(process control block进程控 制块),向其中填写控制和管理进程的信息,完成资源分配.如果创建工作无法完 成,比如资源无法满足,就无法被调度运行,把此时进程所处状态称为创建状态 </p>
+<p><strong>就绪状态:</strong></p>
+<p>​    进程已准备好,已分配到所需资源,只要分配到CPU就能够立即运行 </p>
+<p><strong>执行状态:</strong></p>
+<p>​    进程处于就绪状态被调度后,进程进入执行状态 </p>
+<p><strong>阻塞状态:</strong></p>
+<p>​    正在执行的进程由于某些事件(I/O请求,申请缓存区失败)而暂时 无法运行,进程受到阻塞.在满足请求时进入就绪状态等待系统调用 </p>
+<p><strong>终止状态:</strong></p>
+<p>​    进程结束,或出现错误,或被系统终止,进入终止状态.无法再执行 </p>
+<h4 id="进程之间转换六种情况"><a href="#进程之间转换六种情况" class="headerlink" title="进程之间转换六种情况"></a>进程之间转换六种情况</h4><p>运行——&gt;就绪:</p>
+<p>​    1,主要是进程占用CPU的时间过长,而系统分配给该进程占 用CPU的时间是有限的:</p>
+<p>​    2,在采用抢先式优先级调度算法的系统中,当有更高 优先级的进程要运行时,该进程就被迫让出CPU,该进程便由执行状态转变为 就绪状态 </p>
+<p>就绪——&gt;运行:运行的进程的时间片用完,调度就转到就绪队列中选择合适 的进程分配CPU </p>
+<p>运行——&gt;阻塞:正在执行的进程因发生某等待事件而无法执行,则进程由执 行状态变为阻塞状态,如发生了I/O请求 </p>
+<p>阻塞——&gt;就绪:进程所等待的事件已经发生,就进入就绪队列 </p>
+<p>以下两种状态是不可能发生的: </p>
+<p>​    阻塞——&gt;运行:即使给阻塞进程分配CPU,也无法执行,操作系统在进行调 度时不会从阻塞队列进行挑选,而是从就绪队列中选取 </p>
+<p>​    就绪——&gt;阻塞:就绪态根本就没有执行,谈不上进入阻塞态 </p>
+<h4 id="进程优先级"><a href="#进程优先级" class="headerlink" title="进程优先级"></a>进程优先级</h4><p>进程优先级: </p>
+<p>​    系统优先级:数字越小,优先级越高 </p>
+<p>​        0-139(CentOS4,5) </p>
+<p>​            各有140个运行队列和过期队列 </p>
+<p>​        0-98,99(CentOS6) </p>
+<p>​    实时优先级: 99-0 值最大优先级最高 </p>
+<p>​    nice值:-20到19,对应系统优先级100-139或99 </p>
+<p>Big O:时间复杂度,用时和规模的关系 </p>
+<p>​    O(1), O(logn), O(n)线性, O(n^2)抛物线, O(2^n) </p>
+<h4 id="进程相关概念"><a href="#进程相关概念" class="headerlink" title="进程相关概念"></a>进程相关概念</h4><p>进程内存: </p>
+<p>​    Page Frame: 页框,用存储页面数据,存储Page 4k </p>
+<p>​    LRU:Least Recently Used 近期最少使用算法,释放内存物理地址空间和线性地址空间 </p>
+<p>​    MMU:Memory Management Unit负责转换线性和物理地址 </p>
+<p>​    TLB:Translation Lookaside Buffer 翻译后备缓冲器,用于保存虚拟地址和物理地址映射关系的缓存 </p>
+<p>IPC: Inter Process Communication </p>
+<p>​    同一主机:</p>
+<p>​        signal:信号 </p>
+<p>​        shm: shared memory </p>
+<p>​        semaphore:信号量,一种计数器 </p>
+<p>​    不同主机:</p>
+<p>​        socket: IP和端口号 </p>
+<p>​        RPC: remote procedure call </p>
+<p>​        MQ:消息队列,Kafka,ActiveMQ </p>
+<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h4><p>Linux内核:抢占式多任务 </p>
+<p>进程类型: </p>
+<p>​    守护进程: daemon,在系统引导过程中启动的进程,和终端无关进程 </p>
+<p>​    前台进程:跟终端相关,通过终端启动的进程 </p>
+<p>​    注意:两者可相互转化 </p>
+<p>进程状态: </p>
+<p>​    运行态:running </p>
+<p>​    就绪态:ready </p>
+<p>​    睡眠态: </p>
+<p>​        可中断:interruptable </p>
+<p>​        不可中断:uninterruptable </p>
+<p>​    停止态:stopped,暂停于内存,但不会被调度,除非手动启动 </p>
+<p>​    僵死态:zombie,结束进程,父进程结束前,子进程不关闭 </p>
+<hr>
+<h3 id="系统管理工具"><a href="#系统管理工具" class="headerlink" title="系统管理工具"></a>系统管理工具</h3><p>进程的分类: </p>
+<p>​    CPU-Bound:CPU密集型,非交互 </p>
+<p>​    IO-Bound:IO密集型,交互 </p>
+<p>Linux系统状态的查看及管理工具:pstree, ps, pidof, pgrep, top, htop, glance, pmap, vmstat, dstat, kill, pkill, job, bg, fg, nohup </p>
+<p>pstree命令: </p>
+<p>​    pstree - display a tree of processes </p>
+<p>ps: process state </p>
+<p>​    ps - report a snapshot of the current processes </p>
+<p>​    Linux系统各进程的相关信息均保存在/proc/PID目录下的各文件中 </p>
+<h4 id="查看系统进程-ps"><a href="#查看系统进程-ps" class="headerlink" title="查看系统进程 ps"></a>查看系统进程 ps</h4><p>ps [OPTION]… </p>
+<p>支持三种选项: </p>
+<p>​    UNIX选项 如-A -e </p>
+<p>​    BSD选项 如a </p>
+<p>​    GNU选项 如–help </p>
+<p>• 选项:默认显示当前终端中的进程 </p>
+<p>• a 选项包括所有终端中的进程 </p>
+<p>• x 选项包括不链接终端的进程 </p>
+<p>• u 选项显示进程所有者的信息 </p>
+<p>• f 选项显示进程树,相当于 –forest </p>
+<p>• k|–sort 属性 对属性排序,属性前加- 表示倒序 </p>
+<p>• o 属性… 选项显示定制的信息 pid、cmd、%cpu、%mem </p>
+<p>• L 显示支持的属性列表 </p>
+<h5 id="ps常见选项"><a href="#ps常见选项" class="headerlink" title="ps常见选项"></a>ps常见选项</h5><p>-C cmdlist 指定命令,多个命令用,分隔 </p>
+<p>-L 显示线程 </p>
+<p>-e: 显示所有进程,相当于-A </p>
+<p>-f: 显示完整格式程序信息 </p>
+<p>-F: 显示更完整格式的进程信息 </p>
+<p>-H: 以进程层级格式显示进程相关信息 </p>
+<p>-u userlist 指定有效的用户ID或名称 </p>
+<p>-U userlist 指定真正的用户ID或名称 </p>
+<p>-g gid或groupname 指定有效的gid或组名称 </p>
+<p>-G gid或groupname 指定真正的gid或组名称 </p>
+<p>-p pid 显示指pid的进程 </p>
+<p>–ppid pid 显示属于pid的子进程 </p>
+<p>-M 显示SELinux信息,相当于Z </p>
+<h5 id="ps输出属性"><a href="#ps输出属性" class="headerlink" title="ps输出属性"></a>ps输出属性</h5><p>VSZ: Virtual memory SiZe,虚拟内存集,线性内存 </p>
+<p>RSS: ReSident Size, 常驻内存集 </p>
+<p>STAT:进程状态 </p>
+<p>​    R:running </p>
+<p>​    S: interruptable sleeping </p>
+<p>​    D: uninterruptable sleeping </p>
+<p>​    T: stopped </p>
+<p>​    Z: zombie </p>
+<p>​    +: 前台进程 </p>
+<p>​    l: 多线程进程 </p>
+<p>​    L:内存分页并带锁 </p>
+<p>​    N:低优先级进程 </p>
+<p>​    &lt;: 高优先级进程 </p>
+<p>​    s: session leader,会话(子进程)发起者 </p>
+<h4 id="ps-输出及常见示例"><a href="#ps-输出及常见示例" class="headerlink" title="ps 输出及常见示例"></a>ps 输出及常见示例</h4><p>ni: nice值 </p>
+<p>pri: priority 优先级 </p>
+<p>psr: processor CPU编号 </p>
+<p>rtprio: 实时优先级 </p>
+<p>示例: </p>
+<p>​    ps axo pid,cmd,psr,ni,pri,rtprio </p>
+<p>常用组合: </p>
+<p>​    aux </p>
+<p>​    -ef </p>
+<p>​    -eFH </p>
+<p>​    -eo pid,tid,class,rtprio,ni,pri,psr,pcpu,stat,comm </p>
+<p>​    axo stat,euid,ruid,tty,tpgid,sess,pgrp,ppid,pid,pcpu,comm </p>
+<h5 id="ps示例"><a href="#ps示例" class="headerlink" title="ps示例"></a>ps示例</h5><p>查询你拥有的所有进程: </p>
+<p>​    ps -x </p>
+<p>显示指定用户名(RUID)或用户ID的进程: </p>
+<p>​    ps -fU apache </p>
+<p>​    ps -fu 48 </p>
+<p>显示指定用户名(EUID)或用户ID的进程: </p>
+<p>​    ps -fu mark </p>
+<p>​    ps -fu 1000 </p>
+<p>查看以root用户权限(实际和有效ID)运行的每个进程: </p>
+<p>​    ps -U root -u root </p>
+<p>列出某个组拥有的所有进程(实际组ID,RGID或名称): </p>
+<p>​    ps -fG nginx </p>
+<p>列出有效组名称(或会话)所拥有的所有进程: </p>
+<p>​    ps -fg mysql </p>
+<p>​    ps -fG 27 </p>
+<p>通过进程ID来显示所属的进程: </p>
+<p>​    ps -fp 1234 </p>
+<p>以父进程ID来显示其下所有的进程,如显示父进程为1154的所有进程: </p>
+<p>​    ps -f –ppid 1234 </p>
+<p>显示指定PID的多个进程: </p>
+<p>​    ps -fp 1204,1239,1263 </p>
+<p>要按tty显示所属进程: </p>
+<p>​    ps -ft pst/0 </p>
+<p>以进程树显示系统中的进程如何相互链接: </p>
+<p>​    ps -e –forest </p>
+<p>以进程树显示指定的进程 </p>
+<p>​    ps -f –forest -C sshd </p>
+<p>​    ps -ef –forest | grep -v grep | grep sshd </p>
+<p>要显示一个进程的所有线程,将显示LWP(轻量级进程)以及NLWP(轻量级进 程数)列: </p>
+<p>​    ps -fL -C nginx </p>
+<p>要列出所有格式说明符: </p>
+<p>​    ps L </p>
+<p>查看进程的PID,PPID,用户名和命令: </p>
+<p>​    ps -eo pid,ppid,user,cmd </p>
+<p>自定义格式显示文件系统组,ni值开始时间和进程的时间: </p>
+<p>​    ps -p 1234 -o pid,ppid,fgroup,ni,lstart,etime </p>
+<p>使用其PID查找进程名称: </p>
+<p>​    ps -p 1244 -o comm= </p>
+<p>要以其名称选择特定进程,显示其所有子进程 </p>
+<p>​    ps -C sshd,bash </p>
+<p>查找指定进程名所有的所属PID,在编写需要从std输出或文件读取PID的脚本时 这个参数很有用: </p>
+<p>​    ps -C httpd,sshd -o pid= </p>
+<p>检查一个进程的执行时间 </p>
+<p>​    ps -eo comm,etime,user | grep nginx </p>
+<p>查找占用最多内存和CPU的进程: </p>
+<p>​    ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%mem | head</p>
+<p>​    ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%cpu | head </p>
+<p>显示安全信息: </p>
+<p>​    ps -eM </p>
+<p>​    ps –context </p>
+<p>使用以下命令以用户定义的格式显示安全信息. </p>
+<p>​    ps -eo euser,ruser,suser,fuser,f,comm,label </p>
+<p>使用watch实用程序执行重复的输出以实现对就程进行实时的监视,如下面的命 令显示每秒钟的监视: </p>
+<p>​    watch -n 1 ‘ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%mem | head’ </p>
+<hr>
+<h3 id="进程优先级-1"><a href="#进程优先级-1" class="headerlink" title="进程优先级"></a>进程优先级</h3><p>进程优先级调整: </p>
+<p>​    静态优先级:100-139 </p>
+<p>​    进程默认启动时的nice值为0,优先级为120 </p>
+<p>​    只有根用户才能降低nice值(提高优先性) </p>
+<p>nice命令: </p>
+<p>​    nice [OPTION]/[COMMAND /[ARG]…] </p>
+<p>renice命令: </p>
+<p>​    renice [-n] priority pid… </p>
+<p>查看: </p>
+<p>​    ps axo pid,comm,ni </p>
+<h4 id="搜索进程"><a href="#搜索进程" class="headerlink" title="搜索进程"></a>搜索进程</h4><p>最灵活:</p>
+<p>​    ps 选项 | 其它命令 </p>
+<p>按预定义的模式:pgrep </p>
+<p>​    pgrep [options] pattern </p>
+<p>​    -u uid: effective user,生效者 </p>
+<p>​    -U uid: real user,真正发起运行命令者 </p>
+<p>​    -t terminal: 与指定终端相关的进程 </p>
+<p>​    -l: 显示进程名 </p>
+<p>​    -a: 显示完整格式的进程名 </p>
+<p>​    -P pid: 显示指定进程的子进程 </p>
+<p>按确切的程序名称:/sbin/pidof </p>
+<p>​    pidof bash </p>
+<h4 id="系统工具"><a href="#系统工具" class="headerlink" title="系统工具"></a>系统工具</h4><p><strong>uptime</strong></p>
+<p>显示当前时间,系统已启动的时间、当前上线人数,系统平均负载(1、5、10 分钟的平均负载,一般不会超过1) </p>
+<p>系统平均负载: </p>
+<p>指在特定时间间隔内运行队列中的平均进程数 </p>
+<p>通常每个CPU内核的当前活动进程数不大于3,那么系统的性能良好.如果每 个CPU内核的任务数大于5,那么此主机的性能有严重问题 </p>
+<p>如果linux主机是1个双核CPU,当Load Average 为6的时候说明机器已经被 充分使用 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/" rel="prev" title="Linux 磁盘存储和文件系统(三)">
+      <i class="fa fa-chevron-left"></i> Linux 磁盘存储和文件系统(三)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%BA%8C/" rel="next" title="Linux 中的进程和计划任务(二)">
+      Linux 中的进程和计划任务(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-中进程的查看"><span class="nav-number">1.</span> <span class="nav-text">Linux 中进程的查看</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#进程的相关概念"><span class="nav-number">1.1.</span> <span class="nav-text">进程的相关概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#进程的基本状态和转换"><span class="nav-number">1.1.1.</span> <span class="nav-text">进程的基本状态和转换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程之间转换六种情况"><span class="nav-number">1.1.2.</span> <span class="nav-text">进程之间转换六种情况</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程优先级"><span class="nav-number">1.1.3.</span> <span class="nav-text">进程优先级</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程相关概念"><span class="nav-number">1.1.4.</span> <span class="nav-text">进程相关概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进程状态"><span class="nav-number">1.1.5.</span> <span class="nav-text">进程状态</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#系统管理工具"><span class="nav-number">1.2.</span> <span class="nav-text">系统管理工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#查看系统进程-ps"><span class="nav-number">1.2.1.</span> <span class="nav-text">查看系统进程 ps</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ps常见选项"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">ps常见选项</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ps输出属性"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">ps输出属性</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ps-输出及常见示例"><span class="nav-number">1.2.2.</span> <span class="nav-text">ps 输出及常见示例</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ps示例"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">ps示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#进程优先级-1"><span class="nav-number">1.3.</span> <span class="nav-text">进程优先级</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#搜索进程"><span class="nav-number">1.3.1.</span> <span class="nav-text">搜索进程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#系统工具"><span class="nav-number">1.3.2.</span> <span class="nav-text">系统工具</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

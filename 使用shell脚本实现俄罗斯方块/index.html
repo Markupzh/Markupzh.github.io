@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="需求分析学习 shell 的最好方法就是去实践,网上有很多的源码可供参考 实现过程源码分析: 先从游戏主程序开始分析: 1234567891011if [[ &quot;$1&quot; &#x3D;&#x3D; &quot;-h&quot; || &quot;$1&quot; &#x3D;&#x3D; &quot;--help&quot; ]]; then        Usageelif [[ &quot;$1&quot; &#x3D;&#x3D; &quot;--version&quot; ]]; then        echo &quot;$APP_NAME $APP_VE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用shell脚本实现俄罗斯方块">
+<meta property="og:url" content="http://yoursite.com/%E4%BD%BF%E7%94%A8shell%E8%84%9A%E6%9C%AC%E5%AE%9E%E7%8E%B0%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="需求分析学习 shell 的最好方法就是去实践,网上有很多的源码可供参考 实现过程源码分析: 先从游戏主程序开始分析: 1234567891011if [[ &quot;$1&quot; &#x3D;&#x3D; &quot;-h&quot; || &quot;$1&quot; &#x3D;&#x3D; &quot;--help&quot; ]]; then        Usageelif [[ &quot;$1&quot; &#x3D;&#x3D; &quot;--version&quot; ]]; then        echo &quot;$APP_NAME $APP_VE">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-09-02T09:24:07.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:38:58.652Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="shell">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/%E4%BD%BF%E7%94%A8shell%E8%84%9A%E6%9C%AC%E5%AE%9E%E7%8E%B0%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用shell脚本实现俄罗斯方块 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E4%BD%BF%E7%94%A8shell%E8%84%9A%E6%9C%AC%E5%AE%9E%E7%8E%B0%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用shell脚本实现俄罗斯方块
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-09-02 17:24:07" itemprop="dateCreated datePublished" datetime="2015-09-02T17:24:07+08:00">2015-09-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:38:58" itemprop="dateModified" datetime="2019-01-02T23:38:58+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h3><p>学习 shell 的最好方法就是去实践,网上有很多的源码可供参考</p>
+<h3 id="实现过程"><a href="#实现过程" class="headerlink" title="实现过程"></a>实现过程</h3><p>源码分析:</p>
+<p>先从游戏主程序开始分析:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if [[ "$1" == "-h" || "$1" == "--help" ]]; then</span><br><span class="line">        Usage</span><br><span class="line">elif [[ "$1" == "--version" ]]; then</span><br><span class="line">        echo "$APP_NAME $APP_VERSION"</span><br><span class="line">elif [[ "$1" == "--show" ]]; then</span><br><span class="line">        #当发现具有参数--show时，运行显示函数</span><br><span class="line">        RunAsDisplayer</span><br><span class="line">else</span><br><span class="line">        bash $0 --show&amp;        #以参数--show将本程序再运行一遍</span><br><span class="line">        RunAsKeyReceiver $!        #以上一行产生的进程的进程号作为参数</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>里面出现了两个变量,查看定义后发现</p>
+<p>APP_NAME : 打印了脚本名</p>
+<p><code>APP_NAME=&quot;${0##*[\\/]}&quot;</code></p>
+<p>APP_VERSION : 自己定义了版本号</p>
+<p><code>APP_VERSION=&quot;1.0&quot;</code></p>
+<p>其中出现了3个函数</p>
+<p>Usage :显示脚本用法的函数</p>
+<p>RunAsDisplayer :处理显示和游戏流程的主函数</p>
+<p>RunAsKeyReceiver :接收输入的进程的主函数</p>
+<p>我们从头开始分析这些函数的实现</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function Usage</span><br><span class="line">&#123;</span><br><span class="line">        cat &lt;&lt; EOF</span><br><span class="line">Usage: $APP_NAME</span><br><span class="line">Start tetris game.</span><br><span class="line">  </span><br><span class="line">  -h, --help              display this help and exit</span><br><span class="line">      --version           output version information and exit</span><br><span class="line">EOF</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看出 Usage 函数就是打印了一些信息,主要是用户提示.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">function RunAsDisplayer()</span><br><span class="line">&#123;</span><br><span class="line">        local sigThis	#定义了局部变量 sigThis</span><br><span class="line">        InitDraw</span><br><span class="line">  </span><br><span class="line">        #挂载各种信号的处理函数</span><br><span class="line">        trap "sig=$sigRotate;" $sigRotate</span><br><span class="line">        trap "sig=$sigLeft;" $sigLeft</span><br><span class="line">        trap "sig=$sigRight;" $sigRight</span><br><span class="line">        trap "sig=$sigDown;" $sigDown</span><br><span class="line">        trap "sig=$sigAllDown;" $sigAllDown</span><br><span class="line">        trap "ShowExit;" $sigExit</span><br><span class="line">  </span><br><span class="line">        while :</span><br><span class="line">        do</span><br><span class="line">                #根据当前的速度级iLevel不同，设定相应的循环的次数</span><br><span class="line">                for ((i = 0; i &lt; 21 - iLevel; i++))</span><br><span class="line">                do</span><br><span class="line">                        sleep 0.02</span><br><span class="line">                        sigThis=$sig</span><br><span class="line">                        sig=0</span><br><span class="line">  </span><br><span class="line">                        #根据sig变量判断是否接受到相应的信号</span><br><span class="line">                        if ((sigThis == sigRotate)); then BoxRotate;        #旋转</span><br><span class="line">                        elif ((sigThis == sigLeft)); then BoxLeft;        #左移一列</span><br><span class="line">                        elif ((sigThis == sigRight)); then BoxRight;        #右移一列</span><br><span class="line">                        elif ((sigThis == sigDown)); then BoxDown;        #下落一行</span><br><span class="line">                        elif ((sigThis == sigAllDown)); then BoxAllDown;        #下落到底</span><br><span class="line">                        fi</span><br><span class="line">                done</span><br><span class="line">                #kill -$sigDown $$</span><br><span class="line">                BoxDown        #下落一行</span><br><span class="line">        done</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>暂时先不管 RunAsDisplayer 中调用的 InitDraw 函数,先看一下这个函数的功能.</p>
+<p>从流程上分析这个函数实现了按键信号的捕捉,然后在一个死循环中以操作时间为0.02秒,不断的执行对方块的移动操作,然后执行下落一行的操作.</p>
+<p>接下来对其中出现的参数和函数进行分析:</p>
+<p>trap 这个命令实现了shell中脚本信号的获取,可以在脚本运行中执行额外的操作,比如获取键盘的输入用来控制方块的运动轨迹.</p>
+<p>iLevel 这个参数是定义的速度级,这个稍后会提到.</p>
+<p>BoxDown : 控制方块下落的函数</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">function RunAsKeyReceiver()</span><br><span class="line">&#123;</span><br><span class="line">        local pidDisplayer key aKey sig cESC sTTY</span><br><span class="line">  </span><br><span class="line">        pidDisplayer=$1</span><br><span class="line">        aKey=(0 0 0)</span><br><span class="line">  </span><br><span class="line">        cESC=`echo -ne "\033"`</span><br><span class="line">        cSpace=`echo -ne "\040"`</span><br><span class="line">  </span><br><span class="line">        #保存终端属性。在read -s读取终端键时，终端的属性会被暂时改变。</span><br><span class="line">        #如果在read -s时程序被不幸杀掉，可能会导致终端混乱，</span><br><span class="line">        #需要在程序退出时恢复终端属性。</span><br><span class="line">        sTTY=`stty -g`</span><br><span class="line">  </span><br><span class="line">        #捕捉退出信号</span><br><span class="line">        trap "MyExit;" INT TERM</span><br><span class="line">        trap "MyExitNoSub;" $sigExit</span><br><span class="line">  </span><br><span class="line">        #隐藏光标</span><br><span class="line">        echo -ne "\033[?25l"</span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">        while :</span><br><span class="line">        do</span><br><span class="line">                #读取输入。注-s不回显，-n读到一个字符立即返回</span><br><span class="line">                read -s -n 1 key</span><br><span class="line">  </span><br><span class="line">                aKey[0]=$&#123;aKey[1]&#125;</span><br><span class="line">                aKey[1]=$&#123;aKey[2]&#125;</span><br><span class="line">                aKey[2]=$key</span><br><span class="line">                sig=0</span><br><span class="line">  </span><br><span class="line">                #判断输入了何种键</span><br><span class="line">                if [[ $key == $cESC &amp;&amp; $&#123;aKey[1]&#125; == $cESC ]]</span><br><span class="line">                then</span><br><span class="line">                        #ESC键</span><br><span class="line">                        MyExit</span><br><span class="line">                elif [[ $&#123;aKey[0]&#125; == $cESC &amp;&amp; $&#123;aKey[1]&#125; == "[" ]]</span><br><span class="line">                then</span><br><span class="line">                        if [[ $key == "A" ]]; then sig=$sigRotate        #&lt;向上键&gt;</span><br><span class="line">                        elif [[ $key == "B" ]]; then sig=$sigDown        #&lt;向下键&gt;</span><br><span class="line">                        elif [[ $key == "D" ]]; then sig=$sigLeft        #&lt;向左键&gt;</span><br><span class="line">                        elif [[ $key == "C" ]]; then sig=$sigRight        #&lt;向右键&gt;</span><br><span class="line">                        fi</span><br><span class="line">                elif [[ $key == "W" || $key == "w" ]]; then sig=$sigRotate        #W, w</span><br><span class="line">                elif [[ $key == "S" || $key == "s" ]]; then sig=$sigDown        #S, s</span><br><span class="line">                elif [[ $key == "A" || $key == "a" ]]; then sig=$sigLeft        #A, a</span><br><span class="line">                elif [[ $key == "D" || $key == "d" ]]; then sig=$sigRight        #D, d</span><br><span class="line">                elif [[ "[$key]" == "[]" ]]; then sig=$sigAllDown        #空格键</span><br><span class="line">                elif [[ $key == "Q" || $key == "q" ]]                        #Q, q</span><br><span class="line">                then</span><br><span class="line">                        MyExit</span><br><span class="line">                fi</span><br><span class="line">  </span><br><span class="line">                if [[ $sig != 0 ]]</span><br><span class="line">                then</span><br><span class="line">                        #向另一进程发送消息</span><br><span class="line">                        kill -$sig $pidDisplayer</span><br><span class="line">                fi</span><br><span class="line">        done</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数是接收输入的进程的主程序,然后判断用户的输入,在这个脚本中,可以使用方向键和wasd来控制方块的运行轨迹,然后不断显示直到游戏结束.</p>
+<p>里面调用了一个MyExit的函数.</p>
+<p>接下来分析一下 RunAsDisplayer中BoxDown 这个函数</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function BoxDown()</span><br><span class="line">&#123;</span><br><span class="line">        local y s</span><br><span class="line">        ((y = boxCurY + 1))        #新的y坐标</span><br><span class="line">        if BoxMove $y $boxCurX        #测试是否可以下落一行</span><br><span class="line">        then</span><br><span class="line">                s="`DrawCurBox 0`"        #将旧的方块抹去</span><br><span class="line">                ((boxCurY = y))</span><br><span class="line">                s="$s`DrawCurBox 1`"        #显示新的下落后方块</span><br><span class="line">                echo -ne $s</span><br><span class="line">        else</span><br><span class="line">                #走到这儿, 如果不能下落了</span><br><span class="line">                Box2Map                #将当前移动中的方块贴到背景方块中</span><br><span class="line">                RandomBox        #产生新的方块</span><br><span class="line">        fi</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数主要是定义了控制方块下落的功能,首先会判断是否可也下落,如果可以消除的话,先把可以消除的方块抹去,然后显示新的下落后的方块,如果不能下落了就将当前移动中的方块贴到背景方块中,然后继续产生新的方块.</p>
+<p>里面调用了四个函数</p>
+<p>BoxMove : 测试是否可以下落一行</p>
+<p>DrawCurBox : 显示方块</p>
+<p>Box2Map : 将当前移动中的方块贴到背景方块中</p>
+<p>RandomBox : 产生新的方块</p>
+<p>查看一下BoxMove这个函数,看看其中的功能是怎么实现的:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">function BoxMove()</span><br><span class="line">&#123;</span><br><span class="line">        local j i x y xTest yTest</span><br><span class="line">        yTest=$1</span><br><span class="line">        xTest=$2</span><br><span class="line">        for ((j = 0; j &lt; 8; j += 2))</span><br><span class="line">        do</span><br><span class="line">                ((i = j + 1))</span><br><span class="line">                ((y = $&#123;boxCur[$j]&#125; + yTest))</span><br><span class="line">                ((x = $&#123;boxCur[$i]&#125; + xTest))</span><br><span class="line">                if (( y &lt; 0 || y &gt;= iTrayHeight || x &lt; 0 || x &gt;= iTrayWidth))</span><br><span class="line">                then</span><br><span class="line">                        #撞到墙壁了</span><br><span class="line">                        return 1</span><br><span class="line">                fi</span><br><span class="line">                if (($&#123;iMap[y * iTrayWidth + x]&#125; != -1 ))</span><br><span class="line">                then</span><br><span class="line">                        #撞到其他已经存在的方块了</span><br><span class="line">                        return 1</span><br><span class="line">                fi</span><br><span class="line">        done</span><br><span class="line">        return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>里面定义了方块移动的相关信息,通过判断方块的位置来确定是否可以进行移动</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/shell/" rel="tag"># shell</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/shell-%E4%B8%AD%E7%89%B9%E6%AE%8A%E5%8F%98%E9%87%8F%E7%9A%84%E7%94%A8%E6%B3%95/" rel="prev" title="shell 中特殊变量的用法">
+      <i class="fa fa-chevron-left"></i> shell 中特殊变量的用法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%96%87%E4%BB%B6%E6%9F%A5%E6%89%BE%E5%92%8C%E5%8E%8B%E7%BC%A9/" rel="next" title="Linux 文件查找和压缩">
+      Linux 文件查找和压缩 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#需求分析"><span class="nav-number">1.</span> <span class="nav-text">需求分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现过程"><span class="nav-number">2.</span> <span class="nav-text">实现过程</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="AIDEAIDE简介当一个入侵者进入了你的系统并且种植了木马,通常会想办法来隐蔽这个木马(除了木马自身的一些隐蔽特性外,他会尽量给你检查系统的过程设置障碍),通常入侵者会修改一些文件,比如管理员通常用ps -aux来查看系统进程,那么入侵者很可能用自己经过修改的ps程序来替换掉你系统上的ps程序,以使用ps命令查不到正在运行的木马程序.如果入侵者发现管理员正在运行crontab作业,也有可能替换掉">
+<meta property="og:type" content="article">
+<meta property="og:title" content="加密与安全(四)">
+<meta property="og:url" content="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E5%9B%9B/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="AIDEAIDE简介当一个入侵者进入了你的系统并且种植了木马,通常会想办法来隐蔽这个木马(除了木马自身的一些隐蔽特性外,他会尽量给你检查系统的过程设置障碍),通常入侵者会修改一些文件,比如管理员通常用ps -aux来查看系统进程,那么入侵者很可能用自己经过修改的ps程序来替换掉你系统上的ps程序,以使用ps命令查不到正在运行的木马程序.如果入侵者发现管理员正在运行crontab作业,也有可能替换掉">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-09-14T14:20:43.000Z">
+<meta property="article:modified_time" content="2018-09-20T11:31:09.789Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E5%9B%9B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>加密与安全(四) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E5%9B%9B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          加密与安全(四)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-14 22:20:43" itemprop="dateCreated datePublished" datetime="2018-09-14T22:20:43+08:00">2018-09-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-09-20 19:31:09" itemprop="dateModified" datetime="2018-09-20T19:31:09+08:00">2018-09-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="AIDE"><a href="#AIDE" class="headerlink" title="AIDE"></a>AIDE</h3><h5 id="AIDE简介"><a href="#AIDE简介" class="headerlink" title="AIDE简介"></a>AIDE简介</h5><p>当一个入侵者进入了你的系统并且种植了木马,通常会想办法来隐蔽这个木马(除了木马自身的一些隐蔽特性外,他会尽量给你检查系统的过程设置障碍),通常入侵者会修改一些文件,比如管理员通常用ps -aux来查看系统进程,那么入侵者很可能用自己经过修改的ps程序来替换掉你系统上的ps程序,以使用ps命令查不到正在运行的木马程序.如果入侵者发现管理员正在运行crontab作业,也有可能替换掉crontab程序等等.所以由此可以看出对于系统文件或是关键文件的检查是很必要的.目前就系统完整性检查的工具用的比较多的有两款:Tripwire和AIDE,前者是一款商业软件,后者是一款免费的但功能也很强大的工具</p>
+<p>AIDE(Advanced Intrusion Detection Environment)<br>• 高级入侵检测环境)是一个入侵检测工具,主要用途是检查文件的完整性,审计计算机上的那些文件被更改过了.<br>• AIDE能够构造一个指定文件的数据库,它使用aide.conf作为其配置文件.AIDE数据库能够保存文件的各种属性,包括:权限(permission)、索引节点序号(inode number)、所属用户(user)、所属用户组(group)、文件大小、最后修改时间(mtime)、创建时间(ctime)、最后访问时间(atime)、增加的大小以及连接数.AIDE还能够使用下列算法:sha1、md5、rmd160、tiger,以密文形式建立每个文件的校验码或散列号.<br>• 这个数据库不应该保存那些经常变动的文件信息,例如:日志文件、邮件、/proc文件系统、用户起始目录以及临时目录.</p>
+<h5 id="安装AIDE"><a href="#安装AIDE" class="headerlink" title="安装AIDE"></a>安装AIDE</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install aide</span><br></pre></td></tr></table></figure>
+
+<h5 id="修改配置文件"><a href="#修改配置文件" class="headerlink" title="修改配置文件"></a>修改配置文件</h5><p>vim /etc/aide.conf (指定对哪些文件进行检测)<br>/test/chameleon R<br>/bin/ps R+a<br>/usr/bin/crontab R+a<br>/etc PERMS<br>!/etc/mtab #“!”表示忽略这个文件的检查<br>R=p+i+n+u+g+s+m+c+md5 权限+索引节点+链接数+用户+组+大小+最后一次修改时间+创建时间+md5校验    值<br>NORMAL = R+rmd60+sha256    </p>
+<h5 id="初始化默认的AIDE的库"><a href="#初始化默认的AIDE的库" class="headerlink" title="初始化默认的AIDE的库:"></a>初始化默认的AIDE的库:</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;aide --init</span><br></pre></td></tr></table></figure>
+
+<h5 id="生成检查数据库-建议初始数据库存放到安全的地方"><a href="#生成检查数据库-建议初始数据库存放到安全的地方" class="headerlink" title="生成检查数据库(建议初始数据库存放到安全的地方)"></a>生成检查数据库(建议初始数据库存放到安全的地方)</h5><p>cd /var/lib/aide<br>mv aide.db.new.gz aide.db.gz    </p>
+<h5 id="检测"><a href="#检测" class="headerlink" title="检测:"></a>检测:</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;aide --check</span><br></pre></td></tr></table></figure>
+
+<h5 id="更新数据库"><a href="#更新数据库" class="headerlink" title="更新数据库"></a>更新数据库</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aide --update</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="sudo更改身份"><a href="#sudo更改身份" class="headerlink" title="sudo更改身份"></a>sudo更改身份</h3><p>su 切换身份:su –l username –c ‘command’<br>sudo<br>    • 来自sudo包,man 5 sudoers<br>    • sudo能够授权指定用户在指定主机上运行某些命令.如果未授权用户尝试使用 sudo,会提示联系管理员<br>    • sudo可以提供日志,记录每个用户使用sudo操作<br>    • sudo为系统管理员提供配置文件,允许系统管理员集中地管理用户的使用权限和使用的主机<br>    • sudo使用时间戳文件来完成类似“检票”的系统,默认存活期为5分钟的“入场券”<br>    • 通过visudo命令编辑配置文件,具有语法检查功能<br>        visudo –c 检查语法<br>        visudo -f /etc/sudoers.d/test</p>
+<h4 id="sudo"><a href="#sudo" class="headerlink" title="sudo"></a>sudo</h4><p>配置文件:/etc/sudoers, /etc/sudoers.d/<br>时间戳文件:/var/db/sudo<br>日志文件:/var/log/secure<br>配置文件支持使用通配符glob:<br>？:任意单一字符</p>
+<p>* :匹配任意长度字符</p>
+<p>[wxc]:匹配其中一个字符</p>
+<p>[!wxc]:除了这三个字符的其它字符</p>
+<p>\x : 转义</p>
+<p>[[alpha]] :字母 示例: /bin/ls [[alpha]]*    </p>
+<p>配置文件规则有两类；<br>    1、别名定义:不是必须的<br>    2、授权规则:必须的</p>
+<h4 id="sudoers"><a href="#sudoers" class="headerlink" title="sudoers"></a>sudoers</h4><p>授权规则格式:<br>    用户 登入主机=(代表用户) 命令<br>示例:<br>    root ALL=(ALL) ALL<br>格式说明:<br>    user: 运行命令者的身份<br>    host: 通过哪些主机<br>    (runas):以哪个用户的身份<br>    command: 运行哪些命令</p>
+<h4 id="别名"><a href="#别名" class="headerlink" title="别名"></a>别名</h4><p> Users和runas:<br>    username<br>    #uid<br>    %group_name<br>    %#gid<br>    user_alias|runas_alias<br> host:<br>    ip或hostname<br>    network(/netmask)<br>    host_alias<br> command:<br>    command name<br>    directory<br>    sudoedit<br>    Cmnd_Alias</p>
+<h4 id="sudo别名和示例"><a href="#sudo别名和示例" class="headerlink" title="sudo别名和示例"></a>sudo别名和示例</h4><p>别名有四种类型:User_Alias, Runas_Alias, Host_Alias ,Cmnd_Alias<br>别名格式:[A-Z]([A-Z][0-9]_)*</p>
+<p>别名定义:<br>Alias_Type NAME1 = item1, item2, item3 : NAME2 = item4, item5</p>
+<h5 id="示例1"><a href="#示例1" class="headerlink" title="示例1:"></a>示例1:</h5><p>Student ALL=(ALL) ALL<br>%wheel ALL=(ALL) ALL</p>
+<h5 id="示例2"><a href="#示例2" class="headerlink" title="示例2:"></a>示例2:</h5><p>student ALL=(root) /sbin/pidof,/sbin/ifconfig<br>%wheel ALL=(ALL) NOPASSWD: ALL</p>
+<h5 id="示例3"><a href="#示例3" class="headerlink" title="示例3:"></a>示例3:</h5><p>User_Alias NETADMIN= netuser1,netuser2<br>Cmnd_Alias NETCMD = /usr/sbin/ip<br>NETADMIN ALL=(root) NETCMD</p>
+<h5 id="示例4"><a href="#示例4" class="headerlink" title="示例4:"></a>示例4:</h5><p>User_Alias SYSADER=mark,jack,%admins<br>User_Alias DISKADER=tom<br>Host_Alias SERS=<a href="http://www.google.com,172.16.0.0/24" target="_blank" rel="noopener">www.google.com,172.16.0.0/24</a><br>Runas_Alias OP=root<br>Cmnd_Alias SYDCMD=/bin/chown,/bin/chmod<br>Cmnd_Alias DSKCMD=/sbin/parted,/sbin/fdisk<br>SYSADER SERS= SYDCMD,DSKCMD<br>DISKADER ALL=(OP) DSKCMD </p>
+<p>User_Alias ADMINUSER = adminuser1,adminuser2<br>Cmnd_Alias ADMINCMD =             /usr/sbin/useradd,/usr/sbin/usermod,<br>/usr/bin/passwd [a-zA-Z]*, !/usr/bin/passwd root ADMINUSER ALL=(root) NOPASSWD:ADMINCMD,<br>PASSWD:/usr/sbin/userdel</p>
+<h5 id="示例5"><a href="#示例5" class="headerlink" title="示例5:"></a>示例5:</h5><p>Defaults:mark runas_default=tom<br>mark ALL=(tom,jerry) ALL</p>
+<h5 id="示例6"><a href="#示例6" class="headerlink" title="示例6:"></a>示例6:</h5><p>mark 192.168.1.6,192.168.1.8=(root) /usr/sbin/,!/usr/sbin/useradd</p>
+<h5 id="示例7"><a href="#示例7" class="headerlink" title="示例7:"></a>示例7:</h5><p>mark ALL=(ALL) /bin/cat /var/log/messages*</p>
+<h4 id="sudo命令"><a href="#sudo命令" class="headerlink" title="sudo命令"></a>sudo命令</h4><p>ls -l /usr/bin/sudo<br>sudo –i –u mark 切换身份<br>sudo [-u user] COMMAND<br>    -V 显示版本信息等配置信息<br>    -u user 默认为root<br>    -l,ll 列出用户在主机上可用的和被禁止的命令<br>    -v 再延长密码有效期限5分钟,更新时间戳<br>    -k 清除时间戳(1970-01-01),下次需要重新输密码<br>    -K 与-k类似,还要删除时间戳文件<br>    -b 在后台执行指令<br>    -p 改变询问密码的提示符号<br>    示例:-p “password on %h for user %p:” </p>
+<h3 id="TCP-Wrappers"><a href="#TCP-Wrappers" class="headerlink" title="TCP_Wrappers"></a>TCP_Wrappers</h3><p>作者:Wieste Venema,IBM,Google<br>工作在第四层(传输层)的TCP协议<br>对有状态连接的特定服务进行安全检测并实现访问控制<br>以库文件形式实现<br>某进程是否接受libwrap的控制取决于发起此进程的程序在编译时是否针对libwrap进行编译的<br>判断服务程序是否能够由tcp_wrapper进行访问控制的方法:<br>    ldd /PATH/TO/PROGRAM|grep libwrap.so<br>    strings PATH/TO/PROGRAM|grep libwrap.so</p>
+<h4 id="TCP-Wrappers的使用"><a href="#TCP-Wrappers的使用" class="headerlink" title="TCP_Wrappers的使用"></a>TCP_Wrappers的使用</h4><p>配置文件:/etc/hosts.allow, /etc/hosts.deny<br>帮助参考:man 5 hosts_access,man 5 hosts_options<br>检查顺序:hosts.allow,hosts.deny(默认允许)<br>    注意:一旦前面规则匹配,直接生效,将不再继续<br>基本语法:<br>    daemon_list@host: client_list [ :options :option… ]<br>Daemon_list@host格式<br>    单个应用程序的二进制文件名,而非服务名,例如vsftpd<br>    以逗号或空格分隔的应用程序文件名列表,如:sshd,vsftpd<br>    ALL表示所有接受tcp_wrapper控制的服务程序<br>    主机有多个IP,可用@hostIP来实现控制如:<a href="mailto:in.telnetd@192.168.0.254">in.telnetd@192.168.0.254</a></p>
+<p>客户端Client_list格式<br>    以逗号或空格分隔的客户端列表<br>    基于IP地址:192.168.10.1 192.168.1.<br>    基于主机名:<a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a> .google.com 较少用<br>    基于网络/掩码:192.168.0.0/255.255.255.0<br>    基于net/prefixlen: 192.168.1.0/24(CentOS7)<br>    基于网络组(NIS 域):@mynetwork<br>    内置ACL:ALL,LOCAL,KNOWN,UNKNOWN,PARANOID<br>EXCEPT用法:<br>    示例:<br>    vsftpd: 172.16. EXCEPT 172.16.100.0/24 EXCEPT 172.16.100.1</p>
+<p>[:options]选项:<br>帮助:man 5 hosts_options<br>    deny 主要用在/etc/hosts.allow定义“拒绝”规则<br>        如:vsftpd: 172.16. :deny<br>    allow 主要用在/etc/hosts.deny定义“允许”规则<br>        如:vsftpd:172.16. :allow<br>    spawn 启动一个外部程序完成执行的操作<br>        twist 实际动作是拒绝访问,使用指定的操作替换当前服务,标准I/O和ERROR发送到客户端,默认至/dev/null<br>测试工具:<br>    tcpdmatch [-d] daemon[@host] client<br>    -d 测试当前目录下的hosts.allow和hosts.deny</p>
+<h5 id="示例1-1"><a href="#示例1-1" class="headerlink" title="示例1:"></a>示例1:</h5><p>只允许192.168.1.0/24的主机访问sshd</p>
+<p>/etc/hosts.allow<br>    sshd: 192.168.1.<br>/etc/hosts.deny<br>    sshd :ALL </p>
+<h5 id="示例2-1"><a href="#示例2-1" class="headerlink" title="示例2:"></a>示例2:</h5><p>只允许192.168.1.0/24的主机访问telnet和vsftpd服务</p>
+<p>/etc/hosts.allow<br>    vsftpd,in.telnetd: 192.168.1.<br>/etc/host.deny<br>    vsftpd,in.telnetd: ALL </p>
+<h5 id="示例3-1"><a href="#示例3-1" class="headerlink" title="示例3:"></a>示例3:</h5><p>sshd: ALL :spawn echo “$(date +%%F) login attempt from %c to<br>%s,%d” &gt;&gt;/var/log/sshd.log<br>说明:<br>    在/etc/hosts.allow中添加,允许登录,并记录日志<br>    在/etc/hosts.deny中添加,拒绝登录,并记录日志<br>    %c 客户端信息<br>    %s 服务器端信息<br>    %d 服务名<br>    %p 守护进程的PID<br>    %% 表示%<br>vsftpd: 172.16. :twist /bin/echo “connection prohibited”</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%94/" rel="prev" title="Linux 启动和内核管理(五)">
+      <i class="fa fa-chevron-left"></i> Linux 启动和内核管理(五)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%94/" rel="next" title="加密与安全(五)">
+      加密与安全(五) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#AIDE"><span class="nav-number">1.</span> <span class="nav-text">AIDE</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#AIDE简介"><span class="nav-number">1.0.1.</span> <span class="nav-text">AIDE简介</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#安装AIDE"><span class="nav-number">1.0.2.</span> <span class="nav-text">安装AIDE</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#修改配置文件"><span class="nav-number">1.0.3.</span> <span class="nav-text">修改配置文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#初始化默认的AIDE的库"><span class="nav-number">1.0.4.</span> <span class="nav-text">初始化默认的AIDE的库:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#生成检查数据库-建议初始数据库存放到安全的地方"><span class="nav-number">1.0.5.</span> <span class="nav-text">生成检查数据库(建议初始数据库存放到安全的地方)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#检测"><span class="nav-number">1.0.6.</span> <span class="nav-text">检测:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#更新数据库"><span class="nav-number">1.0.7.</span> <span class="nav-text">更新数据库</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sudo更改身份"><span class="nav-number">2.</span> <span class="nav-text">sudo更改身份</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sudo"><span class="nav-number">2.1.</span> <span class="nav-text">sudo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sudoers"><span class="nav-number">2.2.</span> <span class="nav-text">sudoers</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#别名"><span class="nav-number">2.3.</span> <span class="nav-text">别名</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sudo别名和示例"><span class="nav-number">2.4.</span> <span class="nav-text">sudo别名和示例</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#示例1"><span class="nav-number">2.4.1.</span> <span class="nav-text">示例1:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例2"><span class="nav-number">2.4.2.</span> <span class="nav-text">示例2:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例3"><span class="nav-number">2.4.3.</span> <span class="nav-text">示例3:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例4"><span class="nav-number">2.4.4.</span> <span class="nav-text">示例4:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例5"><span class="nav-number">2.4.5.</span> <span class="nav-text">示例5:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例6"><span class="nav-number">2.4.6.</span> <span class="nav-text">示例6:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例7"><span class="nav-number">2.4.7.</span> <span class="nav-text">示例7:</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sudo命令"><span class="nav-number">2.5.</span> <span class="nav-text">sudo命令</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP-Wrappers"><span class="nav-number">3.</span> <span class="nav-text">TCP_Wrappers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TCP-Wrappers的使用"><span class="nav-number">3.1.</span> <span class="nav-text">TCP_Wrappers的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#示例1-1"><span class="nav-number">3.1.1.</span> <span class="nav-text">示例1:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例2-1"><span class="nav-number">3.1.2.</span> <span class="nav-text">示例2:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#示例3-1"><span class="nav-number">3.1.3.</span> <span class="nav-text">示例3:</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Linux组成Linux: kernel+rootfs    kernel: 进程管理、内存管理、网络管理、驱动程序、文件系统、安全功能    rootfs:程序和glibc    库：函数集合, function, 调用接口（头文件负责描述）        过程调用：procedure,无返回值        函数调用：function    程序：二进制执行文件内核设计流派：    单内核(m">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 启动和内核管理(一)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="Linux组成Linux: kernel+rootfs    kernel: 进程管理、内存管理、网络管理、驱动程序、文件系统、安全功能    rootfs:程序和glibc    库：函数集合, function, 调用接口（头文件负责描述）        过程调用：procedure,无返回值        函数调用：function    程序：二进制执行文件内核设计流派：    单内核(m">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-09-11T05:16:31.000Z">
+<meta property="article:modified_time" content="2018-09-11T08:55:07.971Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="CentOS">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 启动和内核管理(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 启动和内核管理(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-11 13:16:31 / 修改时间：16:55:07" itemprop="dateCreated datePublished" datetime="2018-09-11T13:16:31+08:00">2018-09-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="Linux组成"><a href="#Linux组成" class="headerlink" title="Linux组成"></a>Linux组成</h3><p>Linux: kernel+rootfs<br>    kernel: 进程管理、内存管理、网络管理、驱动程序、文件系统、安全功能<br>    rootfs:程序和glibc<br>    库：函数集合, function, 调用接口（头文件负责描述）<br>        过程调用：procedure,无返回值<br>        函数调用：function<br>    程序：二进制执行文件<br>内核设计流派：<br>    单内核(monolithic kernel)：Linux<br>        把所有功能集成于同一个程序<br>    微内核(micro kernel)：Windows, Solaris<br>        每种功能使用一个单独子系统实现</p>
+<h3 id="内核"><a href="#内核" class="headerlink" title="内核"></a>内核</h3><p>Linux内核特点：<br>    支持模块化：.ko（内核对象）<br>        如：文件系统,硬件驱动,网络协议等<br>    支持内核模块的动态装载和卸载<br>组成部分：<br>核心文件：/boot/vmlinuz-VERSION-release<br>    ramdisk：辅助的伪根系统<br>    CentOS 5: /boot/initrd-VERSION-release.img<br>    CentOS 6,7: /boot/initramfs-VERSION-release.img<br>模块文件：/lib/modules/VERSION-release</p>
+<h3 id="CentOS6启动流程"><a href="#CentOS6启动流程" class="headerlink" title="CentOS6启动流程"></a>CentOS6启动流程</h3><p>1.加载BIOS的硬件信息,获取第一个启动设备<br>2.读取第一个启动设备MBR的引导加载程序(grub)的启动信息<br>3.加载核心操作系统的核心信息,核心开始解压缩,并尝试驱动所有的硬件设备<br>4.核心执行init程序,并获取默认的运行信息<br>5.init程序执行/etc/rc.d/rc.sysinit文件<br>6.启动核心的外挂模块<br>7.init执行运行的各个批处理文件(scripts)<br>8.init执行/etc/rc.d/rc.local<br>9.执行/bin/login程序,等待用户登录<br>10.登录之后开始以Shell控制主机</p>
+<h4 id="详细步骤"><a href="#详细步骤" class="headerlink" title="详细步骤"></a>详细步骤</h4><p> POST：Power-On-Self-Test,加电自检,是BIOS功能的一个主要部分.负责完成对CPU、主板、内存、硬盘子系统、显示子系统、串并行接口、键盘等硬件情况的检测<br>    ROM：BIOS,Basic Input and Output System,保存着有关计算机系统最重要的基本输入输出程序,系统信息设置、开机加电自检程序和系统启动自举程序等<br>    RAM：CMOS互补金属氧化物半导体,保存各项参数的设定<br>    按次序查找引导设备,第一个有引导程序的设备为本次启动设备<br> bootloader: 引导加载器,引导程序<br>    windows: ntloader,仅是启动OS<br>    Linux：功能丰富,提供菜单,允许用户选择要启动系统或不同的内核版本；把用户选定的内核装载到内存中的特定空间中,解压、展开,并把系统控制权移交给内核<br>        LILO：LInux LOader<br>        GRUB: GRand Unified Bootloader<br>            GRUB 0.X: GRUB Legacy, GRUB2</p>
+<p>MBR:<br>    446: bootloader, 64: 分区表, 2: 55AA<br>GRUB:<br>    primary boot loader : 1st stage,1.5 stage<br>    secondary boot loader ：2nd stage,分区文件<br>kernel：<br>自身初始化：<br>    探测可识别到的所有硬件设备<br>    加载硬件驱动程序（借助于ramdisk加载驱动）<br>    以只读方式挂载根文件系统<br>    运行用户空间的第一个应用程序：/sbin/init</p>
+<p>ramdisk：<br>内核中的特性之一：使用缓冲和缓存来加速对磁盘上的文件访问,并加载相应的硬件驱动<br>    ramdisk –&gt; ramfs 提高速度<br>    CentOS 5: initrd<br>        工具程序：mkinitrd<br>    CentOS 6,7: initramfs<br>        工具程序：mkinitrd, dracut<br>系统初始化：<br>POST –&gt; BootSequence (BIOS) –&gt; Bootloader(MBR) –&gt; kernel(ramdisk) –&gt; rootfs(只读) –&gt; init（systemd）</p>
+<h3 id="ramdisk管理"><a href="#ramdisk管理" class="headerlink" title="ramdisk管理"></a>ramdisk管理</h3><p>ramdisk文件的制作：<br>(1) mkinitrd命令<br>    为当前正在使用的内核重新制作ramdisk文件<br>    mkinitrd /boot/initramfs-$(uname -r).img $(uname -r)<br>(2) dracut命令<br>    为当前正在使用的内核重新制作ramdisk文件<br>    dracut /boot/initramfs-$(uname -r).img $(uname -r) </p>
+<h3 id="系统启动流程"><a href="#系统启动流程" class="headerlink" title="系统启动流程"></a>系统启动流程</h3><p>init程序的类型：</p>
+<p>SysV: init, CentOS 5之前</p>
+<pre><code>配置文件：/etc/inittab</code></pre><p>Upstart: init,CentOS 6</p>
+<pre><code>配置文件：/etc/inittab, /etc/init/*.conf</code></pre><p>Systemd：systemd, CentOS 7</p>
+<pre><code>配置文件：
+
+    /usr/lib/systemd/system
+
+    /etc/systemd/system</code></pre><h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><p>/sbin/init CentOS6之前<br>运行级别：为系统运行或维护等目的而设定；0-6：7个级别<br>    0：关机<br>    1：单用户模式(root自动登录), single, 维护模式<br>    2: 多用户模式,启动网络功能,但不会启动NFS；维护模式<br>    3：多用户模式,正常模式；文本界面<br>    4：预留级别；可同3级别<br>    5：多用户模式,正常模式；图形界面<br>    6：重启<br>默认级别：3, 5<br>切换级别：init #<br>查看级别：runlevel : who -r</p>
+<h3 id="init初始化"><a href="#init初始化" class="headerlink" title="init初始化"></a>init初始化</h3><p>init读取其初始化文件：/etc/inittab<br>初始运行级别(RUN LEVEL)<br>系统初始化脚本<br>对应运行级别的脚本目录<br>捕获某个关键字顺序<br>定义UPS电源终端/恢复脚本<br>在虚拟控制台生成getty<br>在运行级别5初始化X</p>
+<h3 id="CentOS-5-的inittab文件"><a href="#CentOS-5-的inittab文件" class="headerlink" title="CentOS 5 的inittab文件"></a>CentOS 5 的inittab文件</h3><p>配置文件：</p>
+<pre><code>/etc/inittab</code></pre><p> 每一行格式： </p>
+<pre><code>id:runlevel:action:process
+
+id：是惟一标识该项的字符序列
+
+runlevels： 定义了操作所使用的运行级别
+
+action： 指定了要执行的特定操作
+
+    wait: 切换至此级别运行一次</code></pre><p>​        respawn：此process终止,就重新启动之</p>
+<pre><code>    initdefault：设定默认运行级别；process省略
+
+    sysinit：设定系统初始化方式
+
+process：定义了要执行的进程</code></pre><p> 示例：</p>
+<pre><code>id:3:initdefault:
+
+si::sysinit:/etc/rc.d/rc.sysinit
+
+l0:0:wait:/etc/rc.d/rc 0
+
+l1:1:wait:/etc/rc.d/rc 1...
+
+l6:6:wait:/etc/rc.d/rc 6
+
+ca::ctrlaltdel:/sbin/shutdown -t3 -r now</code></pre><p>CentOS 6 /etc/inittab和相关文件</p>
+<p>/etc/inittab</p>
+<pre><code>设置系统默认的运行级别
+
+id:3:initdefault:</code></pre><p> 示例：</p>
+<pre><code>破解CentOS5和6的root口令</code></pre><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/etc/init/control-alt-delete.conf</span><br><span class="line"></span><br><span class="line">/etc/init/tty.conf</span><br><span class="line"></span><br><span class="line">/etc/init/start-ttys.conf</span><br><span class="line"></span><br><span class="line">/etc/init/rc.conf</span><br><span class="line"></span><br><span class="line">/etc/init/prefdm.conf</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="启动流程-1"><a href="#启动流程-1" class="headerlink" title="启动流程"></a>启动流程</h3><p>/etc/rc.d/rc.sysinit: 系统初始化脚本<br>    (1) 设置主机名<br>    (2) 设置欢迎信息<br>    (3) 激活udev和selinux<br>    (4) 挂载/etc/fstab文件中定义的文件系统<br>    (5) 检测根文件系统,并以读写方式重新挂载根文件系统<br>    (6) 设置系统时钟<br>    (7) 激活swap设备<br>    (8) 根据/etc/sysctl.conf文件设置内核参数<br>    (9) 激活lvm及software raid设备<br>    (10) 加载额外设备的驱动程序<br>    (11) 清理操作</p>
+<p>说明：rc N –&gt; 意味着读取/etc/rc.d/rcN.d/<br>    K<em>: K##*：##运行次序；数字越小,越先运行；数字越小的服务,通常为依赖到别的服务<br>    S</em>: S##<em>：##运行次序；数字越小,越先运行；数字越小的服务,通常为被依赖到的服务<br>    for srv in /etc/rc.d/rcN.d/K</em>: do<br>        $srv stop<br>    done<br>    for srv in /etc/rc.d/rcN.d/S*: do<br>        $srv start<br>    done</p>
+<h3 id="chkconfig命令"><a href="#chkconfig命令" class="headerlink" title="chkconfig命令"></a>chkconfig命令</h3><p>ntsysv命令<br> chkconfig命令<br> 查看服务在所有级别的启动或关闭设定情形：<br>    chkconfig [–list][name]<br> 添加：<br>    SysV的服务脚本放置于/etc/rc.d/init.d (/etc/init.d)<br>    chkconfig –add name<br>        #!/bin/bash</p>
+<p>​        #LLLL 表示初始在哪个级别下启动,-表示都不启动</p>
+<pre><code># chkconfig: LLLL nn nn</code></pre><p> 删除：<br>    chkconfig –del name<br> 修改指定的链接类型<br>    chkconfig [–level levels] name<br>        –level LLLL: 指定要设置的级别；省略时表示2345</p>
+<h3 id="xinetd管理的服务"><a href="#xinetd管理的服务" class="headerlink" title="xinetd管理的服务"></a>xinetd管理的服务</h3><p>service 命令：手动管理服务<br>    service 服务 start|stop|restart<br>    service –status-all<br>瞬态（Transient）服务被xinetd进程所管理<br>进入的请求首先被xinetd代理<br>配置文件：/etc/xinetd.conf、/etc/xinetd.d/<br>与libwrap.so文件链接<br>用chkconfig控制的服务：<br>示例：chkconfig tftp on</p>
+<h3 id="启动流程-2"><a href="#启动流程-2" class="headerlink" title="启动流程"></a>启动流程</h3><p>注意：正常级别下,最后启动一个服务S99local没有链接至/etc/rc.d/init.d一个<br>服务脚本,而是指向了/etc/rc.d/rc.local脚本<br>不便或不需写为服务脚本放置于/etc/rc.d/init.d/目录,且又想开机时自动运行<br>的命令,可直接放置于/etc/rc.d/rc.local文件中<br>• /etc/rc.d/rc.local在指定运行级别脚本后运行<br>• 可以根据情况,进行自定义修改</p>
+<p>1:2345:respawn:/usr/sbin/mingetty tty1<br>2:2345:respawn:/usr/sbin/mingetty tty2<br>…<br>6:2345:respawn:/usr/sbin/mingetty tty6<br>    mingetty会自动调用login程序<br>x:5:respawn:/etc/X11/prefdm -nodaemon</p>
+<h3 id="启动过程"><a href="#启动过程" class="headerlink" title="启动过程"></a>启动过程</h3><p>总结：/sbin/init –&gt; (/etc/inittab) –&gt; 设置默认运行级别 –&gt; 运行系统初始脚本、完成系统初始化 –&gt; (关闭对应下需要关闭的服务)启动需要启动服务 –&gt; 设置登录终端<br>CentOS 6 init程序为: upstart, 其配置文件：<br>/etc/inittab, /etc/init/*.conf,配置文件的语法 遵循 upstart配置文件语法格式,和CentOS5不同</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/CentOS/" rel="tag"># CentOS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Go-%E8%AF%AD%E8%A8%80%E7%AE%80%E4%BB%8B-%E5%9B%9B/" rel="prev" title="Go 语言简介(四)">
+      <i class="fa fa-chevron-left"></i> Go 语言简介(四)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%8C/" rel="next" title="Linux 启动和内核管理(二)">
+      Linux 启动和内核管理(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux组成"><span class="nav-number">1.</span> <span class="nav-text">Linux组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内核"><span class="nav-number">2.</span> <span class="nav-text">内核</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CentOS6启动流程"><span class="nav-number">3.</span> <span class="nav-text">CentOS6启动流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#详细步骤"><span class="nav-number">3.1.</span> <span class="nav-text">详细步骤</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ramdisk管理"><span class="nav-number">4.</span> <span class="nav-text">ramdisk管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#系统启动流程"><span class="nav-number">5.</span> <span class="nav-text">系统启动流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动流程"><span class="nav-number">6.</span> <span class="nav-text">启动流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#init初始化"><span class="nav-number">7.</span> <span class="nav-text">init初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CentOS-5-的inittab文件"><span class="nav-number">8.</span> <span class="nav-text">CentOS 5 的inittab文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动流程-1"><span class="nav-number">9.</span> <span class="nav-text">启动流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chkconfig命令"><span class="nav-number">10.</span> <span class="nav-text">chkconfig命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xinetd管理的服务"><span class="nav-number">11.</span> <span class="nav-text">xinetd管理的服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动流程-2"><span class="nav-number">12.</span> <span class="nav-text">启动流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动过程"><span class="nav-number">13.</span> <span class="nav-text">启动过程</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="CA和证书PKI: Public Key Infrastructure    签证机构:CA(Certificate Authority)    注册机构:RA    证书吊销列表:CRL    证书存取库:X.509:定义了证书的结构以及认证协议标准    版本号 序列号  签名算法  颁发者  有效期限  主体名称  主体公钥  CRL分发点  扩展信息  发行者签名证书获取证书类型:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="加密与安全(二)">
+<meta property="og:url" content="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="CA和证书PKI: Public Key Infrastructure    签证机构:CA(Certificate Authority)    注册机构:RA    证书吊销列表:CRL    证书存取库:X.509:定义了证书的结构以及认证协议标准    版本号 序列号  签名算法  颁发者  有效期限  主体名称  主体公钥  CRL分发点  扩展信息  发行者签名证书获取证书类型:">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_03.png">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_04.png">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_05.png">
+<meta property="article:published_time" content="2018-09-11T05:18:54.000Z">
+<meta property="article:modified_time" content="2018-09-20T11:24:42.851Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_03.png">
+
+<link rel="canonical" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>加密与安全(二) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          加密与安全(二)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-11 13:18:54" itemprop="dateCreated datePublished" datetime="2018-09-11T13:18:54+08:00">2018-09-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-09-20 19:24:42" itemprop="dateModified" datetime="2018-09-20T19:24:42+08:00">2018-09-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="CA和证书"><a href="#CA和证书" class="headerlink" title="CA和证书"></a>CA和证书</h3><p>PKI: Public Key Infrastructure<br>    签证机构:CA(Certificate Authority)<br>    注册机构:RA<br>    证书吊销列表:CRL<br>    证书存取库:<br>X.509:定义了证书的结构以及认证协议标准<br>    版本号</p>
+<pre><code>序列号
+
+签名算法
+
+颁发者
+
+有效期限
+
+主体名称
+
+主体公钥
+
+CRL分发点
+
+扩展信息
+
+发行者签名</code></pre><h4 id="证书获取"><a href="#证书获取" class="headerlink" title="证书获取"></a>证书获取</h4><p>证书类型:<br>    证书授权机构的证书<br>    服务器<br>    用户证书<br>获取证书两种方法:<br>    • 使用证书授权机构<br>        生成签名请求(csr)<br>        将csr发送给CA<br>        从CA处接收签名<br>    • 自签名的证书<br>        自已签发自己的公钥    </p>
+<h3 id="安全协议"><a href="#安全协议" class="headerlink" title="安全协议"></a>安全协议</h3><p>SSL: Secure Socket Layer,TLS: Transport Layer Security<br>        1995:SSL 2.0 Netscape<br>        1996: SSL 3.0<br>        1999: TLS 1.0<br>        2006: TLS 1.1 IETF(Internet工程任务组) RFC 4346<br>        2008:TLS 1.2 当前使用<br>        2015: TLS 1.3<br>    功能:机密性,认证,完整性,重放保护<br> 两阶段协议,分为握手阶段和应用阶段<br>    握手阶段(协商阶段):客户端和服务器端认证对方身份(依赖于PKI体系,利用数字证书进行身份认证),并协商通信中使用的安全参数、密码套件以及主密钥.后续通信使用的所有密钥都是通过MasterSecret生成.<br>    应用阶段:在握手阶段完成后进入,在应用阶段通信双方使用握手阶段协商好的密钥进行安全通信</p>
+<h4 id="SSL-TLS图解"><a href="#SSL-TLS图解" class="headerlink" title="SSL/TLS图解"></a>SSL/TLS图解</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_03.png" alt=""></p>
+<h4 id="SSL-TLS"><a href="#SSL-TLS" class="headerlink" title="SSL/TLS"></a>SSL/TLS</h4><p>Handshake协议:包括协商安全参数和密码套件、服务器身份认证(客户端身份认证可选)、密钥交换<br>ChangeCipherSpec 协议:一条消息表明握手协议已经完成<br>Alert 协议:对握手协议中一些异常的错误提醒,分为fatal和warning两个级别,fatal类型错误会直接中断SSL链接,而Warning级别的错误SSL链接仍可继续,只是会给出错误警告<br>Record 协议:包括对消息的分段、压缩、消息认证和完整性保护、加密等<br>HTTPS 协议:就是“HTTP 协议”和“SSL/TLS 协议”的组合.HTTP over SSL”或“HTTP over TLS”,对http协议的文本数据进行加密处理后,成为二进制形式传输</p>
+<h4 id="HTTPS结构"><a href="#HTTPS结构" class="headerlink" title="HTTPS结构"></a>HTTPS结构</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_04.png" alt=""></p>
+<h4 id="HTTPS工作过程"><a href="#HTTPS工作过程" class="headerlink" title="HTTPS工作过程"></a>HTTPS工作过程</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_05.png" alt=""></p>
+<h4 id="OpenSSL"><a href="#OpenSSL" class="headerlink" title="OpenSSL"></a>OpenSSL</h4><p>OpenSSL:开源项目<br>    三个组件:<br>        openssl: 多用途的命令行工具,包openssl<br>        libcrypto: 加密算法库,包openssl-libs<br>        libssl:加密模块应用库,实现了ssl及tls,包nss<br>openssl命令:<br>    两种运行模式:交互模式和批处理模式<br>    openssl version:程序版本号<br>    标准命令、消息摘要命令、加密命令<br>    标准命令:<br>        enc, ca, req, …</p>
+<h5 id="openssl命令"><a href="#openssl命令" class="headerlink" title="openssl命令"></a>openssl命令</h5><p><strong>对称加密:</strong><br>    工具:openssl enc, gpg<br>    算法:3des, aes, blowfish, twofish<br><strong>enc命令:</strong><br>    帮助:man enc<br>    加密:<br>    openssl enc -e -des3 -a -salt -in testfile -out testfile.cipher<br><strong>解密:</strong><br>    openssl enc -d -des3 -a -salt –in testfile.cipher<br>    -out testfile<br>    openssl ?</p>
+<p><strong>单向加密:</strong><br>    工具:md5sum, sha1sum, sha224sum,sha256sum… openssl dgst<br><strong>dgst命令:</strong><br>    帮助:man dgst<br>    openssl dgst -md5 [-hex默认] /PATH/SOMEFILE<br>    openssl dgst -md5 testfile<br>    md5sum /PATH/TO/SOMEFILE<br><strong>MAC:</strong></p>
+<p>Message Authentication Code,单向加密的一种延伸应用,用于实现网络通信中保证所传输数据的完整性机制<br>CBC-MAC<br>HMAC:使用md5或sha1算法</p>
+<p><strong>生成用户密码:</strong><br>    passwd命令:<br>    帮助:man sslpasswd<br>    openssl passwd -1 -salt SALT(最多8位)<br>    openssl passwd -1 –salt centos<br><strong>生成随机数:</strong><br>    帮助:man sslrand<br>    openssl rand -base64|-hex NUM<br>    NUM: 表示字节数；-hex时,每个字符为十六进制,相当于4位二进制,出现的字符数为NUM*2</p>
+<p><strong>公钥加密:</strong><br>    算法:RSA, ELGamal<br>    工具:gpg, openssl rsautl(man rsautl)<br><strong>数字签名:</strong><br>    算法:RSA, DSA, ELGamal<br><strong>密钥交换:</strong><br>    算法:dh<br>    DSA: Digital Signature Algorithm<br>    DSS:Digital Signature Standard<br>    RSA:</p>
+<p><strong>生成密钥对:</strong></p>
+<p>​    man genrsa</p>
+<p><strong>生成私钥:</strong><br>    openssl genrsa -out /PATH/TO/PRIVATEKEY.FILE NUM_BITS<br>    (umask 077; openssl genrsa –out test.key –des 2048)<br>    openssl rsa -in test.key –out test2.key 将加密key解密<br><strong>从私钥中提取出公钥</strong><br>    openssl rsa -in PRIVATEKEYFILE –pubout –out PUBLICKEYFILE<br>    openssl rsa –in test.key –pubout –out test.key.pub<br><strong>随机数生成器:伪随机数字</strong><br>    键盘和鼠标,块设备中断<br>    /dev/random:仅从熵池返回随机数；随机数用尽,阻塞<br>    /dev/urandom:从熵池返回随机数；随机数用尽,会利用软件生成伪随机数,非阻塞</p>
+<h4 id="OpenSSL-的几个简单使用"><a href="#OpenSSL-的几个简单使用" class="headerlink" title="OpenSSL 的几个简单使用"></a>OpenSSL 的几个简单使用</h4><p>PKI:Public Key Infrastructure<br>    CA<br>    RA<br>    CRL<br>    证书存取库<br>建立私有CA:<br>    OpenCA<br>    openssl<br>证书申请及签署步骤:<br>    1、生成申请请求<br>    2、RA核验<br>    3、CA签署<br>    4、获取证书</p>
+<h4 id="创建CA和申请证书"><a href="#创建CA和申请证书" class="headerlink" title="创建CA和申请证书"></a>创建CA和申请证书</h4><p>创建私有CA:<br>    openssl的配置文件:/etc/pki/tls/openssl.cnf<br>    三种策略:匹配、支持和可选<br>    匹配指要求申请填写的信息跟CA设置信息必须一致,支持指必须填写这项申请信息,可选指可有可无</p>
+<h5 id="1-创建所需要的文件"><a href="#1-创建所需要的文件" class="headerlink" title="1.创建所需要的文件"></a>1.创建所需要的文件</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">touch &#x2F;etc&#x2F;pki&#x2F;CA&#x2F;index.txt 生成证书索引数据库文件</span><br><span class="line">echo 01 &gt; &#x2F;etc&#x2F;pki&#x2F;CA&#x2F;serial 指定第一个颁发证书的序列号</span><br></pre></td></tr></table></figure>
+
+<h5 id="2-CA自签证书"><a href="#2-CA自签证书" class="headerlink" title="2.CA自签证书"></a>2.CA自签证书</h5><p>生成私钥<br>    cd /etc/pki/CA/<br>    (umask 066; openssl genrsa -out etc/pki/CA/private/cakey.pem 2048)</p>
+<p>生成自签名证书<br>openssl req -new -x509 –key<br>/etc/pki/CA/private/cakey.pem -days 7300 -out<br>/etc/pki/CA/cacert.pem<br>    -new:                             生成新证书签署请求<br>    -x509:                             专用于CA生成自签证书<br>    -key:                             生成请求时用到的私钥文件<br>    -days n:                        证书的有效期限<br>    -out /PATH/TO/SOMECERTFILE:     证书的保存路径</p>
+<h5 id="3-颁发证书"><a href="#3-颁发证书" class="headerlink" title="3.颁发证书"></a>3.颁发证书</h5><p>在需要使用证书的主机生成证书请求<br>    给web服务器生成私钥<br>    (umask 066; openssl genrsa -out /etc/pki/tls/private/test.key 2048)<br>    生成证书申请文件<br>    openssl req -new -key /etc/pki/tls/private/test.key -days 365 -out etc/pki/tls/test.csr<br>将证书请求文件传输给CA<br>CA签署证书,并将证书颁发给请求者<br>    openssl ca -in /tmp/test.csr –out<br>    /etc/pki/CA/certs/test.crt -days 365<br>注意:默认国家,省,公司名称三项必须和CA一致</p>
+<p>查看证书中的信息:<br>    openssl x509 -in /PATH/FROM/CERT_FILE -noout - text|issuer|subject|serial|dates<br>    openssl ca -status SERIAL 查看指定编号的证书状态</p>
+<h5 id="4-吊销证书"><a href="#4-吊销证书" class="headerlink" title="4.吊销证书"></a>4.吊销证书</h5><p> 在客户端获取要吊销的证书的serial<br>    openssl x509 -in /PATH/FROM/CERT_FILE -noout -serial - subject<br> 在CA上,根据客户提交的serial与subject信息,对比检验是否与index.txt文件中的信息一致,<br>吊销证书:<br>    openssl ca -revoke /etc/pki/CA/newcerts/SERIAL.pem<br> 指定第一个吊销证书的编号,注意:第一次更新证书吊销列表前,才需要执行<br>    echo 01 &gt; /etc/pki/CA/crlnumber<br> 更新证书吊销列表<br>    openssl ca -gencrl -out /etc/pki/CA/crl.pem<br> 查看crl文件:<br>    openssl crl -in /etc/pki/CA/crl.pem -noout -text</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%80/" rel="prev" title="加密与安全(一)">
+      <i class="fa fa-chevron-left"></i> 加密与安全(一)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%89/" rel="next" title="加密与安全(三)">
+      加密与安全(三) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#CA和证书"><span class="nav-number">1.</span> <span class="nav-text">CA和证书</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#证书获取"><span class="nav-number">1.1.</span> <span class="nav-text">证书获取</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安全协议"><span class="nav-number">2.</span> <span class="nav-text">安全协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SSL-TLS图解"><span class="nav-number">2.1.</span> <span class="nav-text">SSL&#x2F;TLS图解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SSL-TLS"><span class="nav-number">2.2.</span> <span class="nav-text">SSL&#x2F;TLS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HTTPS结构"><span class="nav-number">2.3.</span> <span class="nav-text">HTTPS结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HTTPS工作过程"><span class="nav-number">2.4.</span> <span class="nav-text">HTTPS工作过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OpenSSL"><span class="nav-number">2.5.</span> <span class="nav-text">OpenSSL</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#openssl命令"><span class="nav-number">2.5.1.</span> <span class="nav-text">openssl命令</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OpenSSL-的几个简单使用"><span class="nav-number">2.6.</span> <span class="nav-text">OpenSSL 的几个简单使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建CA和申请证书"><span class="nav-number">2.7.</span> <span class="nav-text">创建CA和申请证书</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-创建所需要的文件"><span class="nav-number">2.7.1.</span> <span class="nav-text">1.创建所需要的文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-CA自签证书"><span class="nav-number">2.7.2.</span> <span class="nav-text">2.CA自签证书</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-颁发证书"><span class="nav-number">2.7.3.</span> <span class="nav-text">3.颁发证书</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-吊销证书"><span class="nav-number">2.7.4.</span> <span class="nav-text">4.吊销证书</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

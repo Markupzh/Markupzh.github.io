@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="互联网协议入门物理拓扑分类1.总线拓扑 总线拓扑结构是将网络中的所有设备通过相应的硬件接口直接连接到公共总线上，结点之间按广播方式通信，一个结点发出的信息，总线上的其它结点均可“收听”到。优点：结构简单、布线容易、可靠性较高，易于扩充，是局域网常采用的拓扑结构。缺点：所有的数据都需经过总线传送，总线成为整个网络的瓶颈；出现故障诊断较为困难。最著名的总线拓扑结构是以太网(Ethernet)。 2.星">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 网络管理(三)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E4%B8%89/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="互联网协议入门物理拓扑分类1.总线拓扑 总线拓扑结构是将网络中的所有设备通过相应的硬件接口直接连接到公共总线上，结点之间按广播方式通信，一个结点发出的信息，总线上的其它结点均可“收听”到。优点：结构简单、布线容易、可靠性较高，易于扩充，是局域网常采用的拓扑结构。缺点：所有的数据都需经过总线传送，总线成为整个网络的瓶颈；出现故障诊断较为困难。最著名的总线拓扑结构是以太网(Ethernet)。 2.星">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-11-15T12:33:53.000Z">
+<meta property="article:modified_time" content="2019-01-03T01:51:27.250Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="base">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E4%B8%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 网络管理(三) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 网络管理(三)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-11-15 20:33:53" itemprop="dateCreated datePublished" datetime="2015-11-15T20:33:53+08:00">2015-11-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-03 09:51:27" itemprop="dateModified" datetime="2019-01-03T09:51:27+08:00">2019-01-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="互联网协议入门"><a href="#互联网协议入门" class="headerlink" title="互联网协议入门"></a>互联网协议入门</h3><h4 id="物理拓扑分类"><a href="#物理拓扑分类" class="headerlink" title="物理拓扑分类"></a>物理拓扑分类</h4><p><strong>1.总线拓扑</strong></p>
+<p>总线拓扑结构是将网络中的所有设备通过相应的硬件接口直接连接到公共总线上，结点之间按广播方式通信，一个结点发出的信息，总线上的其它结点均可“收听”到。优点：结构简单、布线容易、可靠性较高，易于扩充，是局域网常采用的拓扑结构。缺点：所有的数据都需经过总线传送，总线成为整个网络的瓶颈；出现故障诊断较为困难。最著名的总线拓扑结构是以太网(Ethernet)。</p>
+<p><strong>2.星型拓扑</strong></p>
+<p>每个结点都由一条单独的通信线路与中心结点连结。优点：结构简单、容易实现、便于管理，连接点的故障容易监测和排除。缺点：中心结点是全网络的可靠瓶颈，中心结点出现故障会导致网络的瘫痪。</p>
+<p><strong>3.环形拓扑</strong></p>
+<p>各结点通过通信线路组成闭合回路，环中数据只能单向传输。优点：结构简单、容易实现，适合使用光纤，传输距离远，传输延迟确定。缺点：环网中的每个结点均成为网络可靠性的瓶颈，任意结点出现故障都会造成网络瘫痪，另外故障诊断也较困难。最著名的环形拓扑结构网络是令牌环网(Token Ring)</p>
+<p><strong>4.树型拓扑</strong></p>
+<p>是一种层次结构，结点按层次连结，信息交换主要在上下结点之间进行，相邻结点或同层结点之间一般不进行数据交换。优点：连结简单，维护方便，适用于汇集信息的应用要求。缺点：资源共享能力较低，可靠性不高，任何一个工作站或链路的故障都会影响整个网络的运行。</p>
+<p><strong>5.网状拓扑</strong></p>
+<p>又称作无规则结构，结点之间的联结是任意的，没有规律。优点：系统可靠性高，比较容易扩展，但是结构复杂，每一结点都与多点进行连结，因此必须采用路由算法和流量控制方法。目前广域网基本上采用网状拓扑结构。</p>
+<h3 id="OSI模型"><a href="#OSI模型" class="headerlink" title="OSI模型"></a>OSI模型</h3><p><strong>开放式系统互联通信参考模型</strong>（英语：Open System Interconnection Reference Model，缩写为 OSI），简称为<strong>OSI模型</strong> </p>
+<h4 id="层次划分"><a href="#层次划分" class="headerlink" title="层次划分"></a>层次划分</h4><p>根据建议X.200，OSI将计算机网络体系结构划分为以下七层，标有1～7，第1层在底部。 现“OSI/RM”是“Open Systems Interconnection Reference Model”的缩写。 </p>
+<h5 id="第7层-应用层"><a href="#第7层-应用层" class="headerlink" title="第7层 应用层"></a>第7层 应用层</h5><h5 id="主条目：应用层"><a href="#主条目：应用层" class="headerlink" title="主条目：应用层"></a>主条目：<a href="https://zh.wikipedia.org/wiki/%E5%BA%94%E7%94%A8%E5%B1%82" target="_blank" rel="noopener">应用层</a></h5><p>应用层（Application Layer）提供为应用软件而设的接口，以设置与另一应用软件之间的通信。例如: HTTP，HTTPS，FTP，TELNET，SSH，SMTP，POP3等。</p>
+<h5 id="第6层-表达层"><a href="#第6层-表达层" class="headerlink" title="第6层 表达层"></a>第6层 表达层</h5><h5 id="主条目：表达层"><a href="#主条目：表达层" class="headerlink" title="主条目：表达层"></a>主条目：<a href="https://zh.wikipedia.org/wiki/%E8%A1%A8%E9%81%94%E5%B1%82" target="_blank" rel="noopener">表达层</a></h5><p>表达层（Presentation Layer）把数据转换为能与接收者的系统格式兼容并适合传输的格式。</p>
+<h5 id="第5层-会话层"><a href="#第5层-会话层" class="headerlink" title="第5层 会话层"></a>第5层 会话层</h5><p>主条目：<a href="https://zh.wikipedia.org/wiki/%E4%BC%9A%E8%AF%9D%E5%B1%82" target="_blank" rel="noopener">会话层</a></p>
+<p>会话层（Session Layer）负责在数据传输中设置和维护计算机网络中两台计算机之间的通信连接。</p>
+<h5 id="第4层-传输层"><a href="#第4层-传输层" class="headerlink" title="第4层 传输层"></a>第4层 传输层</h5><p>主条目：<a href="https://zh.wikipedia.org/wiki/%E4%BC%A0%E8%BE%93%E5%B1%82" target="_blank" rel="noopener">传输层</a></p>
+<p>传输层（Transport Layer）把传输表头（TH）加至数据以形成数据包。传输表头包含了所使用的协议等发送信息。例如:传输控制协议（TCP）等。</p>
+<h5 id="第3层-网络层"><a href="#第3层-网络层" class="headerlink" title="第3层 网络层"></a>第3层 网络层</h5><p>主条目：<a href="https://zh.wikipedia.org/wiki/%E7%BD%91%E7%BB%9C%E5%B1%82" target="_blank" rel="noopener">网络层</a></p>
+<p>网络层（Network Layer）决定数据的路径选择和转寄，将网络表头（NH）加至数据包，以形成分组。网络表头包含了网络数据。例如:互联网协议（IP）等。</p>
+<h5 id="第2层-数据链路层"><a href="#第2层-数据链路层" class="headerlink" title="第2层 数据链路层"></a>第2层 数据链路层</h5><p>主条目：<a href="https://zh.wikipedia.org/wiki/%E6%95%B0%E6%8D%AE%E9%93%BE%E8%B7%AF%E5%B1%82" target="_blank" rel="noopener">数据链路层</a></p>
+<p>数据链路层（Data Link Layer）负责网络寻址、错误侦测和改错。当表头和表尾被加至数据包时，会形成帧。数据链表头（DLH）是包含了物理地址和错误侦测及改错的方法。数据链表尾（DLT）是一串指示数据包末端的字符串。例如以太网、无线局域网（Wi-Fi）和通用分组无线服务（GPRS）等。</p>
+<p>分为两个子层：逻辑链路控制（logic link control，LLC）子层和介质访问控制（media access control，MAC）子层。</p>
+<h5 id="第1层-物理层"><a href="#第1层-物理层" class="headerlink" title="第1层 物理层"></a>第1层 物理层</h5><p>主条目：<a href="https://zh.wikipedia.org/wiki/%E7%89%A9%E7%90%86%E5%B1%82" target="_blank" rel="noopener">物理层</a></p>
+<p>物理层（Physical Layer）在局部局域网上传送数据帧（data frame），它负责管理计算机通信设备和网络媒体之间的互通。包括了针脚、电压、线缆规范、集线器、中继器、网卡、主机适配器等。</p>
+<h3 id="数据封装"><a href="#数据封装" class="headerlink" title="数据封装"></a>数据封装</h3><p>OSI的核心思想:</p>
+<p><strong>1) 通信两端的主机能够理解对方的语言</strong></p>
+<p>这是要求主机使用相同协议格式来发送数据</p>
+<p><strong>2) 希望通信系统模块化，每个模块提供标准接口</strong></p>
+<p>每个模块给和直接耦合的模块提供标准化的流程接口，每个模块内部无论怎样实现没有硬性规定，但外在的接口一定是标准件，这样耦合的模块可以无缝对接起来。</p>
+<p>这样做的好处有：<br>(1) 由于使用标准接口，每个通信模块可以独立开发，增加自由度，提高生产效率<br>(2) 增加代码的重复利用率，由于通信模块的标准化的外在接口，应用程序可以直接使用现成的通信模块，而无需重新编码，这大大减轻了开发者的负担，间接地提供了生产效率。</p>
+<table>
+<thead>
+<tr>
+<th>OSI参考模型</th>
+<th>各层的解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>应用层</td>
+<td>为应用程序提供服务</td>
+</tr>
+<tr>
+<td>表示层</td>
+<td>数据格式转化,数据加密</td>
+</tr>
+<tr>
+<td>会话层</td>
+<td>建立,管理和维护回话</td>
+</tr>
+<tr>
+<td>传输层</td>
+<td>建立,管理和维护端到端的连接</td>
+</tr>
+<tr>
+<td>网络层</td>
+<td>IP选址及路由选择</td>
+</tr>
+<tr>
+<td>数据链路层</td>
+<td>提供介质访问和链路管理</td>
+</tr>
+<tr>
+<td>物理层</td>
+<td>物理层</td>
+</tr>
+</tbody></table>
+<p> 以上七道工序最终产生了二进制流，除了物理层之外，每道工序都会在原始数据前添加一串属于自己的协议头，每个协议头有源主机的每层工序产生，自然有理解这些协议头的对端，举例来说：</p>
+<p><strong>链路层协议头</strong>，这个协议头只有源主机、端接路由器可以理解，只会存活在源主机与其端接的中继路由器，换句话说，其生命周期只限于一根链路，只要端接路由器能顺利接收，其使命就算完成了，那路由器会将其从二进制流剥离掉，剩下打头阵的就是网络层的协议头。</p>
+<p><strong>网络层协议头</strong>，其中包含了目的地网络地址，用于指示沿途的路由器，这一串二进制流的目的地是哪里，路由器查询自己的网络地址表，决定再发给更靠近目的地的下一跳路由器。假如找到了一个出接口与下一跳路由器直连，则又要考虑如何添加链路层的协议头了，依据不同的接口类型，添加了适合此链路的链路层协议头，然后再依据物理层介质的不同，物理层将其以光、电、电磁波的信号发送出去。</p>
+<p>依照上面类似的步骤，一串二进制流每经过沿途一跳路由器，变换一次链路特有的协议头，但网络层协议头一直不会变，最终这一串二进制流到达了终点。</p>
+<p>至此，网络层协议头也完成了其使命，剥离掉网络层协议头，剥离掉之前，先读出网络层协议头的传输层协议代码，把这一串二进制流发给传输层，剩下打头阵的就是传输层的协议头。</p>
+<p><strong>传输层协议</strong>，依据传输层协议头里会话层协议代码，先剥离掉传输层协议头，把这一串二进制流发给会话层，剩下打头阵的就是会话层协议头。</p>
+<p><strong>会话层协议</strong>，依据会话层议头里表示层协议代码，先剥离掉会话层协议头，把这一串二进制流发给表示层，剩下的头阵的就是表示层协议头。</p>
+<p><strong>表示层协议</strong>，依据表示层议头里应用层协议代码，先剥离掉表示层协议头，把这一串二进制流发给应用层，剩下的头阵的就是应用层协议头。</p>
+<p><strong>应用层协议</strong>，经过以上一跳一跳路由器的中继、终点主机的一层层协议头的剥离，源主机发给终点主机的数据终于到达终点了，至于数据是文字、图片、音频、视频，则由应用层协议来最终解释。 </p>
+<p><strong>PUD</strong> :</p>
+<p>PDU: Protocol Data Unit,协议数据单元是指对等层次之间传递的数据单位 </p>
+<p>物理层的 PDU是数据位 bit </p>
+<p>数据链路层的 PDU是数据帧 frame </p>
+<p>网络层的PDU是数据包 packet </p>
+<p>传输层的 PDU是数据段 segment </p>
+<p>其他更高层次的PDU是消息 message </p>
+<p><strong>三种通讯模式</strong></p>
+<p>单播:一对一</p>
+<p>广播:一对多</p>
+<p>组播:多对多</p>
+<h3 id="网络设备"><a href="#网络设备" class="headerlink" title="网络设备"></a>网络设备</h3><h4 id="Hub集线器"><a href="#Hub集线器" class="headerlink" title="Hub集线器"></a>Hub集线器</h4><p>Hub：多端口中继器 </p>
+<p>Hub并不记忆该信息包是由哪个MAC地址发 出，哪个MAC地址在Hub的哪个端口 </p>
+<p>Hub的特点： </p>
+<p>​    共享带宽 </p>
+<p>​    半双工 </p>
+<h4 id="以太网桥"><a href="#以太网桥" class="headerlink" title="以太网桥"></a>以太网桥</h4><p>交换式以太网的优势 </p>
+<p>• 扩展了网络带宽 </p>
+<p>• 分割了网络冲突域，使网络冲突被限制在最小的范围内 </p>
+<p>• 交换机作为更加智能的交换设备，能够提供更多用户所要求的功能：优先级、 虚拟网、远程检测…… </p>
+<h4 id="以太网桥工作原理"><a href="#以太网桥工作原理" class="headerlink" title="以太网桥工作原理"></a>以太网桥工作原理</h4><p>以太网桥监听数据帧中源MAC地址，学习MAC，建立MAC表 </p>
+<p>对于未知MAC地址，网桥将转发到除接收该帧的端口之外的所有端口 </p>
+<p>当网桥接到一个数据帧时，如果该帧的目的位于接收端口所在网段上，它就过 滤掉该数据帧；如果目的MAC地址在位于另外一个端口，网桥就将该帧转发到 该端口 </p>
+<p>当网桥接到广播帧时候，它立即转发到除接收端口之外的所有其他端口 </p>
+<h4 id="HUB和交换机"><a href="#HUB和交换机" class="headerlink" title="HUB和交换机"></a>HUB和交换机</h4><p> 集线器属于OSI的第一层物理层设备，而网桥属于OSI的第二层数据链路层设备 </p>
+<p> 从工作方式来看，集线器是一种广播模式，所有端口在一个冲突域里面。网桥 的可以通过端口隔离冲突 </p>
+<p> Hub是所有共享总线和共享带宽。网桥每个端口占一个带宽 </p>
+<h4 id="路由器"><a href="#路由器" class="headerlink" title="路由器"></a>路由器</h4><p>为了实现路由,路由器需要做下列事情: </p>
+<p>分隔广播域 </p>
+<p>选择路由表中到达目标最好的路径 </p>
+<p>维护和检查路由信息 </p>
+<p>连接广域网 </p>
+<h4 id="路由"><a href="#路由" class="headerlink" title="路由"></a>路由</h4><p>把一个数据包从一个设备发送到不同网络里的另一个设备上去。这些工 作依靠路由器来完成。路由器只关心网络的状态和决定网络中的最佳路径。 路由的实现依靠路由器中的路由表来完成 </p>
+<h4 id="VLAN"><a href="#VLAN" class="headerlink" title="VLAN"></a>VLAN</h4><p>• 分隔广播域 </p>
+<p>• 安全 </p>
+<p>• 灵活管理</p>
+<p>资料来源:</p>
+<p>[1] 拓扑</p>
+<p> <a href="https://baike.baidu.com/item/%E6%8B%93%E6%89%91" target="_blank" rel="noopener">https://baike.baidu.com/item/%E6%8B%93%E6%89%91</a></p>
+<p>[2]OSI模型</p>
+<p> <a href="https://zh.wikipedia.org/wiki/OSI%E6%A8%A1%E5%9E%8B" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/OSI%E6%A8%A1%E5%9E%8B</a></p>
+<p>[3] 如何生动形象、切中要点地讲解 OSI 七层模型和两主机传输过程? - 车小胖的回答 - 知乎</p>
+<p> <a href="https://www.zhihu.com/question/24002080/answer/150830722" target="_blank" rel="noopener">https://www.zhihu.com/question/24002080/answer/150830722</a> </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/base/" rel="tag"># base</a>
+              <a href="/tags/network/" rel="tag"># network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E4%BA%8C/" rel="prev" title="Linux-网络管理(二)">
+      <i class="fa fa-chevron-left"></i> Linux-网络管理(二)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86-%E5%9B%9B/" rel="next" title="Linux 网络管理(四)">
+      Linux 网络管理(四) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#互联网协议入门"><span class="nav-number">1.</span> <span class="nav-text">互联网协议入门</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#物理拓扑分类"><span class="nav-number">1.1.</span> <span class="nav-text">物理拓扑分类</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OSI模型"><span class="nav-number">2.</span> <span class="nav-text">OSI模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#层次划分"><span class="nav-number">2.1.</span> <span class="nav-text">层次划分</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#第7层-应用层"><span class="nav-number">2.1.1.</span> <span class="nav-text">第7层 应用层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#主条目：应用层"><span class="nav-number">2.1.2.</span> <span class="nav-text">主条目：应用层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第6层-表达层"><span class="nav-number">2.1.3.</span> <span class="nav-text">第6层 表达层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#主条目：表达层"><span class="nav-number">2.1.4.</span> <span class="nav-text">主条目：表达层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第5层-会话层"><span class="nav-number">2.1.5.</span> <span class="nav-text">第5层 会话层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第4层-传输层"><span class="nav-number">2.1.6.</span> <span class="nav-text">第4层 传输层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第3层-网络层"><span class="nav-number">2.1.7.</span> <span class="nav-text">第3层 网络层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第2层-数据链路层"><span class="nav-number">2.1.8.</span> <span class="nav-text">第2层 数据链路层</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第1层-物理层"><span class="nav-number">2.1.9.</span> <span class="nav-text">第1层 物理层</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据封装"><span class="nav-number">3.</span> <span class="nav-text">数据封装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络设备"><span class="nav-number">4.</span> <span class="nav-text">网络设备</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Hub集线器"><span class="nav-number">4.1.</span> <span class="nav-text">Hub集线器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#以太网桥"><span class="nav-number">4.2.</span> <span class="nav-text">以太网桥</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#以太网桥工作原理"><span class="nav-number">4.3.</span> <span class="nav-text">以太网桥工作原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HUB和交换机"><span class="nav-number">4.4.</span> <span class="nav-text">HUB和交换机</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#路由器"><span class="nav-number">4.5.</span> <span class="nav-text">路由器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#路由"><span class="nav-number">4.6.</span> <span class="nav-text">路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VLAN"><span class="nav-number">4.7.</span> <span class="nav-text">VLAN</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

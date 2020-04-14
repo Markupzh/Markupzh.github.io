@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="文件属性操作​    chown 设置文件的所有者  ​    chgrp 设置文件的属组信息  修改文件的主属性和属组修改文件的属主:chown  chown [OPTION]... \[OWNER][:[GROUP]] FILE... 用法:  ​    OWNER  ​    OWNER:GROUP  ​    :GROUP  ​    命令中的冒号可用.替换  ​    -R: 递归  ​">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 文件权限及属性">
+<meta property="og:url" content="http://yoursite.com/Linux-%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90%E5%8F%8A%E5%B1%9E%E6%80%A7/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="文件属性操作​    chown 设置文件的所有者  ​    chgrp 设置文件的属组信息  修改文件的主属性和属组修改文件的属主:chown  chown [OPTION]... \[OWNER][:[GROUP]] FILE... 用法:  ​    OWNER  ​    OWNER:GROUP  ​    :GROUP  ​    命令中的冒号可用.替换  ​    -R: 递归  ​">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-07-23T12:05:04.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:31:39.467Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90%E5%8F%8A%E5%B1%9E%E6%80%A7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 文件权限及属性 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90%E5%8F%8A%E5%B1%9E%E6%80%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 文件权限及属性
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-07-23 20:05:04" itemprop="dateCreated datePublished" datetime="2015-07-23T20:05:04+08:00">2015-07-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:31:39" itemprop="dateModified" datetime="2019-01-02T23:31:39+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="文件属性操作"><a href="#文件属性操作" class="headerlink" title="文件属性操作"></a>文件属性操作</h4><p>​    chown 设置文件的所有者 </p>
+<p>​    chgrp 设置文件的属组信息 </p>
+<h4 id="修改文件的主属性和属组"><a href="#修改文件的主属性和属组" class="headerlink" title="修改文件的主属性和属组"></a>修改文件的主属性和属组</h4><p>修改文件的属主:chown </p>
+<pre><code>chown [OPTION]... \[OWNER][:[GROUP]] FILE... </code></pre><p>用法: </p>
+<p>​    OWNER </p>
+<p>​    OWNER:GROUP </p>
+<p>​    :GROUP </p>
+<p>​    命令中的冒号可用.替换 </p>
+<p>​    -R: 递归 </p>
+<p>​    chown [OPTION]… –reference=RFILE FILE…     </p>
+<p>修改文件的属组:chgrp </p>
+<p>​    chgrp [OPTION]… GROUP FILE… </p>
+<p>​    chgrp [OPTION]… –reference=RFILE FILE… </p>
+<p>​    -R 递归 </p>
+<h4 id="文件权限"><a href="#文件权限" class="headerlink" title="文件权限"></a>文件权限</h4><p>文件的权限主要针对三类对象进行定义 </p>
+<p>​    owner: 属主, u </p>
+<p>​    group: 属组, g </p>
+<p>​    other: 其他, o </p>
+<p>每个文件针对每类访问者都定义了三种权限 </p>
+<p>​    r: Readable </p>
+<p>​    w: Writable </p>
+<p>​    x: eXcutable     </p>
+<p>文件:</p>
+<p>​    r: 可使用文件查看类工具获取其内容 </p>
+<p>​    w: 可修改其内容 </p>
+<p>​    x: 可以把此文件提请内核启动为一个进程     </p>
+<p>目录: </p>
+<p>​    r: 可以使用ls查看此目录中文件列表 </p>
+<p>​    w: 可在此目录中创建文件,也可删除此目录中的文件 </p>
+<p>​    x: 可以使用ls -l查看此目录中文件元数据(须配合r),可以cd进入此目录 </p>
+<p>​    X:只给目录x权限,不给文件x权限 </p>
+<h4 id="文件权限操作"><a href="#文件权限操作" class="headerlink" title="文件权限操作"></a>文件权限操作</h4><p>文件权限操作命令:chmod </p>
+<p>文件权限(rwx|X) </p>
+<h4 id="八进制数字"><a href="#八进制数字" class="headerlink" title="八进制数字"></a>八进制数字</h4><p>—     000 0 </p>
+<p>–x     001 1 </p>
+<p>-w-     010 2 </p>
+<p>-wx     011 3 </p>
+<p>r–     100 4 </p>
+<p>r-x     101 5 </p>
+<p>rw-     110 6 </p>
+<p>rwx    111 7 </p>
+<p>例如: </p>
+<pre><code>640: rw-r----- 
+
+755: rwxr-xr-x </code></pre><h4 id="修改文件权限"><a href="#修改文件权限" class="headerlink" title="修改文件权限"></a>修改文件权限</h4><p>chmod [OPTION]… OCTAL-MODE FILE… </p>
+<p>​    -R: 递归修改权限 </p>
+<p>chmod [OPTION]… MODE[,MODE]… FILE… </p>
+<p>MODE: </p>
+<p>修改一类用户的所有权限: </p>
+<p>​    u= g= o= ug= a= u=,g= </p>
+<p>修改一类用户某位或某些位权限 </p>
+<p>​    u+ u- g+ g- o+ o- a+ a- + - </p>
+<p>chmod [OPTION]… –reference=RFILE FILE… </p>
+<p>​    参考RFILE文件的权限,将FILE的修改为同RFILE </p>
+<h4 id="权限设置示例"><a href="#权限设置示例" class="headerlink" title="权限设置示例"></a>权限设置示例</h4><p>chgrp sales testfile </p>
+<p>chown root:admins testfile </p>
+<p>chmod u+wx,g-r,o=rx file </p>
+<p>chmod -R g+rwX /testdir </p>
+<p>chmod 600 file </p>
+<p>chown mark testfile </p>
+<h4 id="新建文件和目录的默认权限"><a href="#新建文件和目录的默认权限" class="headerlink" title="新建文件和目录的默认权限"></a>新建文件和目录的默认权限</h4><p>umask值 可以用来保留在创建文件权限 </p>
+<p>新建FILE权限: 666-umask </p>
+<p>​    如果所得结果某位存在执行(奇数)权限,则将其权限+1 </p>
+<p>新建DIR权限: 777-umask </p>
+<p>非特权用户umask是 002 </p>
+<p>root的umask 是 022 </p>
+<p>umask: 查看 </p>
+<p>umask #: 设定 </p>
+<p>​    umask 002 </p>
+<p>​    umask –S 模式方式显示 </p>
+<p>​    umask –p 输出可被调用     </p>
+<p>全局设置: /etc/bashrc 用户设置:~/.bashrc </p>
+<h4 id="Linux文件系统上的特殊权限"><a href="#Linux文件系统上的特殊权限" class="headerlink" title="Linux文件系统上的特殊权限"></a>Linux文件系统上的特殊权限</h4><p>SUID, SGID, Sticky </p>
+<p>三种常用权限:r, w, x user, group, other </p>
+<p>安全上下文 </p>
+<p>前提:进程有属主和属组；文件有属主和属组 </p>
+<p>(1) 任何一个可执行程序文件能不能启动为进程,取决发起者对程序文件是否拥有 执行权限 </p>
+<p>(2) 启动为进程之后,其进程的属主为发起者,进程的属组为发起者所属的组 </p>
+<p>(3) 进程访问文件时的权限,取决于进程的发起者 </p>
+<p>​    (a) 进程的发起者,同文件的属主:则应用文件属主权限 </p>
+<p>​    (b) 进程的发起者,属于文件属组；则应用文件属组权限 </p>
+<p>​    (c) 应用文件“其它”权限     </p>
+<h4 id="可执行文件上的SUID权限"><a href="#可执行文件上的SUID权限" class="headerlink" title="可执行文件上的SUID权限"></a>可执行文件上的SUID权限</h4><p>任何一个可执行程序文件能不能启动为进程:取决发起者对程序文件是否拥有 执行权限 </p>
+<p>启动为进程之后,其进程的属主为原程序文件的属主 </p>
+<p>SUID只对二进制可执行程序有效 </p>
+<p>SUID设置在目录上无意义 </p>
+<p>权限设定: </p>
+<p>​    chmod u+s FILE… </p>
+<p>​    chmod u-s FILE… </p>
+<p>​    SUID使用数字表示法可以用 4 来表示.</p>
+<h4 id="可执行文件上SGID权限"><a href="#可执行文件上SGID权限" class="headerlink" title="可执行文件上SGID权限"></a>可执行文件上SGID权限</h4><p>任何一个可执行程序文件能不能启动为进程,取决发起者对程序文件是否拥有 执行权限 </p>
+<p>启动为进程之后,其进程的属组为原程序文件的属组 </p>
+<p>权限设定: </p>
+<p>​    chmod g+s FILE… </p>
+<p>​    chmod g-s FILE… </p>
+<h4 id="目录上的SGID权限"><a href="#目录上的SGID权限" class="headerlink" title="目录上的SGID权限"></a>目录上的SGID权限</h4><p>默认情况下,用户创建文件时,其属组为此用户所属的主组 </p>
+<p>一旦某目录被设定了SGID,则对此目录有写权限的用户在此目录中创建的文件 所属的组为此目录的属组 </p>
+<p>通常用于创建一个协作目录 </p>
+<p>权限设定: </p>
+<p>​    chmod g+s DIR… </p>
+<p>​    chmod g-s DIR…     </p>
+<p>​    SGID使用数字表示法可以用 2 来表示.</p>
+<h4 id="Sticky位"><a href="#Sticky位" class="headerlink" title="Sticky位"></a>Sticky位</h4><p>具有写权限的目录通常用户可以删除该目录中的任何文件,无论该文件的权限 或拥有权 </p>
+<p>在目录设置Sticky 位,只有文件的所有者或root可以删除该文件 </p>
+<p>sticky 设置在文件上无意义 </p>
+<p>权限设定: </p>
+<p>​    chmod o+t DIR… </p>
+<p>​    chmod o-t DIR…     </p>
+<p>​    Sticky使用数字表示发可以用 1 来表示.</p>
+<p>例如: </p>
+<p>​    ls -ld /tmp drwxrwxrwt 12 root root 4096 Nov 2 15:44 /tmp </p>
+<h4 id="特殊权限数字法"><a href="#特殊权限数字法" class="headerlink" title="特殊权限数字法"></a>特殊权限数字法</h4><p>SUID SGID STICKY </p>
+<p>000 0 </p>
+<p>001 1 </p>
+<p>010 2 </p>
+<p>011 3 </p>
+<p>100 4 </p>
+<p>101 5 </p>
+<p>110 6 </p>
+<p>111 7 </p>
+<p>chmod 4777 /tmp/a.txt </p>
+<h4 id="权限位映射"><a href="#权限位映射" class="headerlink" title="权限位映射"></a>权限位映射</h4><p>SUID: user,占据属主的执行权限位 </p>
+<p>​    s: 属主拥有x权限 </p>
+<p>​    S: 属主没有x权限     </p>
+<p>SGID: group,占据属组的执行权限位 </p>
+<pre><code>s: group拥有x权限 </code></pre><p>​    S: group没有x权限 </p>
+<p>Sticky: other,占据other的执行权限位 </p>
+<p>​    t: other拥有x权限 </p>
+<p>​    T: other没有x权限     </p>
+<p><strong>特殊权限</strong></p>
+<p>suid (4) : 作用于二进制程序,功能: 当用户执行此程序的时,将继承此文件所有者的权限</p>
+<p>sgid (2) : 作用于二进制程序,功能: 当用户执行此程序的时,将继承此文件所有组的权限</p>
+<pre><code>作用于目录上,功能:当用户在目录新建文件时,新文件的所属组自动继承此目录的所属组</code></pre><p>sticky (1) : 作用于目录上,功能: 此目录中的文件,只能被所有者自己删除</p>
+<h4 id="设定文件特定属性"><a href="#设定文件特定属性" class="headerlink" title="设定文件特定属性"></a>设定文件特定属性</h4><p>chattr +i 不能删除,改名,更改 </p>
+<p>chattr +a 只能追加内容 </p>
+<p>lsattr 显示特定属性 </p>
+<h4 id="访问控制列表"><a href="#访问控制列表" class="headerlink" title="访问控制列表"></a>访问控制列表</h4><p>ACL:Access Control List,实现灵活的权限管理 </p>
+<p>除了文件的所有者,所属组和其它人,可以对更多的用户设置权限 </p>
+<p>CentOS7 默认创建的xfs和ext4文件系统具有ACL功能 </p>
+<p>CentOS7 之前版本,默认手工创建的ext4文件系统无ACL功能,需手动增加 </p>
+<pre><code>tune2fs –o acl /dev/sdb1 
+
+mount –o acl /dev/sdb1 /mnt/test </code></pre><p>ACL生效顺序:所有者,自定义用户,自定义组,其他人 </p>
+<p>为多用户或者组的文件和目录赋予访问权限rwx </p>
+<p>• mount -o acl /directory </p>
+<p>• getfacl file |directory </p>
+<p>• setfacl -m u:mark:rwx file|directory </p>
+<p>• setfacl -Rm g:sales:rwX directory </p>
+<p>• setfacl -M file.acl file|directory </p>
+<p>• setfacl -m g:salesgroup:rw file| directory </p>
+<p>• setfacl -m d:u:mark:rx directory </p>
+<p>• setfacl -x u:mark file |directory </p>
+<p>• setfacl -X file.acl directory </p>
+<p>ACL文件上的group权限是mask 值(自定义用户,自定义组,拥有组的最大权 限),而非传统的组权限 </p>
+<p>getfacl 可看到特殊权限:flags </p>
+<p>通过ACL赋予目录默认x权限,目录内文件也不会继承x权限 </p>
+<p>base ACL 不能删除 </p>
+<p>setfacl -k dir 删除默认ACL权限 </p>
+<p>setfacl –b file1清除所有ACL权限 </p>
+<p>getfacl file1 | setfacl –set-file=- file2 复制file1的acl权限给file2 </p>
+<p>mask只影响除所有者和other的之外的人和组的最大权限 </p>
+<p>Mask需要与用户的权限进行逻辑与运算后,才能变成有限的权限(Effective Permission) </p>
+<p>用户或组的设置必须存在于mask权限设定范围内才会生效 </p>
+<pre><code>setfacl -m mask::rx file </code></pre><p>–set选项会把原有的ACL项都删除,用新的替代,需要注意的是一定要包含 UGO的设置,不能象-m一样只是添加ACL就可以 </p>
+<p>示例: </p>
+<pre><code>setfacl --set u::rw,u:mark:rw,g::r,o::- file1 </code></pre><p>备份和恢复ACL </p>
+<p>主要的文件操作命令cp和mv都支持ACL,只是cp命令需要加上-p 参数。但是 tar等常见的备份工具是不会保留目录和文件的ACL信息 </p>
+<pre><code>getfacl -R /tmp/dir1 &gt; acl.txt 
+
+setfacl -R -b /tmp/dir1 
+
+setfacl -R --set-file=acl.txt  /tmp/dir1 
+
+setfacl --restore acl.txt 
+
+getfacl -R /tmp/dir1 </code></pre>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/" rel="prev" title="Linux 文件管理">
+      <i class="fa fa-chevron-left"></i> Linux 文件管理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%A0%87%E5%87%86IO%E5%92%8C%E7%AE%A1%E9%81%93/" rel="next" title="Linux 标准IO和管道">
+      Linux 标准IO和管道 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#文件属性操作"><span class="nav-number">1.</span> <span class="nav-text">文件属性操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#修改文件的主属性和属组"><span class="nav-number">2.</span> <span class="nav-text">修改文件的主属性和属组</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件权限"><span class="nav-number">3.</span> <span class="nav-text">文件权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件权限操作"><span class="nav-number">4.</span> <span class="nav-text">文件权限操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#八进制数字"><span class="nav-number">5.</span> <span class="nav-text">八进制数字</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#修改文件权限"><span class="nav-number">6.</span> <span class="nav-text">修改文件权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#权限设置示例"><span class="nav-number">7.</span> <span class="nav-text">权限设置示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#新建文件和目录的默认权限"><span class="nav-number">8.</span> <span class="nav-text">新建文件和目录的默认权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux文件系统上的特殊权限"><span class="nav-number">9.</span> <span class="nav-text">Linux文件系统上的特殊权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可执行文件上的SUID权限"><span class="nav-number">10.</span> <span class="nav-text">可执行文件上的SUID权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可执行文件上SGID权限"><span class="nav-number">11.</span> <span class="nav-text">可执行文件上SGID权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#目录上的SGID权限"><span class="nav-number">12.</span> <span class="nav-text">目录上的SGID权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Sticky位"><span class="nav-number">13.</span> <span class="nav-text">Sticky位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#特殊权限数字法"><span class="nav-number">14.</span> <span class="nav-text">特殊权限数字法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#权限位映射"><span class="nav-number">15.</span> <span class="nav-text">权限位映射</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#设定文件特定属性"><span class="nav-number">16.</span> <span class="nav-text">设定文件特定属性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#访问控制列表"><span class="nav-number">17.</span> <span class="nav-text">访问控制列表</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

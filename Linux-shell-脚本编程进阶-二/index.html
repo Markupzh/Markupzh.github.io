@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="shell中的函数函数function是由若干条shell命令组成的语句块,实现代码重用和模块化编程它与shell程序形式上是相似的,不同的是它不是一个单独的进程,不能独立运行,而是shell程序的一部分 函数和shell程序比较相似,区别在于:​    Shell程序在子Shell中运行​    而Shell函数在当前Shell中运行.因此在当前Shell中,函数可以对shell中变量进行修改">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux shell 脚本编程进阶(二)">
+<meta property="og:url" content="http://yoursite.com/Linux-shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%BA%8C/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="shell中的函数函数function是由若干条shell命令组成的语句块,实现代码重用和模块化编程它与shell程序形式上是相似的,不同的是它不是一个单独的进程,不能独立运行,而是shell程序的一部分 函数和shell程序比较相似,区别在于:​    Shell程序在子Shell中运行​    而Shell函数在当前Shell中运行.因此在当前Shell中,函数可以对shell中变量进行修改">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-08-23T13:30:35.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:33:11.673Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="shell">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%BA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux shell 脚本编程进阶(二) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux shell 脚本编程进阶(二)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-08-23 21:30:35" itemprop="dateCreated datePublished" datetime="2015-08-23T21:30:35+08:00">2015-08-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:33:11" itemprop="dateModified" datetime="2019-01-02T23:33:11+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="shell中的函数"><a href="#shell中的函数" class="headerlink" title="shell中的函数"></a>shell中的函数</h3><p>函数function是由若干条shell命令组成的语句块,实现代码重用和模块化编程<br>它与shell程序形式上是相似的,不同的是它不是一个单独的进程,不能独立运行,而是shell程序的一部分<br> 函数和shell程序比较相似,区别在于:<br>​    <strong>Shell程序在子Shell中运行</strong><br>​    <strong>而Shell函数在当前Shell中运行.因此在当前Shell中,函数可以对shell中变量进行修改</strong></p>
+<h4 id="定义函数"><a href="#定义函数" class="headerlink" title="定义函数"></a>定义函数</h4><p> 函数由两部分组成:函数名和函数体<br><code>help function</code><br> 语法一:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">f_name （）&#123;</span><br><span class="line">	...函数体...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 语法二:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function f_name &#123;</span><br><span class="line">	...函数体...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 语法三:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function f_name （） &#123;</span><br><span class="line">	...函数体...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="函数使用"><a href="#函数使用" class="headerlink" title="函数使用"></a>函数使用</h4><p>函数的定义和使用:<br>​    可在交互式环境下定义函数<br>​    可将函数放在脚本文件中作为它的一部分<br>​    可放在只包含函数的单独文件中<br>调用:函数只有被调用才会执行<br>​    调用:给定函数名<br>​    函数名出现的地方,会被自动替换为函数代码<br>函数的生命周期:被调用时创建,返回时终止</p>
+<h4 id="函数返回值"><a href="#函数返回值" class="headerlink" title="函数返回值"></a>函数返回值</h4><p>函数有两种返回值:<br>函数的执行结果返回值:<br>​    (1) 使用echo等命令进行输出<br>​    (2) 函数体中调用命令的输出结果<br>函数的退出状态码:<br>​    (1) 默认取决于函数中执行的最后一条命令的退出状态码<br>​    (2) 自定义退出状态码,其格式为:<br>​    return 从函数中返回,用最后状态命令决定返回值<br>​    return 0 无错误返回.<br>​    return 1-255 有错误返回</p>
+<h4 id="交互式环境下定义和使用函数"><a href="#交互式环境下定义和使用函数" class="headerlink" title="交互式环境下定义和使用函数"></a>交互式环境下定义和使用函数</h4><p>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dir() &#123;</span><br><span class="line"><span class="meta"> &gt;</span><span class="bash"> ls -l</span></span><br><span class="line"><span class="meta"> &gt;</span><span class="bash"> &#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>定义该函数后,若在$后面键入dir,其显示结果同ls -l的作用相同<br><code>$ dir</code></p>
+<p>该dir函数将一直保留到用户从系统退出,或执行了如下所示的unset命令<br><code>unset dir</code></p>
+<h4 id="在脚本中定义及使用函数"><a href="#在脚本中定义及使用函数" class="headerlink" title="在脚本中定义及使用函数"></a>在脚本中定义及使用函数</h4><p>函数在使用前必须定义,因此应将函数定义放在脚本开始部分,直至shell首次发现它<br>后才能使用<br>调用函数仅使用其函数名即可<br>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cat func1</span><br><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> func1</span></span><br><span class="line">hello()</span><br><span class="line">&#123;</span><br><span class="line">	echo "Hello there today's date is `date +%F`"</span><br><span class="line">&#125;</span><br><span class="line">echo "now going to the function hello"</span><br><span class="line">hello</span><br><span class="line">echo “back from the function”</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="使用函数文件"><a href="#使用函数文件" class="headerlink" title="使用函数文件"></a>使用函数文件</h4><p>可以将经常使用的函数存入函数文件,然后将函数文件载入shell<br>文件名可任意选取,但最好与相关任务有某种联系.例如:functions.main<br>一旦函数文件载入shell,就可以在命令行或脚本中调用函数.可以使用set命<br>令查看所有定义的函数,其输出列表包括已经载入shell的所有函数<br>若要改动函数,首先用unset命令从shell中删除函数.改动完毕后,再重新载<br>入此文件</p>
+<h4 id="创建函数文件"><a href="#创建函数文件" class="headerlink" title="创建函数文件"></a>创建函数文件</h4><p>函数文件示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">cat functions.main</span><br><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line"><span class="meta">#</span><span class="bash">functions.main</span></span><br><span class="line">findit()</span><br><span class="line">&#123;</span><br><span class="line"> 	if [ $# -lt 1 ] ; then</span><br><span class="line"> 		echo "Usage:findit file"</span><br><span class="line"> 		return 1</span><br><span class="line"> 	fi</span><br><span class="line"> 	find / -name $1 –print</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="载入函数"><a href="#载入函数" class="headerlink" title="载入函数"></a>载入函数</h4><p>函数文件已创建好后,要将它载入shell<br>定位函数文件并载入shell的格式<br>​    <code>. filename</code> 或 <code>source filename</code><br>注意:此即&lt;点&gt; &lt;空格&gt; &lt;文件名&gt;这里的文件名要带正确路径<br>示例:<br>​    上例中的函数,可使用如下命令:<br>​    <code>. functions.main</code>    </p>
+<h4 id="检查载入函数"><a href="#检查载入函数" class="headerlink" title="检查载入函数"></a>检查载入函数</h4><p>使用set命令检查函数是否已载入.set命令将在shell中显示所有的载入函数<br>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">set</span><br><span class="line"> findit=( )</span><br><span class="line"> &#123;</span><br><span class="line"> 	if [ $# -lt 1 ]; then</span><br><span class="line"> 	echo "usage :findit file";</span><br><span class="line"> 	return 1</span><br><span class="line"> 	fi</span><br><span class="line"> 	find / -name $1 -print</span><br><span class="line"> &#125;</span><br><span class="line"> …</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="执行shell函数"><a href="#执行shell函数" class="headerlink" title="执行shell函数"></a>执行shell函数</h4><p>要执行函数,简单地键入函数名即可<br>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">findit groups</span><br><span class="line">/usr/bin/groups</span><br><span class="line">/usr/local/backups/groups.bak</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="删除shell函数"><a href="#删除shell函数" class="headerlink" title="删除shell函数"></a>删除shell函数</h4><p>现在对函数做一些改动后,需要先删除函数,使其对shell不可用.使用unset命<br>令完成删除函数<br>命令格式为:<br>​    <code>unset function_name</code><br>示例:<br>​    <code>unset findit</code><br>​    再键入set命令,函数将不再显示<br>环境函数<br>使子进程也可使用<br>声明:export -f function_name<br>查看:export -f 或 declare -xf</p>
+<h4 id="函数参数"><a href="#函数参数" class="headerlink" title="函数参数"></a>函数参数</h4><p>函数可以接受参数:<br>​    传递参数给函数:调用函数时,在函数名后面以空白分隔给定参数列表即可;例如“testfunc arg1 arg2 …”<br>​    在函数体中当中,可使用$1, $2, …调用这些参数;还可以使用$@, $*, $#等特殊变量</p>
+<h4 id="函数变量"><a href="#函数变量" class="headerlink" title="函数变量"></a>函数变量</h4><p>变量作用域:<br>​    环境变量:当前shell和子shell有效<br>​    本地变量:只在当前shell进程有效,为执行脚本会启动专用子shell进程;因此,本地变量的作用范围是当前shell脚本程序文件,包括脚本中的函数<br>​    局部变量:函数的生命周期;函数结束时变量被自动销毁<br>注意:如果函数中有局部变量,如果其名称同本地变量,使用局部变量<br>在函数中定义局部变量的方法<br>​    <code>local NAME=VALUE</code></p>
+<h4 id="函数递归示例"><a href="#函数递归示例" class="headerlink" title="函数递归示例"></a>函数递归示例</h4><p>函数递归:<br>​    函数直接或间接调用自身<br>​    注意递归层数<br>递归实例:<br>阶乘是基斯顿·卡曼于 1808 年发明的运算符号,是数学术语<br>一个正整数的阶乘（factorial）是所有小于及等于该数的正整数的积,并且有0的阶乘为1,自然数n的阶乘写作n!<br>​    n!=1×2×3×…×n<br>​    阶乘亦可以递归方式定义:0!=1,n!=(n-1)!×n<br>​    n!=n(n-1)(n-2)…1<br>​    n(n-1)! = n(n-1)(n-2)!</p>
+<p>例程:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line">fact() &#123;</span><br><span class="line">	if [ $1 -eq 0 -o $1 -eq 1 ]; then</span><br><span class="line">		echo 1</span><br><span class="line">	else</span><br><span class="line">		echo $[$1*$(fact $[$1-1])]</span><br><span class="line">	fi</span><br><span class="line">&#125;</span><br><span class="line">fact $1</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="fork炸弹"><a href="#fork炸弹" class="headerlink" title="fork炸弹"></a>fork炸弹</h4><p>fork炸弹是一种恶意程序,它的内部是一个不断在fork进程的无限循环,实质是一个简单的递归程序.由于程序是递归的,如果没有任何限制,这会导致这个简单的程序迅速耗尽系统里面的所有资源<br>函数实现<br><code>:(){ :|:&amp; };:</code></p>
+<p><code>bomb() { bomb | bomb &amp; }; bomb</code></p>
+<p>脚本实现</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cat Bomb.sh</span><br><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">./$0|./$0&amp;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/shell/" rel="tag"># shell</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%B8%80/" rel="prev" title="Linux shell 脚本编程进阶(一)">
+      <i class="fa fa-chevron-left"></i> Linux shell 脚本编程进阶(一)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-Shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%B8%89/" rel="next" title="Linux Shell 脚本编程进阶(三)">
+      Linux Shell 脚本编程进阶(三) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#shell中的函数"><span class="nav-number">1.</span> <span class="nav-text">shell中的函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#定义函数"><span class="nav-number">1.1.</span> <span class="nav-text">定义函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数使用"><span class="nav-number">1.2.</span> <span class="nav-text">函数使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数返回值"><span class="nav-number">1.3.</span> <span class="nav-text">函数返回值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#交互式环境下定义和使用函数"><span class="nav-number">1.4.</span> <span class="nav-text">交互式环境下定义和使用函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#在脚本中定义及使用函数"><span class="nav-number">1.5.</span> <span class="nav-text">在脚本中定义及使用函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用函数文件"><span class="nav-number">1.6.</span> <span class="nav-text">使用函数文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建函数文件"><span class="nav-number">1.7.</span> <span class="nav-text">创建函数文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#载入函数"><span class="nav-number">1.8.</span> <span class="nav-text">载入函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#检查载入函数"><span class="nav-number">1.9.</span> <span class="nav-text">检查载入函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#执行shell函数"><span class="nav-number">1.10.</span> <span class="nav-text">执行shell函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除shell函数"><span class="nav-number">1.11.</span> <span class="nav-text">删除shell函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数参数"><span class="nav-number">1.12.</span> <span class="nav-text">函数参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数变量"><span class="nav-number">1.13.</span> <span class="nav-text">函数变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#函数递归示例"><span class="nav-number">1.14.</span> <span class="nav-text">函数递归示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#fork炸弹"><span class="nav-number">1.15.</span> <span class="nav-text">fork炸弹</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

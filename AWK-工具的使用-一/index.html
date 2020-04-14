@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="AWK介绍awk:Aho, Weinberger, Kernighan,报告生成器,格式化文本输出 有多种版本:New awk(nawk),GNU awk( gawk) gawk:模式扫描和处理语言 基本用法:    awk [options] ‘program’ var&#x3D;value file…    awk [options] -f programfile var&#x3D;value file…">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AWK 工具的使用(一)">
+<meta property="og:url" content="http://yoursite.com/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="AWK介绍awk:Aho, Weinberger, Kernighan,报告生成器,格式化文本输出 有多种版本:New awk(nawk),GNU awk( gawk) gawk:模式扫描和处理语言 基本用法:    awk [options] ‘program’ var&#x3D;value file…    awk [options] -f programfile var&#x3D;value file…">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-09-11T05:18:12.000Z">
+<meta property="article:modified_time" content="2018-09-11T08:46:22.004Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="AWK">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>AWK 工具的使用(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AWK 工具的使用(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-11 13:18:12 / 修改时间：16:46:22" itemprop="dateCreated datePublished" datetime="2018-09-11T13:18:12+08:00">2018-09-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="AWK介绍"><a href="#AWK介绍" class="headerlink" title="AWK介绍"></a>AWK介绍</h3><p>awk:Aho, Weinberger, Kernighan,报告生成器,格式化文本输出<br> 有多种版本:New awk(nawk),GNU awk( gawk)<br> gawk:模式扫描和处理语言<br> 基本用法:<br>    awk [options] ‘program’ var=value file…<br>    awk [options] -f programfile var=value file…<br>    awk [options] ‘BEGIN{ action;… } pattern{ action;… } END{ action;… }’ file …<br>    awk 程序通常由:BEGIN语句块、能够使用模式匹配的通用语句块、END语句块,共3部分组成<br>    program通常是被单引号或双引号中<br> 选项:<br>    -F 指明输入时用到的字段分隔符<br>    -v var=value: 自定义变量</p>
+<h3 id="awk语言"><a href="#awk语言" class="headerlink" title="awk语言"></a>awk语言</h3><p>基本格式:awk [options] ‘program’ file…<br>program:pattern{action statements;..}<br>pattern和action:<br>• pattern部分决定动作语句何时触发及触发事件<br>    BEGIN,END<br>• action statements对数据进行处理,放在{}内指明<br>    print, printf<br>分割符、域和记录<br>• awk执行时,由分隔符分隔的字段(域)标记$1,$2..$n称为域标识.$0为所有域,注意:和shell中变量$符含义不同<br>• 文件的每一行称为记录<br>• 省略action,则默认执行 print $0 的操作</p>
+<h3 id="awk工作原理"><a href="#awk工作原理" class="headerlink" title="awk工作原理"></a>awk工作原理</h3><p>第一步:执行BEGIN{action;… }语句块中的语句</p>
+<p>第二步:从文件或标准输入(stdin)读取一行,然后执行pattern{ action;… }语句块,它逐行扫描文件,从第一行到最后一行重复这个过程,直到文件全部被读取完毕.</p>
+<p>第三步:当读至输入流末尾时,执行END{action;…}语句块</p>
+<p>BEGIN语句块在awk开始从输入流中读取行之前被执行,这是一个可选的语句块,比如变量初始化、打印输出表格的表头等语句通常可以写在BEGIN语句块中</p>
+<p>END语句块在awk从输入流中读取完所有的行之后即被执行,比如打印所有行的分析结果这类信息汇总都是在END语句块中完成,它也是一个可选语句块</p>
+<p>pattern语句块中的通用命令是最重要的部分,也是可选的.如果没有提供pattern语句块,则默认执行{ print },即打印每一个读取到的行,awk读取的每一行都会执行该语句块</p>
+<h3 id="awk格式与示例"><a href="#awk格式与示例" class="headerlink" title="awk格式与示例"></a>awk格式与示例</h3><p>print格式: print item1, item2, …<br> 要点:<br>    (1) 逗号分隔符<br>    (2) 输出的各item可以字符串,也可以是数值；当前记录的字段、变量或awk的表达式<br>    (3) 如省略item,相当于print $0<br> 示例:<br>    awk ‘{print “hello,awk”}’<br>    awk –F: ‘{print}’ /etc/passwd<br>    awk –F: ‘{print “wang”}’ /etc/passwd<br>    awk –F: ‘{print $1}’ /etc/passwd<br>    awk –F: ‘{print $0}’ /etc/passwd<br>    awk –F: ‘{print $1”\t”$3}’ /etc/passwd<br>    tail –3 /etc/fstab |awk ‘{print $2,$4}’</p>
+<h3 id="awk变量与参数"><a href="#awk变量与参数" class="headerlink" title="awk变量与参数"></a>awk变量与参数</h3><p>变量:内置和自定义变量<br> FS:输入字段分隔符,默认为空白字符<br>    awk -v FS=’:’ ‘{print $1,FS,$3}’ /etc/passwd<br>    awk –F: ‘{print $1,$3,$7}’ /etc/passwd<br> OFS:输出字段分隔符,默认为空白字符<br>    awk -v FS=‘:’ -v OFS=‘:’ ‘{print $1,$3,$7}’ /etc/passwd<br> RS:输入记录分隔符,指定输入时的换行符<br>    awk -v RS=’ ‘ ‘{print }’ /etc/passwd<br> ORS:输出记录分隔符,输出时用指定符号代替换行符<br>    awk -v RS=’ ‘ -v ORS=’###’‘{print }’ /etc/passwd<br> NF:字段数量<br>    awk -F: ‘{print NF}’ /etc/fstab,引用内置变量不用$<br>    awk -F: ‘{print $(NF-1)}’ /etc/passwd<br> NR:记录号<br>    awk ‘{print NR}’ /etc/fstab ; awk END’{print NR}’ /etc/fstab</p>
+<p>FNR:各文件分别计数,记录号<br>    awk ‘{print FNR}’ /etc/fstab /etc/inittab<br>FILENAME:当前文件名<br>    awk ‘{print FILENAME}’ /etc/fstab<br>ARGC:命令行参数的个数<br>    awk ‘{print ARGC}’ /etc/fstab /etc/inittab<br>    awk ‘BEGIN {print ARGC}’ /etc/fstab /etc/inittab<br>ARGV:数组,保存的是命令行所给定的各参数<br>    awk ‘BEGIN {print ARGV[0]}’ /etc/fstab /etc/inittab<br>    awk ‘BEGIN {print ARGV[1]}’ /etc/fstab /etc/inittab</p>
+<p>自定义变量(区分字符大小写)<br>    (1) -v var=value<br>    (2) 在program中直接定义<br>示例:<br>    awk -v test=’hello gawk’ ‘{print test}’ /etc/fstab<br>    awk -v test=’hello gawk’ ‘BEGIN{print test}’<br>    awk ‘BEGIN{test=”hello,gawk”;print test}’<br>    awk –F:‘{sex=“male”;print $1,sex,age;age=18}’    /etc/passwd<br>    cat awkscript<br>    {print script,$1,$2}<br>    awk -F: -f awkscript script=“awk” /etc/passwd</p>
+<h3 id="printf命令"><a href="#printf命令" class="headerlink" title="printf命令"></a>printf命令</h3><p>格式化输出:printf “FORMAT”, item1, item2, …<br>    (1) 必须指定FORMAT<br>    (2) 不会自动换行,需要显式给出换行控制符,\n<br>    (3) FORMAT中需要分别为后面每个item指定格式符<br> 格式符:与item一一对应<br>    %c: 显示字符的ASCII码<br>    %d, %i: 显示十进制整数<br>    %e, %E:显示科学计数法数值<br>    %f:显示为浮点数<br>    %g, %G:以科学计数法或浮点形式显示数值<br>    %s:显示字符串<br>    %u:无符号整数<br>    %%: 显示%自身<br> 修饰符:<br>    #[.#]:第一个数字控制显示的宽度；第二个#表示小数点后精度,%3.1f<br>    -: 左对齐(默认右对齐) %-15s<br>    +:显示数值的正负符号 %+d</p>
+<h3 id="printf示例"><a href="#printf示例" class="headerlink" title="printf示例"></a>printf示例</h3><p>awk -F: ‘{printf “%s”,$1}’ /etc/passwd<br>awk -F: ‘{printf “%s\n”,$1}’ /etc/passwd<br>awk -F: ‘{printf “%-20s %10d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %s\n”,$1}’ /etc/passwd<br>awk -F: ‘{printf “Username: %s,UID:%d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %15s,UID:%d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %-15s,UID:%d\n”,$1,$3}’ /etc/passwd</p>
+<h3 id="操作符"><a href="#操作符" class="headerlink" title="操作符"></a>操作符</h3><p>算术操作符:<br>    x+y, x-y, x*y, x/y, x^y, x%y<br>    -x: 转换为负数<br>    +x: 转换为数值<br>字符串操作符:没有符号的操作符,字符串连接<br>赋值操作符:<br>    =, +=, -=, *=, /=, %=, ^=<br>    ++, –<br>比较操作符:<br>    ==, !=, &gt;, &gt;=, &lt;, &lt;=<br>模式匹配符:<br>    <del>:左边是否和右边匹配包含 !</del>:是否不匹配<br>示例:<br>    awk –F: ‘$0 ~ /root/{print $1}‘ /etc/passwd<br>    awk ‘$0<del>“^root”‘ /etc/passwd<br>    awk ‘$0 !</del> /root/‘ /etc/passwd<br>    awk –F: ‘$3==0’ /etc/passwd</p>
+<p>逻辑操作符:与&amp;&amp;,或||,非!<br> 示例:<br>• awk –F: ‘$3&gt;=0 &amp;&amp; $3&lt;=1000 {print $1}’ /etc/passwd<br>• awk -F: ‘$3==0 || $3&gt;=1000 {print $1}’ /etc/passwd<br>• awk -F: ‘!($3==0) {print $1}’ /etc/passwd<br>• awk -F: ‘!($3&gt;=500) {print $3}’ /etc/passwd<br> 函数调用: function_name(argu1, argu2, …)<br> 条件表达式(三目表达式):<br>    selector?if-true-expression:if-false-expression<br>• 示例:<br>    awk -F: ‘{$3&gt;=1000?usertype=”Common User”:usertype=”Sysadmin or SysUser”;printf<br>“%15s:%-s\n”,$1,usertype}’ /etc/passwd</p>
+<h3 id="awk-PATTERN"><a href="#awk-PATTERN" class="headerlink" title="awk PATTERN"></a>awk PATTERN</h3><p>PATTERN:根据pattern条件,过滤匹配的行,再做处理<br>(1)如果未指定:空模式,匹配每一行<br>(2) /regular expression/:仅处理能够模式匹配到的行,需要用/ /括起来<br>    awk ‘/^UUID/{print $1}’ /etc/fstab<br>    awk ‘!/^UUID/{print $1}’ /etc/fstab<br>(3) relational expression: 关系表达式,结果为“真”才会被处理<br>    真:结果为非0值,非空字符串<br>    假:结果为空字符串或0值<br> 示例:<br>• awk -F: ‘i=1;j=1{print i,j}’ /etc/passwd<br>• awk ‘!0’ /etc/passwd ; awk ‘!1’ /etc/passwd<br>• awk –F: ‘$3&gt;=1000{print $1,$3}’ /etc/passwd<br>• awk -F: ‘$3&lt;1000{print $1,$3}’ /etc/passwd<br>• awk -F: ‘$NF==”/bin/bash”{print $1,$NF}’ /etc/passwd<br>• awk -F: ‘$NF ~ /bash$/{print $1,$NF}’ /etc/passwd</p>
+<p>4) line ranges:行范围<br>    startline,endline:/pat1/,/pat2/ 不支持直接给出数字格式<br>    awk -F: ‘/^root&gt;/,/^nobody&gt;/{print $1}’ /etc/passwd<br>    awk -F: ‘(NR&gt;=10&amp;&amp;NR&lt;=20){print NR,$1}’ /etc/passwd<br>(5) BEGIN/END模式<br>    BEGIN{}: 仅在开始处理文件中的文本之前执行一次<br>    END{}:仅在文本处理完成之后执行一次</p>
+<p>awk例程</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">awk -F : 'BEGIN &#123;print "USER USERID"&#125; &#123;print $1":"$3&#125; END&#123;print "end file"&#125;'</span><br><span class="line">/etc/passwd</span><br><span class="line">awk -F : '&#123;print "USER USERID“;print $1":"$3&#125; END&#123;print "end file"&#125;' /etc/passwd</span><br><span class="line">awk -F: 'BEGIN&#123;print " USER UID \n--------------- "&#125;&#123;print $1,$3&#125;' /etc/passwd</span><br><span class="line">awk -F: 'BEGIN&#123;print " USER UID \n--------------- "&#125;&#123;print $1,$3&#125;'END&#123;print</span><br><span class="line">"=============="&#125; /etc/passwd</span><br><span class="line">seq 10 |awk ‘i=0’</span><br><span class="line">seq 10 |awk ‘i=1’</span><br><span class="line">seq 10 | awk 'i=!i‘</span><br><span class="line">seq 10 | awk '&#123;i=!i;print i&#125;‘</span><br><span class="line">seq 10 | awk ‘!(i=!i)’</span><br><span class="line">seq 10 |awk -v i=1 'i=!i'</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="awk-action"><a href="#awk-action" class="headerlink" title="awk action"></a>awk action</h3><p>常用的action分类<br>• (1) Expressions:算术,比较表达式等<br>• (2) Control statements:if, while等<br>• (3) Compound statements:组合语句<br>• (4) input statements<br>• (5) output statements:print等</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/AWK/" rel="tag"># AWK</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/SELinux-%E7%AE%80%E4%BB%8B/" rel="prev" title="SELinux 简介">
+      <i class="fa fa-chevron-left"></i> SELinux 简介
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%BA%8C/" rel="next" title="AWK 工具的使用(二)">
+      AWK 工具的使用(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#AWK介绍"><span class="nav-number">1.</span> <span class="nav-text">AWK介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk语言"><span class="nav-number">2.</span> <span class="nav-text">awk语言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk工作原理"><span class="nav-number">3.</span> <span class="nav-text">awk工作原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk格式与示例"><span class="nav-number">4.</span> <span class="nav-text">awk格式与示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk变量与参数"><span class="nav-number">5.</span> <span class="nav-text">awk变量与参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#printf命令"><span class="nav-number">6.</span> <span class="nav-text">printf命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#printf示例"><span class="nav-number">7.</span> <span class="nav-text">printf示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#操作符"><span class="nav-number">8.</span> <span class="nav-text">操作符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk-PATTERN"><span class="nav-number">9.</span> <span class="nav-text">awk PATTERN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#awk-action"><span class="nav-number">10.</span> <span class="nav-text">awk action</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="方法在Python中是如何工作的方法就是一个函数，它作为一个类属性而存在，你可以用如下方式来声明、访问一个函数： 12345678&gt;&gt;&gt; class Pizza(object):...     def __init__(self, size):...         self.size &#x3D; size...     def get_size(self):...         re">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 中使用static,class,abstract方法">
+<meta property="og:url" content="http://yoursite.com/Python-%E4%B8%AD%E4%BD%BF%E7%94%A8static-class-abstract%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="方法在Python中是如何工作的方法就是一个函数，它作为一个类属性而存在，你可以用如下方式来声明、访问一个函数： 12345678&gt;&gt;&gt; class Pizza(object):...     def __init__(self, size):...         self.size &#x3D; size...     def get_size(self):...         re">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-01-05T16:36:54.000Z">
+<meta property="article:modified_time" content="2019-01-05T16:54:21.986Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Python-%E4%B8%AD%E4%BD%BF%E7%94%A8static-class-abstract%E6%96%B9%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Python 中使用static,class,abstract方法 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Python-%E4%B8%AD%E4%BD%BF%E7%94%A8static-class-abstract%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python 中使用static,class,abstract方法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2019-01-06 00:36:54 / 修改时间：00:54:21" itemprop="dateCreated datePublished" datetime="2019-01-06T00:36:54+08:00">2019-01-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="方法在Python中是如何工作的"><a href="#方法在Python中是如何工作的" class="headerlink" title="方法在Python中是如何工作的"></a>方法在Python中是如何工作的</h4><p>方法就是一个函数，它作为一个类属性而存在，你可以用如下方式来声明、访问一个函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line"><span class="meta">... </span>    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, size)</span>:</span></span><br><span class="line"><span class="meta">... </span>        self.size = size</span><br><span class="line"><span class="meta">... </span>    <span class="function"><span class="keyword">def</span> <span class="title">get_size</span><span class="params">(self)</span>:</span></span><br><span class="line"><span class="meta">... </span>        <span class="keyword">return</span> self.size</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.get_size</span><br><span class="line">&lt;unbound method Pizza.get_size&gt;</span><br></pre></td></tr></table></figure>
+
+<p><em>Python在告诉你，属性_get_size</em>是类<em>Pizza</em>的一个<strong>未绑定</strong>方法。这是什么意思呢？很快我们就会知道答案：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.get_size()</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">"&lt;stdin&gt;"</span>, line <span class="number">1</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">TypeError: unbound method get_size() must be called <span class="keyword">with</span> Pizza instance <span class="keyword">as</span> first argument (got nothing instead)</span><br></pre></td></tr></table></figure>
+
+<p>我们不能这么调用，因为它还没有绑定到<em>Pizza</em>类的任何实例上，它需要一个实例作为第一个参数传递进去（Python2必须是该类的实例，Python3中可以是任何东西），尝试一下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.get_size(Pizza(<span class="number">42</span>))</span><br><span class="line"><span class="number">42</span></span><br></pre></td></tr></table></figure>
+
+<p>太棒了，现在用一个实例作为它的的第一个参数来调用，整个世界都清静了，如果我说这种调用方式还不是最方便的，你也会这么认为的；没错，现在每次调用这个方法的时候我们都不得不引用这个类，如果不知道哪个类是我们的对象，长期看来这种方式是行不通的。</p>
+<p><em>那么Python为我们做了什么呢，它绑定了所有来自类_Pizza</em>的方法以及该类的任何一个实例的方法。也就意味着现在属性<em>get_size</em>是<em>Pizza</em>的一个实例对象的绑定方法，这个方法的第一个参数就是该实例本身。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza(<span class="number">42</span>).get_size</span><br><span class="line">&lt;bound method Pizza.get_size of &lt;__main__.Pizza object at <span class="number">0x7f3138827910</span>&gt;&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza(<span class="number">42</span>).get_size()</span><br><span class="line"><span class="number">42</span></span><br></pre></td></tr></table></figure>
+
+<p><em>和我们预期的一样，现在不再需要提供任何参数给_get_size</em>，因为它已经是绑定的，它的<em>self</em>参数会自动地设置给<em>Pizza</em>实例，下面代码是最好的证明：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>m = Pizza(<span class="number">42</span>).get_size</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m()</span><br><span class="line"><span class="number">42</span></span><br></pre></td></tr></table></figure>
+
+<p>更有甚者，你都没必要使用持有<em>Pizza</em>对象的引用了，因为该方法已经绑定到了这个对象，所以这个方法对它自己来说是已经足够了。</p>
+<p>也许，如果你想知道这个绑定的方法是绑定在哪个对象上，下面这种手段就能得知：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>m = Pizza(<span class="number">42</span>).get_size</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m.__self__</span><br><span class="line">&lt;__main__.Pizza object at <span class="number">0x7f3138827910</span>&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="comment"># You could guess, look at this:</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m == m.__self__.get_size</span><br><span class="line"><span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<p>显然，该对象仍然有一个引用存在，只要你愿意你还是可以把它找回来。</p>
+<p>在Python3中，依附在类上的函数不再当作是<strong>未绑定</strong>的方法，而是把它当作一个简单地函数，如果有必要它会绑定到一个对象身上去，原则依然和Python2保持一致，但是模块更简洁：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line"><span class="meta">... </span>    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, size)</span>:</span></span><br><span class="line"><span class="meta">... </span>        self.size = size</span><br><span class="line"><span class="meta">... </span>    <span class="function"><span class="keyword">def</span> <span class="title">get_size</span><span class="params">(self)</span>:</span></span><br><span class="line"><span class="meta">... </span>        <span class="keyword">return</span> self.size</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.get_size</span><br><span class="line">&lt;function Pizza.get_size at <span class="number">0x7f307f984dd0</span>&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="静态方法"><a href="#静态方法" class="headerlink" title="静态方法"></a>静态方法</h4><p>静态方法是一类特殊的方法，有时你可能需要写一个属于这个类的方法，但是这些代码完全不会使用到实例对象本身，例如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">mix_ingredients</span><span class="params">(x, y)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> x + y</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">cook</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> self.mix_ingredients(self.cheese, self.vegetables)</span><br></pre></td></tr></table></figure>
+
+<p><em>这个例子中，如果把_mix_ingredients<em>作为非静态方法同样可以运行，但是它要提供</em>self*参数，而这个参数在方法中根本不会被使用到。这里的</em>@staticmethod*装饰器可以给我们带来一些好处：</p>
+<ul>
+<li>Python不再需要为<em>Pizza</em>对象实例初始化一个绑定方法，绑定方法同样是对象，但是创建他们需要成本，而静态方法就可以避免这些。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza().cook <span class="keyword">is</span> Pizza().cook</span><br><span class="line"><span class="literal">False</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza().mix_ingredients <span class="keyword">is</span> Pizza.mix_ingredients</span><br><span class="line"><span class="literal">True</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza().mix_ingredients <span class="keyword">is</span> Pizza().mix_ingredients</span><br><span class="line"><span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>可读性更好的代码，看到<em>@staticmethod</em>我们就知道这个方法并不需要依赖对象本身的状态。</li>
+<li>可以在子类中被覆盖，如果是把<em>mix_ingredients</em>作为模块的顶层函数，那么继承自<em>Pizza</em>的子类就没法改变pizza的<em>mix_ingredients</em>了如果不覆盖<em>cook</em>的话。</li>
+</ul>
+<h4 id="类方法"><a href="#类方法" class="headerlink" title="类方法"></a>类方法</h4><p>话虽如此，什么是类方法呢？类方法不是绑定到对象上，而是绑定在类上的方法。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line"><span class="meta">... </span>    radius = <span class="number">42</span></span><br><span class="line"><span class="meta">... </span>    @classmethod</span><br><span class="line"><span class="meta">... </span>    <span class="function"><span class="keyword">def</span> <span class="title">get_radius</span><span class="params">(cls)</span>:</span></span><br><span class="line"><span class="meta">... </span>        <span class="keyword">return</span> cls.radius</span><br><span class="line"><span class="meta">... </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza.get_radius</span><br><span class="line">&lt;bound method type.get_radius of &lt;<span class="class"><span class="keyword">class</span> '<span class="title">__main__</span>.<span class="title">Pizza</span>'&gt;&gt;</span></span><br><span class="line"><span class="class">&gt;&gt;&gt; <span class="title">Pizza</span><span class="params">()</span>.<span class="title">get_radius</span></span></span><br><span class="line"><span class="class">&lt;<span class="title">bound</span> <span class="title">method</span> <span class="title">type</span>.<span class="title">get_radius</span> <span class="title">of</span> &lt;<span class="title">class</span> '<span class="title">__main__</span>.<span class="title">Pizza</span>'&gt;&gt;</span></span><br><span class="line"><span class="class">&gt;&gt;&gt; <span class="title">Pizza</span>.<span class="title">get_radius</span> <span class="title">is</span> <span class="title">Pizza</span><span class="params">()</span>.<span class="title">get_radius</span></span></span><br><span class="line"><span class="class"><span class="title">True</span></span></span><br><span class="line"><span class="class">&gt;&gt;&gt; <span class="title">Pizza</span>.<span class="title">get_radius</span><span class="params">()</span></span></span><br><span class="line"><span class="class">42</span></span><br></pre></td></tr></table></figure>
+
+<p>无论你用哪种方式访问这个方法，它总是绑定到了这个类身上，它的第一个参数是这个类本身（记住：类也是对象）。</p>
+<p>什么时候使用这种方法呢？类方法通常在以下两种场景是非常有用的：</p>
+<ul>
+<li>工厂方法：它用于创建类的实例，例如一些预处理。如果使用<em>@staticmethod</em>代替，那我们不得不硬编码<em>Pizza</em>类名在函数中，这使得任何继承<em>Pizza</em>的类都不能使用我们这个工厂方法给它自己用。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, ingredients)</span>:</span></span><br><span class="line">        self.ingredients = ingredients</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">from_fridge</span><span class="params">(cls, fridge)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> cls(fridge.get_cheese() + fridge.get_vegetables())</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>调用静态类：如果你把一个静态方法拆分成多个静态方法，除非你使用类方法，否则你还是得硬编码类名。使用这种方式声明方法，<em>Pizza</em>类名明永远都不会在被直接引用，继承和方法覆盖都可以完美的工作。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, radius, height)</span>:</span></span><br><span class="line">        self.radius = radius</span><br><span class="line">        self.height = height</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">compute_area</span><span class="params">(radius)</span>:</span></span><br><span class="line">         <span class="keyword">return</span> math.pi * (radius ** <span class="number">2</span>)</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">compute_volume</span><span class="params">(cls, height, radius)</span>:</span></span><br><span class="line">         <span class="keyword">return</span> height * cls.compute_area(radius)</span><br><span class="line"> </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_volume</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> self.compute_volume(self.height, self.radius)</span><br></pre></td></tr></table></figure>
+
+<h4 id="抽象方法"><a href="#抽象方法" class="headerlink" title="抽象方法"></a>抽象方法</h4><p>抽象方法是定义在基类中的一种方法，它没有提供任何实现，类似于Java中接口(Interface)里面的方法。</p>
+<p>在Python中实现抽象方法最简单地方式是：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_radius</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">raise</span> NotImplementedError</span><br></pre></td></tr></table></figure>
+
+<p><em>任何继承自_Pizza</em>的类必须覆盖实现方法<em>get_radius</em>，否则会抛出异常。</p>
+<p>这种抽象方法的实现有它的弊端，如果你写一个类继承<em>Pizza</em>，但是忘记实现<em>get_radius</em>，异常只有在你真正使用的时候才会抛出来。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza()</span><br><span class="line">&lt;__main__.Pizza object at <span class="number">0x7fb747353d90</span>&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>Pizza().get_radius()</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">"&lt;stdin&gt;"</span>, line <span class="number">1</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">  File <span class="string">"&lt;stdin&gt;"</span>, line <span class="number">3</span>, <span class="keyword">in</span> get_radius</span><br><span class="line">NotImplementedError</span><br></pre></td></tr></table></figure>
+
+<p>还有一种方式可以让错误更早的触发，使用Python提供的<strong>abc</strong>模块，对象被初始化之后就可以抛出异常：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    __metaclass__  = abc.ABCMeta</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_radius</span><span class="params">(self)</span>:</span></span><br><span class="line">         <span class="string">"""Method that should do something."""</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<em>abc</em>后，当你尝试初始化<em>BasePizza</em>或者任何子类的时候立马就会得到一个<em>TypeError</em>，而无需等到真正调用<em>get_radius</em>的时候才发现异常。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>BasePizza()</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">"&lt;stdin&gt;"</span>, line <span class="number">1</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">TypeError: Can<span class="string">'t instantiate abstract class BasePizza with abstract methods get_radius</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="混合静态方法、类方法、抽象方法"><a href="#混合静态方法、类方法、抽象方法" class="headerlink" title="混合静态方法、类方法、抽象方法"></a>混合静态方法、类方法、抽象方法</h4><p>当你开始构建类和继承结构时，混合使用这些装饰器的时候到了，所以这里列出了一些技巧。</p>
+<p>记住，声明一个抽象的方法，不会固定方法的原型，这就意味着虽然你必须实现它，但是我可以用任何参数列表来实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    __metaclass__  = abc.ABCMeta</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(self)</span>:</span></span><br><span class="line">         <span class="string">"""Returns the ingredient list."""</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Calzone</span><span class="params">(BasePizza)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(self, with_egg=False)</span>:</span></span><br><span class="line">        egg = Egg() <span class="keyword">if</span> with_egg <span class="keyword">else</span> <span class="literal">None</span></span><br><span class="line">        <span class="keyword">return</span> self.ingredients + egg</span><br></pre></td></tr></table></figure>
+
+<p>这样是允许的，因为<em>Calzone</em>满足<em>BasePizza</em>对象所定义的接口需求。同样我们也可以用一个类方法或静态方法来实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    __metaclass__  = abc.ABCMeta</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(self)</span>:</span></span><br><span class="line">         <span class="string">"""Returns the ingredient list."""</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DietPizza</span><span class="params">(BasePizza)</span>:</span></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">()</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+
+<p>这同样是正确的,因为它遵循抽象类<em>BasePizza</em>设定的契约。事实上<em>get_ingredients</em>方法并不需要知道返回结果是什么，结果是实现细节，不是契约条件。</p>
+<p>因此，你不能强制抽象方法的实现是一个常规方法、或者是类方法还是静态方法，也没什么可争论的。从Python3开始（在Python2中不能如你期待的运行，见<a href="http://bugs.python.org/issue5867" target="_blank" rel="noopener">issue5867</a>），在<em>abstractmethod*方法上面使用</em>@staticmethod<em>和</em>@classmethod*装饰器成为可能。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    __metaclass__  = abc.ABCMeta</span><br><span class="line"> </span><br><span class="line">    ingredient = [<span class="string">'cheese'</span>]</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(cls)</span>:</span></span><br><span class="line">         <span class="string">"""Returns the ingredient list."""</span></span><br><span class="line">         <span class="keyword">return</span> cls.ingredients</span><br></pre></td></tr></table></figure>
+
+<p>别误会了，如果你认为它会强制子类作为一个类方法来实现<em>get_ingredients</em>那你就错了，它仅仅表示你实现的<em>get_ingredients</em>在<em>BasePizza</em>中是一个类方法。</p>
+<p>可以在抽象方法中做代码的实现？没错，Python与Java接口中的方法相反，你可以在抽象方法编写实现代码通过<em>super()</em>来调用它。（译注：在Java8中，接口也提供的默认方法，允许在接口中写方法的实现）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> abc</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasePizza</span><span class="params">(object)</span>:</span></span><br><span class="line">    __metaclass__  = abc.ABCMeta</span><br><span class="line"> </span><br><span class="line">    default_ingredients = [<span class="string">'cheese'</span>]</span><br><span class="line"> </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line"><span class="meta">    @abc.abstractmethod</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(cls)</span>:</span></span><br><span class="line">         <span class="string">"""Returns the ingredient list."""</span></span><br><span class="line">         <span class="keyword">return</span> cls.default_ingredients</span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DietPizza</span><span class="params">(BasePizza)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_ingredients</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> [<span class="string">'egg'</span>] + super(DietPizza, self).get_ingredients()</span><br></pre></td></tr></table></figure>
+
+<p>这个例子中，你构建的每个pizza都通过继承<em>BasePizza</em>的方式，你不得不覆盖<em>get_ingredients</em>方法，但是能够使用默认机制通过<em>super()</em>来获取<em>ingredient</em>列表。</p>
+<p>感谢原文作者:</p>
+<p><a href="http://www.jobbole.com/members/liuzhijun" target="_blank" rel="noopener">刘志军</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Python-%E5%A4%9A%E8%BF%9B%E7%A8%8B%E4%B8%8E%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="prev" title="Python 多进程与多线程">
+      <i class="fa fa-chevron-left"></i> Python 多进程与多线程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Shell%E8%84%9A%E6%9C%AC%E7%9A%84%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/" rel="next" title="Shell脚本的调试方法">
+      Shell脚本的调试方法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#方法在Python中是如何工作的"><span class="nav-number">1.</span> <span class="nav-text">方法在Python中是如何工作的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#静态方法"><span class="nav-number">2.</span> <span class="nav-text">静态方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#类方法"><span class="nav-number">3.</span> <span class="nav-text">类方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#抽象方法"><span class="nav-number">4.</span> <span class="nav-text">抽象方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#混合静态方法、类方法、抽象方法"><span class="nav-number">5.</span> <span class="nav-text">混合静态方法、类方法、抽象方法</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

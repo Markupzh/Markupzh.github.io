@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="关于安全,首先要介绍以下墨菲定律: 墨菲定律:一种心理学效应,是由爱德华·墨菲(Edward A. Murphy)提出的,原话:如果有两种或两种以上的方式去做某件事情,而其中一种选择方式将导致灾难,则必定有人会做出这种选择主要内容:任何事都没有表面看起来那么简单所有的事都会比你预计的时间长会出错的事总会出错如果你担心某种情况发生,那么它就更有可能发生 安全机制信息安全防护的目标保密性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="加密与安全(一)">
+<meta property="og:url" content="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%80/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="关于安全,首先要介绍以下墨菲定律: 墨菲定律:一种心理学效应,是由爱德华·墨菲(Edward A. Murphy)提出的,原话:如果有两种或两种以上的方式去做某件事情,而其中一种选择方式将导致灾难,则必定有人会做出这种选择主要内容:任何事都没有表面看起来那么简单所有的事都会比你预计的时间长会出错的事总会出错如果你担心某种情况发生,那么它就更有可能发生 安全机制信息安全防护的目标保密性">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_01.png">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_02.png">
+<meta property="article:published_time" content="2018-09-11T05:18:49.000Z">
+<meta property="article:modified_time" content="2018-09-20T11:30:36.367Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_01.png">
+
+<link rel="canonical" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>加密与安全(一) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          加密与安全(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-11 13:18:49" itemprop="dateCreated datePublished" datetime="2018-09-11T13:18:49+08:00">2018-09-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-09-20 19:30:36" itemprop="dateModified" datetime="2018-09-20T19:30:36+08:00">2018-09-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>关于安全,首先要介绍以下墨菲定律:</p>
+<p>墨菲定律:一种心理学效应,是由爱德华·墨菲(Edward A. Murphy)提出的,原话:如果有两种或两种以上的方式去做某件事情,而其中一种选择方式将导致灾难,则必定有人会做出这种选择<br>主要内容:<br>任何事都没有表面看起来那么简单<br>所有的事都会比你预计的时间长<br>会出错的事总会出错<br>如果你担心某种情况发生,那么它就更有可能发生</p>
+<h3 id="安全机制"><a href="#安全机制" class="headerlink" title="安全机制"></a>安全机制</h3><p>信息安全防护的目标<br>保密性         Confidentiality<br>完整性         Integrity<br>可用性         Usability<br>可控制性     Controlability<br>不可否认性     Non-repudiation<br>安全防护环节<br>物理安全:各种设备/主机、机房环境<br>系统安全:主机或设备的操作系统<br>应用安全:各种网络服务、应用程序<br>网络安全:对网络访问的控制、防火墙规则<br>数据安全:信息的备份与恢复、加密解密<br>管理安全:各种保障性的规范、流程、方法</p>
+<h3 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h3><p>安全攻击: STRIDE<br>Spoofing                      假冒<br>Tampering                      篡改<br>Repudiation                      否认<br>Information Disclosure         信息泄漏<br>Denial of Service                      拒绝服务<br>Elevation of Privilege              提升权限</p>
+<h4 id="安全设计基本原则"><a href="#安全设计基本原则" class="headerlink" title="安全设计基本原则"></a>安全设计基本原则</h4><p>使用成熟的安全系统<br>以小人之心度输入数据<br>外部系统是不安全的<br>最小授权<br>减少外部接口<br>缺省使用安全模式<br>安全不是似是而非<br>从STRIDE思考<br>在入口处检查<br>从管理上保护好你的系统</p>
+<h3 id="安全算法"><a href="#安全算法" class="headerlink" title="安全算法"></a>安全算法</h3><p><strong>常用安全技术</strong><br>    认证<br>    授权<br>    审计<br>    安全通信<br><strong>密码算法和协议</strong><br>    对称加密<br>    公钥加密<br>    单向加密<br>    认证协议</p>
+<h4 id="对称加密算法"><a href="#对称加密算法" class="headerlink" title="对称加密算法"></a>对称加密算法</h4><p>对称加密:加密和解密使用同一个密钥<br>    DES:Data Encryption Standard,56bits<br>    3DES:<br>    AES:Advanced (128, 192, 256bits)<br>    Blowfish,Twofish<br>    IDEA,RC6,CAST5<br><strong>特性:</strong><br>    1、加密、解密使用同一个密钥,效率高<br>    2、将原始数据分割成固定大小的块,逐个进行加密<br><strong>缺陷:</strong><br>    1、密钥过多<br>    2、密钥分发<br>    3、数据来源无法确认</p>
+<h4 id="非对称加密算法"><a href="#非对称加密算法" class="headerlink" title="非对称加密算法"></a>非对称加密算法</h4><p>公钥加密:密钥是成对出现<br>    公钥:公开给所有人；public key<br>    私钥:自己留存,必须保证其私密性；secret key<br><strong>特点</strong>:用公钥加密数据,只能使用与之配对的私钥解密；反之亦然<br><strong>功能:</strong><br>    数字签名:主要在于让接收方确认发送方身份<br>    对称密钥交换:发送方用对方的公钥加密一个对称密钥后发送给对方<br>    数据加密:适合加密较小数据<br><strong>缺点:</strong>密钥长,加密解密效率低下<br><strong>算法:</strong><br>    RSA(加密,数字签名)<br>    DSA(数字签名)<br>    ELGamal</p>
+<h5 id="非对称加密实现"><a href="#非对称加密实现" class="headerlink" title="非对称加密实现"></a>非对称加密实现</h5><p>基于一对公钥/密钥对<br>    • 用密钥对中的一个加密,另一个解密<br>实现加密:<br>    • 接收者<br>        生成公钥/密钥对:P和S<br>        公开公钥P,保密密钥S<br>    • 发送者<br>        使用接收者的公钥来加密消息M<br>        将P(M)发送给接收者<br>    • 接收者<br>        使用密钥S来解密:M=S(P(M))</p>
+<p>实现数字签名:<br>    • 发送者<br>        生成公钥/密钥对:P和S<br>        公开公钥P,保密密钥S<br>        使用密钥S来加密消息M<br>        发送给接收者S(M)<br>    • 接收者<br>        使用发送者的公钥来解密M=P(S(M))<br>结合签名和加密<br>分离签名</p>
+<h4 id="单向散列"><a href="#单向散列" class="headerlink" title="单向散列"></a>单向散列</h4><p>将任意数据缩小成固定大小的“指纹”<br>    • 任意长度输入<br>    • 固定长度输出<br>    • 若修改数据,指纹也会改变(“不会产生冲突”)<br>    • 无法从指纹中重新生成数据(“单向”)<br>功能:数据完整性<br>常见算法<br>    md5: 128bits、sha1: 160bits、sha224、sha256、sha384、sha512<br>常用工具<br>    • md5sum | sha1sum [ –check ] file<br>    • openssl、gpg<br>    • rpm -V</p>
+<h4 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_01.png" alt=""></p>
+<h4 id="密钥交换"><a href="#密钥交换" class="headerlink" title="密钥交换"></a>密钥交换</h4><p>密钥交换:IKE( Internet Key Exchange ) </p>
+<p>公钥加密: DH (Deffie-Hellman):生成会话密钥,由惠特菲尔德·迪菲(Bailey Whitfield Diffie)和马丁·赫尔曼(Martin Edward Hellman)在1976年发表 参看:<a href="https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange</a> </p>
+<p>DH: </p>
+<p>A: g,p 协商生成公开的整数g, 大素数p  </p>
+<p>B: g,p </p>
+<p>A:生成隐私数据:a (a &lt; p),计算得出g^a%p,发送给B</p>
+<p>B:生成隐私数据:b,计算得出 g^b%p, 发送给A</p>
+<p>A:计算得出[(g^b%p)^a]%p=g^ab%p,生成为密钥</p>
+<p>B:计算得出[(g^a%p)^b]%p=g^ab%p,生成为密钥</p>
+<h4 id="应用程序-RPM"><a href="#应用程序-RPM" class="headerlink" title="应用程序: RPM"></a>应用程序: RPM</h4><p>文件完整性的两种实施方式<br>    被安装的文件<br>        • MD5单向散列<br>        • rpm –verify package_name (or -V)<br>    发行的软件包文件<br>        • GPG公钥签名<br>        • rpm –import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat*<br>        • rpm –checksig pakage_file_name (or -K)</p>
+<h4 id="使用-gpg-实现对称加密"><a href="#使用-gpg-实现对称加密" class="headerlink" title="使用 gpg 实现对称加密"></a>使用 gpg 实现对称加密</h4><p>对称加密file文件<br>    gpg -c file<br>    ls file.gpg<br>在另一台主机上解密file<br>    gpg -o file -d file.gpg</p>
+<h4 id="使用-gpg-工具实现公钥加密"><a href="#使用-gpg-工具实现公钥加密" class="headerlink" title="使用 gpg 工具实现公钥加密"></a>使用 gpg 工具实现公钥加密</h4><p><strong>在hostB主机上用公钥加密,在hostA主机上解密</strong></p>
+<p>在hostA主机上生成公钥/私钥对<br>    gpg –gen-key<br>在hostA主机上查看公钥<br>    gpg –list-keys<br>在hostA主机上导出公钥到mark.pubkey<br>    gpg -a –export -o mark.pubkey<br>从hostA主机上复制公钥文件到需加密的B主机上<br>    scp mark.pubkey hostB:</p>
+<p>在需加密数据的hostB主机上生成公钥/私钥对<br>    gpg –list-keys<br>    gpg –gen-key<br>在hostB主机上导入公钥<br>    gpg –import mark.pubkey<br>    gpg –list-keys<br>用从hostA主机导入的公钥,加密hostB主机的文件file,生成file.gpg<br>    gpg -e -r mark file<br>    file file.gpg</p>
+<p>复制加密文件到hostA主机<br>    scp fstab.gpg hostA:<br>在hostA主机解密文件<br>    gpg -d file.gpg<br>    gpg -o file -d file.gpg<br>删除公钥和私钥<br>    gpg –delete-keys mark<br>    gpg –delete-secret-keys mark</p>
+<h4 id="中间人攻击"><a href="#中间人攻击" class="headerlink" title="中间人攻击"></a>中间人攻击</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_02.png" alt=""></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%BA%8C/" rel="prev" title="AWK 工具的使用(二)">
+      <i class="fa fa-chevron-left"></i> AWK 工具的使用(二)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%8C/" rel="next" title="加密与安全(二)">
+      加密与安全(二) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#安全机制"><span class="nav-number">1.</span> <span class="nav-text">安全机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安全"><span class="nav-number">2.</span> <span class="nav-text">安全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#安全设计基本原则"><span class="nav-number">2.1.</span> <span class="nav-text">安全设计基本原则</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安全算法"><span class="nav-number">3.</span> <span class="nav-text">安全算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#对称加密算法"><span class="nav-number">3.1.</span> <span class="nav-text">对称加密算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#非对称加密算法"><span class="nav-number">3.2.</span> <span class="nav-text">非对称加密算法</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#非对称加密实现"><span class="nav-number">3.2.1.</span> <span class="nav-text">非对称加密实现</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#单向散列"><span class="nav-number">3.3.</span> <span class="nav-text">单向散列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数字签名"><span class="nav-number">3.4.</span> <span class="nav-text">数字签名</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#密钥交换"><span class="nav-number">3.5.</span> <span class="nav-text">密钥交换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#应用程序-RPM"><span class="nav-number">3.6.</span> <span class="nav-text">应用程序: RPM</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-gpg-实现对称加密"><span class="nav-number">3.7.</span> <span class="nav-text">使用 gpg 实现对称加密</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用-gpg-工具实现公钥加密"><span class="nav-number">3.8.</span> <span class="nav-text">使用 gpg 工具实现公钥加密</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中间人攻击"><span class="nav-number">3.9.</span> <span class="nav-text">中间人攻击</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

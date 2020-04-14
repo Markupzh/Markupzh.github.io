@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="编程基础程序:指令+数据  程序编程风格:  ​    过程式:以指令为中心,数据服务于指令  ​    对象式:以数据为中心,指令服务于数据  shell程序:提供了编程能力,解释执行  程序的执行方式编程逻辑处理方式:  ​    顺序执行  ​    循环执行  ​    选择执行  shell编程:过程式、解释执行  ​    编程语言的基本结构:  ​        各种系统命令的组合">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux shell基础部分">
+<meta property="og:url" content="http://yoursite.com/Linux-shell%E5%9F%BA%E7%A1%80%E9%83%A8%E5%88%86/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="编程基础程序:指令+数据  程序编程风格:  ​    过程式:以指令为中心,数据服务于指令  ​    对象式:以数据为中心,指令服务于数据  shell程序:提供了编程能力,解释执行  程序的执行方式编程逻辑处理方式:  ​    顺序执行  ​    循环执行  ​    选择执行  shell编程:过程式、解释执行  ​    编程语言的基本结构:  ​        各种系统命令的组合">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-08-19T12:41:26.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:38:13.382Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-shell%E5%9F%BA%E7%A1%80%E9%83%A8%E5%88%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux shell基础部分 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-shell%E5%9F%BA%E7%A1%80%E9%83%A8%E5%88%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux shell基础部分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-08-19 20:41:26" itemprop="dateCreated datePublished" datetime="2015-08-19T20:41:26+08:00">2015-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:38:13" itemprop="dateModified" datetime="2019-01-02T23:38:13+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="编程基础"><a href="#编程基础" class="headerlink" title="编程基础"></a>编程基础</h4><p>程序:指令+数据 </p>
+<p>程序编程风格: </p>
+<p>​    过程式:以指令为中心,数据服务于指令 </p>
+<p>​    对象式:以数据为中心,指令服务于数据 </p>
+<p>shell程序:提供了编程能力,解释执行 </p>
+<h4 id="程序的执行方式"><a href="#程序的执行方式" class="headerlink" title="程序的执行方式"></a>程序的执行方式</h4><p>编程逻辑处理方式: </p>
+<p>​    顺序执行 </p>
+<p>​    循环执行 </p>
+<p>​    选择执行 </p>
+<p>shell编程:过程式、解释执行 </p>
+<p>​    编程语言的基本结构: </p>
+<p>​        各种系统命令的组合 </p>
+<p>​        数据存储:变量、数组 </p>
+<p>​        表达式: a + b </p>
+<p>​        语句:if  </p>
+<h4 id="shell脚本基础"><a href="#shell脚本基础" class="headerlink" title="shell脚本基础"></a>shell脚本基础</h4><p>shell脚本: </p>
+<p>​    包含一些命令或声明,并符合一定格式的文本文件 </p>
+<p>格式要求:首行shebang机制 </p>
+<p>​    #!/bin/bash </p>
+<p>​    #!/usr/bin/python </p>
+<p>​    #!/usr/bin/perl </p>
+<p>shell脚本的用途有: </p>
+<p>​     自动化常用命令 </p>
+<p>​     执行系统管理和故障排除 </p>
+<p>​     创建简单的应用程序 </p>
+<p>​     处理文本或文件 </p>
+<h4 id="创建shell脚本"><a href="#创建shell脚本" class="headerlink" title="创建shell脚本"></a>创建shell脚本</h4><p>第一步:使用文本编辑器来创建文本文件 </p>
+<p>​    第一行必须包括shell声明序列:#! </p>
+<p>​        #!/bin/bash </p>
+<p>​    添加注释 </p>
+<p>​        注释以#开头 </p>
+<p>​    第二步:运行脚本 </p>
+<p>​        给予执行权限,在命令行上指定脚本的绝对或相对路径 </p>
+<p>​        直接运行解释器,将脚本作为解释器程序的参数运行 </p>
+<h4 id="脚本规范"><a href="#脚本规范" class="headerlink" title="脚本规范"></a>脚本规范</h4><p>脚本代码开头约定 </p>
+<p>​    1、第一行一般为调用使用的语言 </p>
+<p>​    2、程序名,避免更改文件名为无法找到正确的文件 </p>
+<p>​    3、版本号 </p>
+<p>​    4、更改后的时间 </p>
+<p>​    5、作者相关信息 </p>
+<p>​    6、该程序的作用,及注意事项 </p>
+<p>​    7、最后是各版本的更新简要说明</p>
+<h4 id="脚本的基本结构"><a href="#脚本的基本结构" class="headerlink" title="脚本的基本结构"></a>脚本的基本结构</h4><p> #!SHEBANG </p>
+<p>CONFIGURATION_VARIABLES </p>
+<p>FUNCTION_DEFINITIONS </p>
+<p>MAIN_CODE </p>
+<h4 id="脚本调试"><a href="#脚本调试" class="headerlink" title="脚本调试"></a>脚本调试</h4><p>检测脚本中的语法错误 </p>
+<p>​    bash -n /path/to/some_script </p>
+<p>调试执行 </p>
+<p>​    bash -x /path/to/some_script </p>
+<h4 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h4><p>变量:命名的内存空间 </p>
+<p>​    数据存储方式: </p>
+<p>​        字符: </p>
+<p>​        数值:整型,浮点型 </p>
+<p>变量:变量类型 </p>
+<p>​    作用: </p>
+<p>​        1、数据存储格式 </p>
+<p>​        2、参与的运算 </p>
+<p>​        3、表示的数据范围 </p>
+<p>​    类型: </p>
+<p>​        字符 </p>
+<p>​        数值:整型、浮点型 </p>
+<p>强类型:变量不经过强制转换,它永远是这个数据类型,不允许隐式的类型转 换.一般定义变量时必须指定类型、参与运算必须符合类型要求;调用未声明 变量会产生错误 </p>
+<p>​    如 java,c# </p>
+<p>弱类型:语言的运行时会隐式做数据类型转换.无须指定类型,默认均为字符 型;参与运算会自动进行隐式类型转换;变量无须事先定义可直接调用 </p>
+<p>​    如:bash 不支持浮点数,php </p>
+<p>变量命名法则: </p>
+<p>​    1、不能使程序中的保留字:例如if, for </p>
+<p>​    2、只能使用数字、字母及下划线,且不能以数字开头 </p>
+<p>​    3、见名知义 </p>
+<p>​    4、统一命名规则:驼峰命名法 </p>
+<h4 id="bash中变量的种类"><a href="#bash中变量的种类" class="headerlink" title="bash中变量的种类"></a>bash中变量的种类</h4><p>根据变量的生效范围等标准划分下面变量类型: </p>
+<p>​    局部变量:生效范围为当前shell进程;对当前shell之外的其它shell进程,包括 当前shell的子shell进程均无效 </p>
+<p>​    环境(全局)变量:生效范围为当前shell进程及其子进程 </p>
+<p>​    本地变量:生效范围为当前shell进程中某代码片断,通常指函数 </p>
+<p>​    位置变量:$1, $2, …来表示,用于让脚本在脚本代码中调用通过命令行传递给它 的参数 </p>
+<p>​    特殊变量:$?, $0, $*, $@, $#,$$ </p>
+<h4 id="局部变量"><a href="#局部变量" class="headerlink" title="局部变量"></a>局部变量</h4><p>变量赋值:name=‘value’ </p>
+<p>可以使用引用value: </p>
+<p>​    (1) 可以是直接字串; name=“root” </p>
+<p>​    (2) 变量引用:name=”$USER” </p>
+<p>​    (3) 命令引用:name=`COMMAND` name=$(COMMAND) </p>
+<p>变量引用:${name} $name</p>
+<p>​     &quot;“:弱引用,其中的变量引用会被替换为变量值</p>
+<p>​     &#39;‘:强引用,其中的变量引用不会被替换为变量值,而保持原字符串 </p>
+<p>显示已定义的所有变量:set </p>
+<p>删除变量:unset name </p>
+<h4 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h4><p>变量声明、赋值: </p>
+<p>​    export name=VALUE </p>
+<p>​    declare -x name=VALUE </p>
+<p>变量引用:$name, ${name} </p>
+<p>显示所有环境变量: </p>
+<p>​    env </p>
+<p>​    printenv </p>
+<p>​    export </p>
+<p>​    declare -x </p>
+<p>删除变量: </p>
+<p>​    unset name </p>
+<p>bash内建的环境变量: </p>
+<p>​    PATH </p>
+<p>​    SHELL </p>
+<p>​    USER </p>
+<p>​    UID </p>
+<p>​    HOME </p>
+<p>​    PWD </p>
+<p>​    SHLVL </p>
+<p>​    LANG </p>
+<p>​     MAIL </p>
+<p>​    HOSTNAME </p>
+<p>​    HISTSIZE </p>
+<h4 id="只读和位置变量"><a href="#只读和位置变量" class="headerlink" title="只读和位置变量"></a>只读和位置变量</h4><p>只读变量:只能声明,但不能修改和删除 </p>
+<p>​     声明只读变量: </p>
+<p>​        readonly name </p>
+<p>​        declare -r name </p>
+<p>​     查看只读变量: </p>
+<p>​        readonly –p </p>
+<p> 位置变量:在脚本代码中调用通过命令行传递给脚本的参数 </p>
+<p>​    $1, $2, …:对应第1、第2等参数,shift [n]换位置 </p>
+<p>​    $0: 命令本身 </p>
+<p>​    $*: 传递给脚本的所有参数,全部参数合为一个字符串 </p>
+<p>​    $@: 传递给脚本的所有参数,每个参数为独立字符串 </p>
+<p>​    $#: 传递给脚本的参数的个数 </p>
+<p>​        $@ $* 只在被双引号包起来的时候才会有差异 </p>
+<p>​    set – 清空所有位置变量 </p>
+<h4 id="退出状态"><a href="#退出状态" class="headerlink" title="退出状态"></a>退出状态</h4><p>进程使用退出状态来报告成功或失败 </p>
+<p>​    • 0 代表成功,1－255代表失败 </p>
+<p>​    • $? 变量保存最近的命令退出状态 </p>
+<p>例如: </p>
+<p>​    ping -c1 -W1 hostdown &amp;&gt; /dev/null </p>
+<p>​    echo $? </p>
+<h4 id="退出状态码"><a href="#退出状态码" class="headerlink" title="退出状态码"></a>退出状态码</h4><p>bash自定义退出状态码 </p>
+<p>​    exit [n]:自定义退出状态码 </p>
+<p>注意:脚本中一旦遇到exit命令,脚本会立即终止;终止退出状态取决于exit命 令后面的数字                                                         注意:如果未给脚本指定退出状态码,整个脚本的退出状态码取决于脚本中执行 的最后一条命令的状态码 </p>
+<h4 id="算数运算"><a href="#算数运算" class="headerlink" title="算数运算"></a>算数运算</h4><p>bash中的算术运算:help let </p>
+<p>​    +, -, *, /, %取模(取余), **(乘方)</p>
+<p>​    实现算术运算: </p>
+<p>​    (1) let var=算术表达式 </p>
+<p>​    (2) var=$[算术表达式] </p>
+<p>​    (3) var=$((算术表达式)) </p>
+<p>​    (4) var=$(expr arg1 arg2 arg3 …) </p>
+<p>​    (5) declare –i var = 数值 </p>
+<p>​    (6) echo ‘算术表达式’ | bc </p>
+<p>乘法符号有些场景中需要转义,如* </p>
+<p>bash有内建的随机数生成器:$RANDOM(0-32767) </p>
+<p>​    echo $[$RANDOM%50] :0-49之间随机数 </p>
+<h4 id="赋值"><a href="#赋值" class="headerlink" title="赋值"></a>赋值</h4><p>增强型赋值: </p>
+<p>​    +=, -=, *=, /=, %= </p>
+<p>let varOPERvalue </p>
+<p>​    例如:let count+=3 自加3后自赋值 </p>
+<p>自增,自减: </p>
+<p>​    let var+=1 </p>
+<p>​    let var++ let </p>
+<p>​    var-=1 </p>
+<p>​    let var– </p>
+<h4 id="逻辑运算"><a href="#逻辑运算" class="headerlink" title="逻辑运算"></a>逻辑运算</h4><p>true, false </p>
+<p>​    1, 0 </p>
+<p>与(and): </p>
+<p>​    1 与 1 = 1 </p>
+<p>​    1 与 0 = 0 </p>
+<p>​    0 与 1 = 0 </p>
+<p>​    0 与 0 = 0 </p>
+<p>或(or): </p>
+<p>​    1 或 1 = 1 </p>
+<p>​    1 或 0 = 1 </p>
+<p>​    0 或 1 = 1 </p>
+<p>​    0 或 0 = 0 </p>
+<p>非(not):！ </p>
+<p>​    ! 1 = 0 </p>
+<p>​    ! 0 = 1 </p>
+<p>短路运算 </p>
+<p>​    短路与 </p>
+<p>​    第一个为0,结果必定为0 </p>
+<p>​    第一个为1,第二个必须要参与运算 </p>
+<p>短路或 </p>
+<p>​    第一个为1,结果必定为1 </p>
+<p>​    第一个为0,第二个必须要参与运算 </p>
+<p>异或:</p>
+<p>​    ^ 异或的两个值,相同为假,不同为真 </p>
+<h4 id="条件测试"><a href="#条件测试" class="headerlink" title="条件测试"></a>条件测试</h4><p>判断某需求是否满足,需要由测试机制来实现 </p>
+<p>专用的测试表达式需要由测试命令辅助完成测试过程 </p>
+<p>评估布尔声明,以便用在条件性执行中 </p>
+<p>​    • 若真,则返回0 </p>
+<p>​    • 若假,则返回1 </p>
+<p>测试命令: </p>
+<p>​    • test EXPRESSION </p>
+<p>​    • [ EXPRESSION ] </p>
+<p>​    • [[ EXPRESSION ]] </p>
+<p>​    注意:EXPRESSION前后必须有空白字符 </p>
+<h4 id="条件性的执行操作符"><a href="#条件性的执行操作符" class="headerlink" title="条件性的执行操作符"></a>条件性的执行操作符</h4><p>根据退出状态而定,命令可以有条件地运行 </p>
+<p>​    • &amp;&amp; 代表条件性的AND THEN </p>
+<p>​    • || 代表条件性的OR ELSE </p>
+<p>例如:</p>
+<p>grep -q no_such_user /etc/passwd \ </p>
+<p>|| echo &#39;No such user&#39; </p>
+<p>No such user </p>
+<p>ping -c1 -W2 station1 &amp;&gt; /dev/null \ </p>
+<p>&gt; &amp;&amp; echo “station1 is up&quot; \ </p>
+<p>&gt; || (echo ‘station1 is unreachable’; exit 1) </p>
+<p>station1 is up </p>
+<h4 id="test命令"><a href="#test命令" class="headerlink" title="test命令"></a>test命令</h4><p>长格式的例子: </p>
+<p>​    test “$A” = “$B” &amp;&amp; echo “Strings are equal” </p>
+<p>​    test “$A”-eq “$B” &amp;&amp; echo “Integers are equal” </p>
+<p> 简写格式的例子: </p>
+<p>​    [ “$A” = “$B” ] &amp;&amp; echo “Strings are equal” </p>
+<p>​    [ “$A” -eq “$B” ] &amp;&amp; echo “Integers are equal” </p>
+<h4 id="bash的数值测试"><a href="#bash的数值测试" class="headerlink" title="bash的数值测试"></a>bash的数值测试</h4><p>-v VAR </p>
+<p>​    变量VAR是否设置 </p>
+<p>数值测试: </p>
+<p>​    -gt 是否大于 </p>
+<p>​    -ge 是否大于等于 </p>
+<p>​    -eq 是否等于 </p>
+<p>​    -ne 是否不等于 </p>
+<p>​    -lt 是否小于 </p>
+<p>​    -le 是否小于等于 </p>
+<h4 id="bash-的字符串测试"><a href="#bash-的字符串测试" class="headerlink" title="bash 的字符串测试"></a>bash 的字符串测试</h4><p>字符串测试: </p>
+<p>​    = 是否等于 </p>
+<p>​    &gt; ascii码是否大于ascii码 </p>
+<p>​    &lt; 是否小于 </p>
+<p>​    != 是否不等于 </p>
+<p>​    =~ 左侧字符串是否能够被右侧的PATTERN所匹配,注意: 此表达式一般用于[[ ]]中;扩展的正则表达式 </p>
+<p>​    -z “STRING“ 字符串是否为空,空为真,不空为假 </p>
+<p>​    -n “STRING“ 字符串是否不空,不空为真,空为假 </p>
+<p> 注意:用于字符串比较时的用到的操作数都应该使用引号 </p>
+<h4 id="bash的文件测试"><a href="#bash的文件测试" class="headerlink" title="bash的文件测试"></a>bash的文件测试</h4><p>存在性测试 </p>
+<p>​    -a FILE:同-e </p>
+<p>​    -e FILE: 文件存在性测试,存在为真,否则为假 </p>
+<p>存在性及类别测试 </p>
+<p>​    -b FILE:是否存在且为块设备文件 </p>
+<p>​    -c FILE:是否存在且为字符设备文件 </p>
+<p>​    -d FILE:是否存在且为目录文件 </p>
+<p>​    -f FILE:是否存在且为普通文件 </p>
+<p>​    -h FILE 或 -L FILE:存在且为符号链接文件 </p>
+<p>​    -p FILE:是否存在且为命名管道文件 </p>
+<p>​    -S FILE:是否存在且为套接字文件</p>
+<h4 id="bash的文件权限测试"><a href="#bash的文件权限测试" class="headerlink" title="bash的文件权限测试"></a>bash的文件权限测试</h4><p>文件权限测试: </p>
+<p>​    -r FILE:是否存在且可读 </p>
+<p>​    -w FILE: 是否存在且可写 </p>
+<p>​    -x FILE: 是否存在且可执行 </p>
+<p>文件特殊权限测试: </p>
+<p>​    -u FILE:是否存在且拥有suid权限 </p>
+<p>​    -g FILE:是否存在且拥有sgid权限 </p>
+<p>​    -k FILE:是否存在且拥有sticky权限 </p>
+<h4 id="bash的文件属性测试"><a href="#bash的文件属性测试" class="headerlink" title="bash的文件属性测试"></a>bash的文件属性测试</h4><p>文件大小测试: </p>
+<p>​    -s FILE: 是否存在且非空 </p>
+<p>文件是否打开: </p>
+<p>​    -t fd: fd 文件描述符是否在某终端已经打开 </p>
+<p>​    -N FILE:文件自从上一次被读取之后是否被修改过 </p>
+<p>​    -O FILE:当前有效用户是否为文件属主 </p>
+<p>​    -G FILE:当前有效用户是否为文件属组</p>
+<p>双目测试: </p>
+<p>​    FILE1 -ef FILE2: FILE1是否是FILE2的硬链接 </p>
+<p>​    FILE1 -nt FILE2: FILE1是否新于FILE2(mtime) </p>
+<p>​    FILE1 -ot FILE2: FILE1是否旧于FILE2 </p>
+<h4 id="bash的组合测试条件"><a href="#bash的组合测试条件" class="headerlink" title="bash的组合测试条件"></a>bash的组合测试条件</h4><p>第一种方式: </p>
+<p>​    COMMAND1 &amp;&amp; COMMAND2 并且 </p>
+<p>​    COMMAND1 || COMMAND2 或者 </p>
+<p>​    ! COMMAND 非 </p>
+<p>​    如:[[ -r FILE ]] &amp;&amp; [[ -w FILE ]] </p>
+<p>第二种方式: </p>
+<p>​    EXPRESSION1 -a EXPRESSION2 并且 </p>
+<p>​    EXPRESSION1 -o EXPRESSION2 或者 </p>
+<p>​    ! EXPRESSION </p>
+<p>​    必须使用测试命令进行 </p>
+<h4 id="使用read命令来接受输入"><a href="#使用read命令来接受输入" class="headerlink" title="使用read命令来接受输入"></a>使用read命令来接受输入</h4><p>使用read来把输入值分配给一个或多个shell变量 </p>
+<p>​    -p 指定要显示的提示 </p>
+<p>​    -s 静默输入,一般用于密码 </p>
+<p>​    -n N 指定输入的字符长度N </p>
+<p>​    -d ‘字符’ 输入结束符 </p>
+<p>​    -t N TIMEOUT为N秒 </p>
+<p>​    read 从标准输入中读取值,给每个单词分配一个变量 </p>
+<p>​    所有剩余单词都被分配给最后一个变量 </p>
+<p>​    read -p “Enter a filename: “ FILE </p>
+<h4 id="bash展开命令行的顺序"><a href="#bash展开命令行的顺序" class="headerlink" title="bash展开命令行的顺序"></a>bash展开命令行的顺序</h4><p>把命令行分成单个命令词 </p>
+<p>展开别名 </p>
+<p>展开大括号的声明({}) </p>
+<p>展开波浪符声明(~) </p>
+<p>命令替换$() 和 (``) </p>
+<p>再次把命令行分成命令词 </p>
+<p>展开文件通配(* 、?、[abc]等等) </p>
+<p>准备I/0重导向(&lt;、&gt;) </p>
+<p>运行命令 </p>
+<h4 id="防止扩展"><a href="#防止扩展" class="headerlink" title="防止扩展"></a>防止扩展</h4><p>反斜线()会使随后的字符按原意解释 </p>
+<p>​    $ echo Your cost: \$5.00 </p>
+<p>​    Your cost: $5.00 </p>
+<p>加引号来防止扩展 </p>
+<p>​    • 单引号(’)防止所有扩展 </p>
+<p>​    • 双引号(”)也防止所有扩展,但是以下情况例外: </p>
+<p>​        $(美元符号) － 变量扩展 </p>
+<p>​        `(反引号) － 命令替换 </p>
+<p>​        (反斜线) － 禁止单个字符扩展 </p>
+<p>​        !(叹号) － 历史命令替换 </p>
+<h4 id="bash的配置文件"><a href="#bash的配置文件" class="headerlink" title="bash的配置文件"></a>bash的配置文件</h4><p>按生效范围划分,存在两类: </p>
+<p>全局配置: </p>
+<p>​    /etc/profile </p>
+<p>​    /etc/profile.d/*.sh </p>
+<p>​    /etc/bashrc </p>
+<p>个人配置: </p>
+<p>​    ~/.bash_profile </p>
+<p>​    ~/.bashrc </p>
+<h4 id="Profile类"><a href="#Profile类" class="headerlink" title="Profile类"></a>Profile类</h4><p>按功能划分,存在两类: </p>
+<p>​    profile类和bashrc类 </p>
+<p>profile类:为交互式登录的shell提供配置 </p>
+<p>​    全局:/etc/profile, /etc/profile.d/*.sh </p>
+<p>​    个人:~/.bash_profile </p>
+<p>​    功用: </p>
+<p>​    (1) 用于定义环境变量 </p>
+<p>​    (2) 运行命令或脚本 </p>
+<h4 id="bashrc类"><a href="#bashrc类" class="headerlink" title="bashrc类"></a>bashrc类</h4><p>bashrc类:为非交互式和交互式登录的shell提供配置 </p>
+<p>​    全局:/etc/bashrc </p>
+<p>​    个人:~/.bashrc </p>
+<p>​    功用: </p>
+<p>​    (1) 定义命令别名和函数 </p>
+<p>​    (2) 定义本地变量 </p>
+<h4 id="编辑配置文件生效"><a href="#编辑配置文件生效" class="headerlink" title="编辑配置文件生效"></a>编辑配置文件生效</h4><p>修改profile和bashrc文件后需生效 </p>
+<p>​    两种方法: </p>
+<p>​    1重新启动shell进程 </p>
+<p>​    2 . 或source </p>
+<p>​    例: </p>
+<p>​    . ~/.bashrc </p>
+<h4 id="bash退出任务"><a href="#bash退出任务" class="headerlink" title="bash退出任务"></a>bash退出任务</h4><p>保存在~/.bash_logout文件中(用户) </p>
+<p>在退出登录shell时运行 </p>
+<p>用于 </p>
+<p>​    • 创建自动备份 </p>
+<p>​    • 清除临时文件 </p>
+<h4 id="变量-1"><a href="#变量-1" class="headerlink" title="$-变量"></a>$-变量</h4><p>h:hashall,打开这个选项后,Shell 会将命令所在的路径hash下来,避免每次 都要查询.通过set +h将h选项关闭 </p>
+<p>i:interactive-comments,包含这个选项说明当前的 shell 是一个交互式的 shell.所谓的交互式shell,在脚本中,i选项是关闭的. </p>
+<p>m:monitor,打开监控模式,就可以通过Job control来控制进程的停止、继 续,后台或者前台执行等. </p>
+<p>B:braceexpand,大括号扩展 </p>
+<p>H:history,H选项打开,可以展开历史列表中的命令,可以通过!感叹号来完 成,例如“!!”返回上最近的一个历史命令,“!n”返回第 n 个历史命令 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7-%E4%BA%8C/" rel="prev" title="Linux 文本处理工具(二)">
+      <i class="fa fa-chevron-left"></i> Linux 文本处理工具(二)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E4%B8%80/" rel="next" title="Linux shell 脚本编程进阶(一)">
+      Linux shell 脚本编程进阶(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#编程基础"><span class="nav-number">1.</span> <span class="nav-text">编程基础</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#程序的执行方式"><span class="nav-number">2.</span> <span class="nav-text">程序的执行方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#shell脚本基础"><span class="nav-number">3.</span> <span class="nav-text">shell脚本基础</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建shell脚本"><span class="nav-number">4.</span> <span class="nav-text">创建shell脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#脚本规范"><span class="nav-number">5.</span> <span class="nav-text">脚本规范</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#脚本的基本结构"><span class="nav-number">6.</span> <span class="nav-text">脚本的基本结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#脚本调试"><span class="nav-number">7.</span> <span class="nav-text">脚本调试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#变量"><span class="nav-number">8.</span> <span class="nav-text">变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash中变量的种类"><span class="nav-number">9.</span> <span class="nav-text">bash中变量的种类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#局部变量"><span class="nav-number">10.</span> <span class="nav-text">局部变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#环境变量"><span class="nav-number">11.</span> <span class="nav-text">环境变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#只读和位置变量"><span class="nav-number">12.</span> <span class="nav-text">只读和位置变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#退出状态"><span class="nav-number">13.</span> <span class="nav-text">退出状态</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#退出状态码"><span class="nav-number">14.</span> <span class="nav-text">退出状态码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#算数运算"><span class="nav-number">15.</span> <span class="nav-text">算数运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#赋值"><span class="nav-number">16.</span> <span class="nav-text">赋值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#逻辑运算"><span class="nav-number">17.</span> <span class="nav-text">逻辑运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#条件测试"><span class="nav-number">18.</span> <span class="nav-text">条件测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#条件性的执行操作符"><span class="nav-number">19.</span> <span class="nav-text">条件性的执行操作符</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#test命令"><span class="nav-number">20.</span> <span class="nav-text">test命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的数值测试"><span class="nav-number">21.</span> <span class="nav-text">bash的数值测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash-的字符串测试"><span class="nav-number">22.</span> <span class="nav-text">bash 的字符串测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的文件测试"><span class="nav-number">23.</span> <span class="nav-text">bash的文件测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的文件权限测试"><span class="nav-number">24.</span> <span class="nav-text">bash的文件权限测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的文件属性测试"><span class="nav-number">25.</span> <span class="nav-text">bash的文件属性测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的组合测试条件"><span class="nav-number">26.</span> <span class="nav-text">bash的组合测试条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用read命令来接受输入"><span class="nav-number">27.</span> <span class="nav-text">使用read命令来接受输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash展开命令行的顺序"><span class="nav-number">28.</span> <span class="nav-text">bash展开命令行的顺序</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#防止扩展"><span class="nav-number">29.</span> <span class="nav-text">防止扩展</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash的配置文件"><span class="nav-number">30.</span> <span class="nav-text">bash的配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Profile类"><span class="nav-number">31.</span> <span class="nav-text">Profile类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bashrc类"><span class="nav-number">32.</span> <span class="nav-text">bashrc类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编辑配置文件生效"><span class="nav-number">33.</span> <span class="nav-text">编辑配置文件生效</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#bash退出任务"><span class="nav-number">34.</span> <span class="nav-text">bash退出任务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#变量-1"><span class="nav-number">35.</span> <span class="nav-text">$-变量</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

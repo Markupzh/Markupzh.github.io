@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="用户登录root 用户一个特殊的管理帐户  也被称为超级用户  root已接近完整的系统控制  对系统损害几乎有无限的能力  除非必要,不要登录为 root  普通( 非特权 )用户权限有限  造成损害的能力比较有限   终端terminal设备终端 键盘鼠标显示器 物理终端( &#x2F;dev&#x2F;console ) 控制台console  虚拟终端(tty:teletypewriters, &#x2F;dev&#x2F;tt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 基础和帮助">
+<meta property="og:url" content="http://yoursite.com/Linux-%E5%9F%BA%E7%A1%80%E5%92%8C%E5%B8%AE%E5%8A%A9/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="用户登录root 用户一个特殊的管理帐户  也被称为超级用户  root已接近完整的系统控制  对系统损害几乎有无限的能力  除非必要,不要登录为 root  普通( 非特权 )用户权限有限  造成损害的能力比较有限   终端terminal设备终端 键盘鼠标显示器 物理终端( &#x2F;dev&#x2F;console ) 控制台console  虚拟终端(tty:teletypewriters, &#x2F;dev&#x2F;tt">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-07-15T06:34:30.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:23:29.798Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E5%9F%BA%E7%A1%80%E5%92%8C%E5%B8%AE%E5%8A%A9/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 基础和帮助 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%9F%BA%E7%A1%80%E5%92%8C%E5%B8%AE%E5%8A%A9/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 基础和帮助
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-07-15 14:34:30" itemprop="dateCreated datePublished" datetime="2015-07-15T14:34:30+08:00">2015-07-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:23:29" itemprop="dateModified" datetime="2019-01-02T23:23:29+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="用户登录"><a href="#用户登录" class="headerlink" title="用户登录"></a>用户登录</h3><h4 id="root-用户"><a href="#root-用户" class="headerlink" title="root 用户"></a>root 用户</h4><p>一个特殊的管理帐户 </p>
+<p>也被称为超级用户 </p>
+<p>root已接近完整的系统控制 </p>
+<p>对系统损害几乎有无限的能力 </p>
+<p>除非必要,不要登录为 root </p>
+<h4 id="普通-非特权-用户"><a href="#普通-非特权-用户" class="headerlink" title="普通( 非特权 )用户"></a>普通( 非特权 )用户</h4><p>权限有限 </p>
+<p>造成损害的能力比较有限 </p>
+<hr>
+<h3 id="终端terminal"><a href="#终端terminal" class="headerlink" title="终端terminal"></a>终端terminal</h3><p>设备终端 键盘鼠标显示器</p>
+<p>物理终端( /dev/console ) 控制台console </p>
+<p>虚拟终端(tty:teletypewriters, /dev/tty# #为[1-6]) tty 可有n个,Ctrl+Alt+F[1-6] </p>
+<p>图形终端( /dev/tty7 ) startx, xwindows </p>
+<pre><code>CentOS 6: Ctrl + Alt + F7 
+
+CentOS 7: 在哪个终端启动,即位于哪个虚拟终端 </code></pre><p>串行终端( /dev/ttyS# ) ttyS </p>
+<p>伪终端( pty:pseudo-tty , /dev/pts/# ) pty, SSH远程连接 </p>
+<p>查看当前的终端设备:#tty </p>
+<hr>
+<h3 id="交互式接口"><a href="#交互式接口" class="headerlink" title="交互式接口"></a>交互式接口</h3><p>交互式接口:启动终端后,在终端设备附加一个交互式应用程序 </p>
+<p>GUI:Graphic User Interface </p>
+<p>X protocol, window manager, desktop Desktop: GNOME (C, 图形库gtk), KDE (C++,图形库qt) XFCE (轻量级桌面) </p>
+<p>CLI:Command Line Interface </p>
+<p>shell程序:sh (bourn 史蒂夫·伯恩) csh tcsh ksh (korn) bash (bourn again shell)GPL zsh </p>
+<hr>
+<h3 id="什么是shell"><a href="#什么是shell" class="headerlink" title="什么是shell"></a>什么是shell</h3><p>Shell 是Linux系统的用户界面,提供了用户与内核进行交互操作的一种接口。 它接收用户输入的命令并把它送入内核去执行 </p>
+<p>shell也被称为LINUX的命令解释器(command interpreter) </p>
+<p>shell是一种高级程序设计语言 </p>
+<hr>
+<h3 id="bash-shell"><a href="#bash-shell" class="headerlink" title="bash shell"></a>bash shell</h3><p>GNU Bourne-Again Shell(bash)是GNU计划中重要的工具软件之一,目前也 是 Linux标准的shell,与sh兼容</p>
+<p>CentOS默认使用 </p>
+<p>显示当前使用的shell </p>
+<p><code>echo ${SHELL}</code></p>
+<p>显示当前系统使用的所有shell </p>
+<p><code>cat /etc/shells</code></p>
+<hr>
+<h3 id="命令提示符"><a href="#命令提示符" class="headerlink" title="命令提示符"></a>命令提示符</h3><p>命令提示符:prompt </p>
+<p><code>[root@localhost ~]#</code></p>
+<blockquote>
+<p>#管理员     $ 普通用户 </p>
+</blockquote>
+<p>显示提示符格式 </p>
+<p><code>[root@localhost ~]#echo $PS1</code></p>
+<p>修改提示符格式 </p>
+<p><code>PS1=&quot;\[\e[1;5;41;33m\][\u@\h \W]\\$\[\e[0m\]&quot;</code></p>
+<blockquote>
+<p>\e \033                 \u 当前用户 </p>
+</blockquote>
+<blockquote>
+<p>\h 主机名简称         \H 主机名 </p>
+</blockquote>
+<blockquote>
+<p>\w 当前工作目录         \W 当前工作目录基名 </p>
+</blockquote>
+<blockquote>
+<p>\t 24小时时间格式     \T 12小时时间格式 ! 命令历史数 </p>
+</blockquote>
+<blockquote>
+<p>\# 开机后命令历史数</p>
+</blockquote>
+<hr>
+<h3 id="执行命令"><a href="#执行命令" class="headerlink" title="执行命令"></a>执行命令</h3><p>输入命令后回车 </p>
+<p>提请shell程序找到键入命令所对应的可执行程序或代码,并由其分析后 提交给内核分配资源将其运行起来 </p>
+<p>在shell中可执行的命令有两类 </p>
+<h4 id="内部命令"><a href="#内部命令" class="headerlink" title="内部命令:"></a>内部命令:</h4><p>由shell自带的,而且通过某命令形式提供 help 内部命令列表 </p>
+<p><code>enable cmd</code></p>
+<p>启用内部命令 </p>
+<p><code>enable –n cmd</code></p>
+<p>禁用内部命令 </p>
+<p><code>enable –n</code></p>
+<p>查看所有禁用的内部命令 </p>
+<h4 id="外部命令"><a href="#外部命令" class="headerlink" title="外部命令:"></a>外部命令:</h4><p>在文件系统路径下有对应的可执行程序文件 </p>
+<p>查看路径:</p>
+<p><code>which -a |--skip-alias</code></p>
+<p><code>whereis</code> </p>
+<p>区别指定的命令是内部或外部命令 </p>
+<p><code>type COMMAND</code></p>
+<h4 id="执行外部命令"><a href="#执行外部命令" class="headerlink" title="执行外部命令"></a>执行外部命令</h4><p>Hash缓存表 </p>
+<p>系统初始hash表为空,当外部命令执行时,默认会从PATH路径下寻找该命 令,找到后会将这条命令的路径记录到hash表中,当再次使用该命令时,shell解 释器首先会查看hash表,存在将执行之,如果不存在,将会去PATH路径下寻找。 利用hash缓存表可大大提高命令的调用速率 </p>
+<p>hash常见用法 </p>
+<p><code>hash</code>                 //显示hash缓存 </p>
+<p><code>hash –l</code>             //显示hash缓存,可作为输入使用 </p>
+<p><code>hash –p path name</code>     //将命令全路径path起别名为name </p>
+<p><code>hash –t name</code>         //打印缓存中name的路径</p>
+<p> <code>hash –d name</code>         //清除name缓存 </p>
+<p><code>hash –r</code>             //清除缓存 </p>
+<h4 id="命令别名"><a href="#命令别名" class="headerlink" title="命令别名"></a>命令别名</h4><p>显示当前shell进程所有可用的命令别名 </p>
+<p><code>alias</code></p>
+<p>定义别名NAME,其相当于执行命令VALUE </p>
+<p><code>alias NAME=&#39;VALUE&#39;</code></p>
+<p>在命令行中定义的别名,仅对当前shell进程有效 </p>
+<p>如果想永久有效,要定义在配置文件中 </p>
+<p>仅对当前用户:</p>
+<p><code>~/.bashrc</code> </p>
+<p>对所有用户有效:</p>
+<p><code>/etc/bashrc</code></p>
+<p>编辑配置给出的新配置不会立即生效 </p>
+<p>bash进程重新读取配置文件 </p>
+<p><code>source /path/to/config_file</code></p>
+<p><code>. /path/to/config_file</code></p>
+<p>撤消别名:unalias </p>
+<p><code>unalias [-a] name [name ...]</code></p>
+<p>-a 取消所有别名 </p>
+<p>如果别名同原命令同名,如果要执行原命令,可使用 </p>
+<p><code>\ALIASNAME</code></p>
+<p><code>&quot;ALIASNAME&quot;</code></p>
+<p><code>&#39;ALIASNAME&#39;</code></p>
+<p><code>command ALIASNAME</code></p>
+<p><code>/path/commmand</code></p>
+<h4 id="命令格式"><a href="#命令格式" class="headerlink" title="命令格式"></a>命令格式</h4><p>COMMAND [OPTIONS…][ARGUMENTS…] </p>
+<p>选项:用于启用或关闭命令的某个或某些功能 </p>
+<p>短选项:-c 例如:-l, -h </p>
+<p>长选项:–word 例如:–all, –human-readable </p>
+<p>参数:命令的作用对象,比如文件名,用户名等 </p>
+<p>注意: </p>
+<p>多个选项以及多参数和命令之间使用空白字符分隔 </p>
+<p>取消和结束命令执行:Ctrl+c,Ctrl+d </p>
+<p>多个命令可以用;符号分开 </p>
+<p>一个命令可以用\分成多行 </p>
+<h4 id="时间和日期"><a href="#时间和日期" class="headerlink" title="时间和日期"></a>时间和日期</h4><p>Linux的两种时钟 </p>
+<p>系统时钟:由Linux内核通过CPU的工作频率进行的 </p>
+<p>硬件时钟:主板 </p>
+<p>相关命令 </p>
+<p>date 显示和设置系统时间 </p>
+<p><code>date +%s</code></p>
+<p><code>date -d @1509536033</code></p>
+<p>hwclock,clock: 显示硬件时钟 </p>
+<p>-s, –hctosys 以硬件时钟为准,校正系统时钟 </p>
+<p>-w, –systohc 以系统时钟为准,校正硬件时钟 </p>
+<p>时区:/etc/localtime </p>
+<p>显示日历:</p>
+<p>cal –y </p>
+<hr>
+<h3 id="简单命令"><a href="#简单命令" class="headerlink" title="简单命令"></a>简单命令</h3><p>关机:halt, poweroff </p>
+<p>重启:reboot </p>
+<pre><code>-f: 强制,不调用shutdown 
+
+-p: 切断电源 </code></pre><p>关机或重启:shutdown </p>
+<p>shutdown [OPTION]… TIME [MESSAGE] </p>
+<pre><code>-r: reboot 
+
+-h: halt 
+
+-c:cancel </code></pre><p>TIME:无指定,默认相当于 +1 </p>
+<pre><code>now: 立刻,相当于+0 
+
++m: 相对时间表示法,几分钟之后；例如 +3 
+
+hh:mm: 绝对时间表示,指明具体时间 </code></pre><p>用户登录信息查看命令:</p>
+<p><code>whoami</code>    : 显示当前登录有效用户 </p>
+<p><code>who</code>    : 系统当前所有的登录会话 </p>
+<p><code>w</code>        : 系统当前所有的登录会话及所做的操作 </p>
+<p>screen命令: </p>
+<pre><code>创建新screen会话 
+
+    screen –S [SESSION] 
+
+加入screen会话 
+
+    screen –x [SESSION] 
+
+退出并关闭screen会话 
+
+    exit 
+
+剥离当前screen会话 
+
+    Ctrl+a,d 
+
+显示所有已经打开的screen会话 
+
+    screen -ls 
+
+恢复某screen会话 
+
+    screen -r [SESSION] </code></pre><p>echo命令 </p>
+<p>功能:显示字符 </p>
+<p>语法:echo [-neE][字符串] </p>
+<p>说明:echo会将输入的字符串送往标准输出。输出的字符串间以空白字符隔开, 并在最后加上换行号 </p>
+<p>选项: </p>
+<pre><code>-E (默认)不支持 \ 解释功能 
+
+-n 不自动换行 
+
+-e 启用 \ 字符的解释功能 </code></pre><p>显示变量 echo “$VAR_NAME” 变量会替换,弱引用 echo ‘$VAR_NAME‘ 变量不会替换,强引用 </p>
+<p>启用命令选项-e,若字符串中出现以下字符,则特别加以处理,而不会将它当成 一般文字输出 </p>
+<pre><code>\a 发出警告声 
+
+\b 退格键 
+
+\c 最后不加上换行符号 
+
+\n 换行且光标移至行首 
+
+\r 回车,即光标移至行首,但不换行 
+
+\t 插入tab 
+
+\\ 插入\字符 
+
+\0nnn 插入nnn(八进制)所代表的ASCII字符 
+
+    echo -e &apos;\033[43;31;5mmagedu\033[0m&apos; 
+
+\xHH插入HH(十六进制)所代表的ASCII字 </code></pre><h4 id="命令行扩展-被括起来的集合"><a href="#命令行扩展-被括起来的集合" class="headerlink" title="命令行扩展,被括起来的集合"></a>命令行扩展,被括起来的集合</h4><p>命令行扩展:$( ) 或   ``</p>
+<p>把一个命令的输出打印给另一个命令的参数 </p>
+<p><code>echo &quot;This system&#39;s name is $(hostname) &quot;</code></p>
+<p><code>This system&#39;s name is server1.example.com</code></p>
+<p>括号扩展:{ } </p>
+<p>打印重复字符串的简化形式 </p>
+<p><code>echo file{1,3,5}</code></p>
+<p>生成 file1 file3 file5 </p>
+<p><code>rm -f file{1,3,5}</code></p>
+<p><code>echo {1..10}</code></p>
+<p><code>echo {a..z}</code></p>
+<p><code>echo {000..20..2}</code></p>
+<hr>
+<h3 id="Tab键补全"><a href="#Tab键补全" class="headerlink" title="Tab键补全"></a>Tab键补全</h3><p>命令补全 </p>
+<pre><code>内部命令: 
+
+外部命令:bash根据PATH环境变量定义的路径,自左而右在每个路径搜寻 以给定命令名命名的文件,第一次找到的命令即为要执行的命令 
+
+用户给定的字符串只有一条惟一对应的命令,直接补全 
+
+否则,再次Tab会给出列表 </code></pre><p>路径补全 </p>
+<pre><code>把用户给出的字符串当做路径开头,并在其指定上级目录下搜索以指定的字符 串开头的文件名                             
+
+如果惟一:则直接补全 
+
+否则:再次Tab给出列表 </code></pre><h4 id="双击Tab键"><a href="#双击Tab键" class="headerlink" title="双击Tab键"></a>双击Tab键</h4><p>command 2Tab 所有子命令或文件补全 </p>
+<p>string2Tab 以string开头命令 </p>
+<p>/2Tab 显示所有根目录下一级目录,包括隐藏目录 </p>
+<p>./2Tab 当前目录下子目录,包括隐藏目录 </p>
+<p>*2Tab 当前目录下子目录,不包括隐藏目录 </p>
+<p>~2Tab 所有用户列表 </p>
+<p>$2Tab 所有变量 </p>
+<p>@2Tab /etc/hosts记录 (centos7不支持) </p>
+<p>=2Tab 相当于ls –A (centos7不支持) </p>
+<hr>
+<h3 id="命令行历史"><a href="#命令行历史" class="headerlink" title="命令行历史"></a>命令行历史</h3><p>保存你输入的命令历史。可以用它来重复执行命令 </p>
+<p>登录shell时,会读取命令历史文件中记录下的命令~/.bash_history </p>
+<p>登录进shell后新执行的命令只会记录在缓存中；这些命令会用户退出时”追 加”至命令历史文件中 </p>
+<p>重复前一个命令,有4种方法 </p>
+<pre><code>重复前一个命令使用上方向键,并回车执行 
+
+按 !! 并回车执行 
+
+输入 !-1 并回车执行 
+
+按 Ctrl+p 并回车执行 </code></pre><p>!:0 执行前一条命令(去除参数) </p>
+<p>Ctrl + n 显示当前历史中的下一条命令,但不执行 </p>
+<p>Ctrl + j 执行当前命令 </p>
+<p>!n 执行history命令输出对应序号n的命令 </p>
+<p>!-n 执行history历史中倒数第n个命令 </p>
+<p>!string 重复前一个以”string”开头的命令 </p>
+<p>!?string 重复前一个包含string的命令 </p>
+<p>!string:p 仅打印命令历史,而不执行 </p>
+<p>!$:p 打印输出 !$ (上一条命令的最后一个参数)的内容 </p>
+<p>!<em>:p 打印输出 !</em>(上一条命令的所有参数)的内容 </p>
+<p>^string 删除上一条命令中的第一个string </p>
+<p>^string1^string2 将上一条命令中的第一个string1替换为string2 </p>
+<p>!:gs/string1/string2 将上一条命令中所有的string1都替换为 string2 </p>
+<p>使用up(向上)和down(向下)键来上下浏览从前输入的命令 </p>
+<p>ctrl-r来在命令历史中搜索命令 </p>
+<p> (reverse-i-search)`’: </p>
+<p>Ctrl+g:从历史搜索模式退出 </p>
+<p>要重新调用前一个命令中最后一个参数 </p>
+<p> !$ 表示 </p>
+<p> Esc, .(点击Esc键后松开,然后点击 . 键) </p>
+<p> Alt+ .(按住Alt键的同时点击 . 键) </p>
+<hr>
+<h3 id="命令行历史-1"><a href="#命令行历史-1" class="headerlink" title="命令行历史"></a>命令行历史</h3><p>command !^             利用上一个命令的第一个参数做cmd的参数 </p>
+<p>command !$             利用上一个命令的最后一个参数做cmd的参数 </p>
+<p>command !*             利用上一个命令的全部参数做cmd的参数 </p>
+<p>command !:n         利用上一个命令的第n个参数做cmd的参数 </p>
+<p>command !n:^         调用第n条命令的第一个参数 </p>
+<p>command !n:$         调用第n条命令的最后一个参数 </p>
+<p>command !n:m         调用第n条命令的第m个参数 </p>
+<p>command !n:*         调用第n条命令的所有参数 </p>
+<p>command !string:^      从命令历史中搜索以 string 开头的命令,并获取它的第一 个参数 </p>
+<p>command !string:$     从命令历史中搜索以 string 开头的命令,并获取它的最后一 个参数 </p>
+<p>command !string:n      从命令历史中搜索以 string 开头的命令,并获取它的第n 个参数 </p>
+<p>command !string:*      从命令历史中搜索以 string 开头的命令,并获取它的所有 参数 </p>
+<h4 id="命令history"><a href="#命令history" class="headerlink" title="命令history"></a>命令history</h4><p>history [-c][-d offset][n] </p>
+<p>history -anrw [filename] </p>
+<p>history -ps arg [arg…] </p>
+<pre><code>-c: 清空命令历史 
+
+-d offset: 删除历史中指定的第offset个命令 
+
+n: 显示最近的n条历史 
+
+-a: 追加本次会话新执行的命令历史列表至历史文件 
+
+-r: 读历史文件附加到历史列表 
+
+-w: 保存历史列表到指定的历史文件 
+
+-n: 读历史文件中未读过的行到历史列表 
+
+-p: 展开历史参数成多行,但不存在历史列表中 
+
+-s: 展开历史参数成一行,附加在历史列表后 </code></pre><h4 id="命令历史相关环境变量"><a href="#命令历史相关环境变量" class="headerlink" title="命令历史相关环境变量"></a>命令历史相关环境变量</h4><p>HISTSIZE:命令历史记录的条数 </p>
+<p>HISTFILE:指定历史文件,默认为~/.bash_history </p>
+<p>HISTFILESIZE:命令历史文件记录历史的条数 </p>
+<p>HISTTIMEFORMAT=”%F %T “ 显示时间 </p>
+<p>HISTIGNORE=”str1:str2*:… “ 忽略str1命令,str2开头的历史 </p>
+<p>控制命令历史的记录方式: </p>
+<pre><code>环境变量:HISTCONTROL 
+
+ignoredups 默认,忽略重复的命令,连续且相同为&quot;重复&quot; 
+
+ignorespace 忽略所有以空白开头的命令 
+
+ignoreboth 相当于ignoredups, ignorespace的组合 
+
+erasedups 删除重复命令 </code></pre><p>export 变量名=”值” </p>
+<p>存放在 /etc/profile 或 ~/.bash_profile </p>
+<hr>
+<h3 id="bash的快捷键"><a href="#bash的快捷键" class="headerlink" title="bash的快捷键"></a>bash的快捷键</h3><p>Ctrl + l 清屏,相当于clear命令 </p>
+<p>Ctrl + o 执行当前命令,并重新显示本命令 </p>
+<p>Ctrl + s 阻止屏幕输出,锁定 </p>
+<p>Ctrl + q 允许屏幕输出 </p>
+<p>Ctrl + c 终止命令 </p>
+<p>Ctrl + z 挂起命令 </p>
+<p>Ctrl + a 光标移到命令行首,相当于Home </p>
+<p>Ctrl + e 光标移到命令行尾,相当于End </p>
+<p>Ctrl + f 光标向右移动一个字符 </p>
+<p>Ctrl + b 光标向左移动一个字符 </p>
+<p>Alt + f 光标向右移动一个单词尾 </p>
+<p>Alt + b 光标向左移动一个单词首 </p>
+<p>Ctrl + xx 光标在命令行首和光标之间移动 </p>
+<p>Ctrl + u 从光标处删除至命令行首 </p>
+<p>Ctrl + k 从光标处删除至命令行尾 </p>
+<p>Alt + r 删除当前整行 </p>
+<p>Ctrl + w 从光标处向左删除至单词首 </p>
+<p>Alt + d 从光标处向右删除至单词尾 </p>
+<p>Ctrl + d 删除光标处的一个字符 </p>
+<p>Ctrl + h 删除光标前的一个字符 </p>
+<p>Ctrl + y 将删除的字符粘贴至光标后 </p>
+<p>Alt + c 从光标处开始向右更改为首字母大写的单词 </p>
+<p>Alt + u 从光标处开始,将右边一个单词更改为大写 </p>
+<p>Alt + l 从光标处开始,将右边一个单词更改为小写 </p>
+<p>Ctrl + t 交换光标处和之前的字符位置 </p>
+<p>Alt + t 交换光标处和之前的单词位置 </p>
+<p>Alt + N 提示输入指定字符后,重复显示该字符N次 </p>
+<p>注意:Alt组合快捷键经常和其它软件冲突 </p>
+<hr>
+<h3 id="获得帮助"><a href="#获得帮助" class="headerlink" title="获得帮助"></a>获得帮助</h3><p>多层次的帮助 </p>
+<p>whatis </p>
+<p>command –help </p>
+<p>man and info </p>
+<p>/usr/share/doc/ </p>
+<p>Red Hat documentation </p>
+<p>其它网站和搜索 </p>
+<h4 id="whatis"><a href="#whatis" class="headerlink" title="whatis"></a>whatis</h4><p>显示命令的简短描述 </p>
+<p>使用数据库 </p>
+<p>刚安装后不可立即使用 </p>
+<p>makewhatis | mandb制作数据库 </p>
+<p>使用示例: </p>
+<pre><code>whatis cal 或 man –f cal </code></pre><h4 id="命令帮助"><a href="#命令帮助" class="headerlink" title="命令帮助"></a>命令帮助</h4><p>内部命令:help COMMAND </p>
+<pre><code>man bash </code></pre><p>外部命令:</p>
+<pre><code>(1) COMMAND --help 
+
+    COMMAND -h 
+
+(2) 使用手册(manual) 
+
+    man COMMAND 
+
+(3) 信息页 
+
+    info COMMAND 
+
+(4) 程序自身的帮助文档 
+
+    README 
+
+    INSTALL 
+
+    ChangeLog 
+
+(5) 程序官方文档 
+
+    官方站点:Documentation 
+
+(6) 发行版的官方文档 
+
+(7) Google </code></pre><h4 id="help和-h选项"><a href="#help和-h选项" class="headerlink" title="-help和-h选项"></a>-help和-h选项</h4><p>显示用法总结和参数列表 </p>
+<p>使用的大多数,但并非所有的 </p>
+<p>示例: </p>
+<pre><code>date --help 
+
+Usage: date [OPTION]... [+FORMAT] or: date \[-u|--utc|-- universal]\[MMDDhhmm\[\[CC]YY]\[.ss]]
+
+[] 表示可选项 
+
+CAPS或 &lt;&gt; 表示变化的数据 
+
+... 表示一个列表 
+
+x |y| z 的意思是&quot; x 或 y 或 z &quot; 
+
+-abc的 意思是-a -b –c 
+
+{ } 表示分组 </code></pre><h4 id="man命令"><a href="#man命令" class="headerlink" title="man命令"></a>man命令</h4><p>提供命令帮助的文件 </p>
+<p>手册页存放在/usr/share/man </p>
+<p>几乎每个命令都有man的”页面” </p>
+<p>man页面分组为不同的”章节” </p>
+<p>统称为Linux手册 </p>
+<p>man命令的配置文件:/etc/man.config | man_db.conf MANPATH /PATH/TO/SOMEWHERE: 指明man文件搜索位置 </p>
+<p>man -M /PATH/TO/SOMEWHERE COMMAND: 到指定位置下搜索 COMMAND命令的手册页并显示 </p>
+<p>中文man需安装包man-pages-zh-CN </p>
+<h4 id="man章节"><a href="#man章节" class="headerlink" title="man章节"></a>man章节</h4><p>1: 用户命令 </p>
+<p>2: 系统调用 </p>
+<p>3: C库调用 </p>
+<p>4: 设备文件及特殊文件 </p>
+<p>5: 配置文件格式 </p>
+<p>6: 游戏 </p>
+<p>7: 杂项 </p>
+<p>8: 管理类的命令 </p>
+<p>9:Linux 内核API</p>
+<h4 id="man帮助段落说明"><a href="#man帮助段落说明" class="headerlink" title="man帮助段落说明"></a>man帮助段落说明</h4><p>帮助手册中的段落说明: </p>
+<pre><code>NAME 名称及简要说明 
+
+SYNOPSIS 用法格式说明 
+
+   • [] 可选内容 
+
+   • &lt;&gt; 必选内容 
+
+   • a|b 二选一 
+
+   • { } 分组 
+
+   • ... 同一内容可出现多次 
+
+DESCRIPTION 详细说明 
+
+OPTIONS 选项说明 
+
+EXAMPLES 示例 
+
+FILES 相关文件 
+
+AUTHOR 作者 
+
+COPYRIGHT 版本信息 
+
+REPORTING BUGS bug信息 
+
+SEE ALSO 其它帮助参考 </code></pre><h4 id="man帮助"><a href="#man帮助" class="headerlink" title="man帮助"></a>man帮助</h4><p>查看man手册页 </p>
+<pre><code>man [章节] keyword </code></pre><p>列出所有帮助 </p>
+<pre><code>man –a keyword </code></pre><p>搜索man手册 </p>
+<pre><code>man -k keyword 列出所有匹配的页面 
+
+使用 whatis 数据库 </code></pre><p>相当于whatis </p>
+<pre><code>man –f keyword </code></pre><p>打印man帮助文件的路径 </p>
+<pre><code>man –w [章节] keyword </code></pre><h4 id="man命令-1"><a href="#man命令-1" class="headerlink" title="man命令"></a>man命令</h4><p>man命令的操作方法:使用less命令实现 </p>
+<pre><code>space, ^v, ^f, ^F: 向文件尾翻屏 
+
+b, ^b: 向文件首部翻屏 
+
+d, ^d: 向文件尾部翻半屏 
+
+u, ^u: 向文件首部翻半屏 
+
+RETURN, ^N, e, ^E or j or ^J: 向文件尾部翻一行 
+
+y or ^Y or ^P or k or ^K:向文件首部翻一行 
+
+q: 退出 
+
+#:跳转至第#行 
+
+1G: 回到文件首部 
+
+G:翻至文件尾部 </code></pre><h4 id="man搜索"><a href="#man搜索" class="headerlink" title="man搜索"></a>man搜索</h4><p>/KEYWORD: </p>
+<pre><code>以KEYWORD指定的字符串为关键字,从当前位置向文件尾部搜索；不区 分字符大小写； 
+
+n: 下一个 
+
+N:上一个 </code></pre><p>?KEYWORD: 以KEYWORD指定的字符串为关键字,从当前位置向文件首部搜索；不区分字 符大小写； </p>
+<pre><code>n: 跟搜索命令同方向,下一个 
+
+N:跟搜索命令反方向,上一个 </code></pre><h4 id="info"><a href="#info" class="headerlink" title="info"></a>info</h4><p>man常用于命令参考 ,GNU工具info适合通用文档参考 </p>
+<p>没有参数,列出所有的页面 </p>
+<p>info 页面的结构就像一个网站 </p>
+<p>每一页分为”节点” </p>
+<p>链接节点之前 * </p>
+<p>info [ 命令 ] </p>
+<h4 id="导航info页"><a href="#导航info页" class="headerlink" title="导航info页"></a>导航info页</h4><p>方向键,PgUp,PgDn 导航 </p>
+<p>Tab键 移动到下一个链接 </p>
+<p>d 显示主题目录 </p>
+<p>Home 显示主题首部 </p>
+<p>Enter进入 选定链接 </p>
+<p>n/p/u/l 进入下/前/上一层/最后一个链接 </p>
+<p>s 文字 文本搜索 </p>
+<p>q 退出 info </p>
+<h4 id="通过本地文档获取帮助"><a href="#通过本地文档获取帮助" class="headerlink" title="通过本地文档获取帮助"></a>通过本地文档获取帮助</h4><p>System-&gt;help(centos6) </p>
+<p>Applications -&gt; documentation-&gt;help(centos7) </p>
+<p>提供的官方使用指南和发行注记 </p>
+<p>/usr/share/doc目录 </p>
+<p>多数安装了的软件包的子目录,包括了这些软件的相关 原理说明 </p>
+<p>常见文档:README INSTALL CHANGES </p>
+<p>不适合其它地方的文档的位置 </p>
+<p>配置文件范例 </p>
+<p>HTML/PDF/PS 格式的文档 </p>
+<p>授权书详情 </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/" rel="next" title="Linux 文件管理">
+      Linux 文件管理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#用户登录"><span class="nav-number">1.</span> <span class="nav-text">用户登录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#root-用户"><span class="nav-number">1.1.</span> <span class="nav-text">root 用户</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#普通-非特权-用户"><span class="nav-number">1.2.</span> <span class="nav-text">普通( 非特权 )用户</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#终端terminal"><span class="nav-number">2.</span> <span class="nav-text">终端terminal</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#交互式接口"><span class="nav-number">3.</span> <span class="nav-text">交互式接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是shell"><span class="nav-number">4.</span> <span class="nav-text">什么是shell</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bash-shell"><span class="nav-number">5.</span> <span class="nav-text">bash shell</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#命令提示符"><span class="nav-number">6.</span> <span class="nav-text">命令提示符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行命令"><span class="nav-number">7.</span> <span class="nav-text">执行命令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#内部命令"><span class="nav-number">7.1.</span> <span class="nav-text">内部命令:</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#外部命令"><span class="nav-number">7.2.</span> <span class="nav-text">外部命令:</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#执行外部命令"><span class="nav-number">7.3.</span> <span class="nav-text">执行外部命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#命令别名"><span class="nav-number">7.4.</span> <span class="nav-text">命令别名</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#命令格式"><span class="nav-number">7.5.</span> <span class="nav-text">命令格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#时间和日期"><span class="nav-number">7.6.</span> <span class="nav-text">时间和日期</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#简单命令"><span class="nav-number">8.</span> <span class="nav-text">简单命令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#命令行扩展-被括起来的集合"><span class="nav-number">8.1.</span> <span class="nav-text">命令行扩展,被括起来的集合</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tab键补全"><span class="nav-number">9.</span> <span class="nav-text">Tab键补全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#双击Tab键"><span class="nav-number">9.1.</span> <span class="nav-text">双击Tab键</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#命令行历史"><span class="nav-number">10.</span> <span class="nav-text">命令行历史</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#命令行历史-1"><span class="nav-number">11.</span> <span class="nav-text">命令行历史</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#命令history"><span class="nav-number">11.1.</span> <span class="nav-text">命令history</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#命令历史相关环境变量"><span class="nav-number">11.2.</span> <span class="nav-text">命令历史相关环境变量</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bash的快捷键"><span class="nav-number">12.</span> <span class="nav-text">bash的快捷键</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获得帮助"><span class="nav-number">13.</span> <span class="nav-text">获得帮助</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#whatis"><span class="nav-number">13.1.</span> <span class="nav-text">whatis</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#命令帮助"><span class="nav-number">13.2.</span> <span class="nav-text">命令帮助</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#help和-h选项"><span class="nav-number">13.3.</span> <span class="nav-text">-help和-h选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man命令"><span class="nav-number">13.4.</span> <span class="nav-text">man命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man章节"><span class="nav-number">13.5.</span> <span class="nav-text">man章节</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man帮助段落说明"><span class="nav-number">13.6.</span> <span class="nav-text">man帮助段落说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man帮助"><span class="nav-number">13.7.</span> <span class="nav-text">man帮助</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man命令-1"><span class="nav-number">13.8.</span> <span class="nav-text">man命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#man搜索"><span class="nav-number">13.9.</span> <span class="nav-text">man搜索</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#info"><span class="nav-number">13.10.</span> <span class="nav-text">info</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#导航info页"><span class="nav-number">13.11.</span> <span class="nav-text">导航info页</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#通过本地文档获取帮助"><span class="nav-number">13.12.</span> <span class="nav-text">通过本地文档获取帮助</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

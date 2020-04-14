@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Linux服务器上经常遇到一些系统和应用上的问题，如何分析排查，需要利器，下面总结列表了一些常用工具、trace tool. 引用linux-performance-analysis-and-tools中图片，说明这些tool试用层次位置  OS系统命令系统信息（RHEL&#x2F;Fedora） uname -a 或 cat &#x2F;proc&#x2F;version #print system information">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 系统及应用问题分析排查工具">
+<meta property="og:url" content="http://yoursite.com/Linux-%E7%B3%BB%E7%BB%9F%E5%8F%8A%E5%BA%94%E7%94%A8%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="Linux服务器上经常遇到一些系统和应用上的问题，如何分析排查，需要利器，下面总结列表了一些常用工具、trace tool. 引用linux-performance-analysis-and-tools中图片，说明这些tool试用层次位置  OS系统命令系统信息（RHEL&#x2F;Fedora） uname -a 或 cat &#x2F;proc&#x2F;version #print system information">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://www.brendangregg.com/Perf/linux_observability_tools.png">
+<meta property="article:published_time" content="2019-01-15T05:35:12.000Z">
+<meta property="article:modified_time" content="2019-01-15T05:49:17.789Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://www.brendangregg.com/Perf/linux_observability_tools.png">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E7%B3%BB%E7%BB%9F%E5%8F%8A%E5%BA%94%E7%94%A8%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 系统及应用问题分析排查工具 | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E7%B3%BB%E7%BB%9F%E5%8F%8A%E5%BA%94%E7%94%A8%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%E6%8E%92%E6%9F%A5%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 系统及应用问题分析排查工具
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2019-01-15 13:35:12 / 修改时间：13:49:17" itemprop="dateCreated datePublished" datetime="2019-01-15T13:35:12+08:00">2019-01-15</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Linux服务器上经常遇到一些系统和应用上的问题，如何分析排查，需要利器，下面总结列表了一些常用工具、trace tool.</p>
+<p>引用<a href="http://dtrace.org/blogs/brendan/2013/06/08/linux-performance-analysis-and-tools/" target="_blank" rel="noopener">linux-performance-analysis-and-tools</a>中图片，说明这些tool试用层次位置</p>
+<p><img data-src="http://www.brendangregg.com/Perf/linux_observability_tools.png" alt=""></p>
+<h2 id="OS系统命令"><a href="#OS系统命令" class="headerlink" title="OS系统命令"></a>OS系统命令</h2><h3 id="系统信息（RHEL-Fedora）"><a href="#系统信息（RHEL-Fedora）" class="headerlink" title="系统信息（RHEL/Fedora）"></a>系统信息（RHEL/Fedora）</h3><ul>
+<li>uname -a 或 cat /proc/version #print system information<ul>
+<li>Linux hadoopst2.cm6 2.6.18-164.el5 #1 SMP Tue Aug 18 15:51:48 EDT 2009 x86_64 x86_64 x86_64 GNU/Linux</li>
+</ul>
+</li>
+<li>uptime<ul>
+<li>15:42:46 up 674 days, 6 min, 35 users, load average: 1.30, 5.97, 11.53</li>
+</ul>
+</li>
+<li>cat /etc/redhat-release<ul>
+<li>Red Hat Enterprise Linux Server release 5.4 (Tikanga)</li>
+</ul>
+</li>
+<li>lsb_release<ul>
+<li>LSB Version:  :core-3.1-amd64:core-3.1-ia32:core-3.1-noarch:graphics-3.1-amd64:graphics-3.1-ia32:graphics-3.1-noarch</li>
+</ul>
+</li>
+<li>cat /proc/cpuinfo</li>
+<li>cat /proc/meminfo</li>
+<li>lspci - list all PCI devices</li>
+<li>lsusb - list USB devices</li>
+<li>last, lastb - show listing of last logged in users</li>
+<li>lsmod — show the status of modules in the Linux Kernel</li>
+<li>modprobe - add and remove modules from the Linux Kernel</li>
+</ul>
+<h2 id="常用命令-工具"><a href="#常用命令-工具" class="headerlink" title="常用命令/工具"></a>常用命令/工具</h2><ul>
+<li>ps<ul>
+<li>To print a process tree: ps -ejH / ps axjf</li>
+<li>To get info about threads: ps -eLf / ps axms</li>
+</ul>
+</li>
+<li>ulimit -a</li>
+<li>lsof - list open files, UNIX一切皆文件<ul>
+<li>lsof -p PID</li>
+</ul>
+</li>
+<li>rpm/yum<ul>
+<li>rpm -qf FILE #文件所属rpm包</li>
+<li>rpm -ql RPM #rpm包含文件</li>
+<li>/var/log/yum.log #yum 更新包日志</li>
+</ul>
+</li>
+<li>/etc/XXX #系统级程序配置目录， 如<ul>
+<li>/etc/yum.repos.d/ yum源配置</li>
+</ul>
+</li>
+<li>/var/log/XXX #日志目录， 如<ul>
+<li>/var/log/cron #crontab日志，可以查看调度执行情况</li>
+</ul>
+</li>
+<li>ntpd - Network Time Protocol (NTP) daemon，同步集群中机器时间</li>
+<li>squid - proxy caching server，集群WebUI的代理</li>
+</ul>
+<h3 id="系统监控"><a href="#系统监控" class="headerlink" title="系统监控"></a>系统监控</h3><ul>
+<li>mpstat - Report processors related statistics. 注意%sys %iowait值</li>
+<li>vmstat - Report virtual memory statistics</li>
+<li>iostat - Report Central Processing Unit (CPU) statistics and input/output statistics for devices and partitions.</li>
+<li>netstat - Print network connections, routing tables, interface statistics, masquerade connections, and multicast memberships<ul>
+<li>netstat -atpn | grep PID</li>
+</ul>
+</li>
+<li><a href="http://ganglia.sourceforge.net/" target="_blank" rel="noopener">ganglia</a> - a scalable distributed monitoring system for high-performance computing systems such as clusters and Grids.</li>
+<li>sar/tsar - Collect, report, or save system activity information; tsar是淘宝自己改进的版本<ul>
+<li>定时采样（每分钟），可查历史记录（默认5分钟），可弥补ganglia显示更详细信息</li>
+</ul>
+</li>
+<li>iftop - the “top” bandwidth consumers shown. <a href="http://en.wikipedia.org/wiki/Iftop" target="_blank" rel="noopener">iftop wiki</a></li>
+<li><a href="http://guichaz.free.fr/iotop/" target="_blank" rel="noopener">iotop</a></li>
+<li><a href="https://github.com/hoytech/vmtouch" target="_blank" rel="noopener">vmtouch</a>, Portable file system cache diagnostics and control</li>
+</ul>
+<h3 id="网络相关"><a href="#网络相关" class="headerlink" title="网络相关"></a>网络相关</h3><ul>
+<li>telnet/nc IP PORT - 确认目标端口是否可访问，只ping通不一定端口可访问，可能防火墙等禁止</li>
+<li>ifconfig/ifup/ifdown - configure a network interface</li>
+<li>traceroute - print the route packets trace to network host</li>
+<li>nslookup - query Internet name servers interactively</li>
+<li>tcpdump - dump traffic on a network， 类似开源工具 <a href="http://www.wireshark.org/" target="_blank" rel="noopener">wireshark</a>, <a href="http://netsniff-ng.org/" target="_blank" rel="noopener">netsniff-ng</a>, <a href="http://en.wikipedia.org/wiki/Comparison_of_packet_analyzers" target="_blank" rel="noopener">更多工具比较</a></li>
+<li>lynx - a general purpose distributed information browser for the World Wide Web</li>
+<li><a href="http://tcpcp.sourceforge.net/" target="_blank" rel="noopener">tcpcp</a> - allows cooperating applications to pass ownership of TCP connection endpoints from one Linux host to another one.</li>
+</ul>
+<h2 id="程序-进程相关"><a href="#程序-进程相关" class="headerlink" title="程序/进程相关"></a>程序/进程相关</h2><h3 id="静态信息"><a href="#静态信息" class="headerlink" title="静态信息"></a>静态信息</h3><ul>
+<li>ldconfig - configure dynamic linker run time bindings<ul>
+<li>ldconfig -p | grep SO 查看so是否在link cache中</li>
+</ul>
+</li>
+<li>ldd - print shared library dependencies， 查看exe或so依赖的so</li>
+<li>nm - list symbols from object files，可grep查找是否存在相关的symbol，是否Undefined.</li>
+<li>readelf - Displays information about ELF files. 可现实elf相关信息，如32/64位，适用的OS，处理器</li>
+</ul>
+<h3 id="动态信息"><a href="#动态信息" class="headerlink" title="动态信息"></a>动态信息</h3><ul>
+<li>gdb</li>
+<li>cat /proc/$PID/[cmdline|environ|limits|status|…] - 进程相关信息</li>
+<li>pstack - print a stack trace of a running process</li>
+<li>pmap - report memory map of a process</li>
+</ul>
+<p>资料来源:</p>
+<p><a href="https://www.cnblogs.com/zengkefu/p/5642955.html" target="_blank" rel="noopener">https://www.cnblogs.com/zengkefu/p/5642955.html</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Shell%E8%84%9A%E6%9C%AC%E7%9A%84%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/" rel="prev" title="Shell脚本的调试方法">
+      <i class="fa fa-chevron-left"></i> Shell脚本的调试方法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/hello-world/" rel="next" title="Hello World">
+      Hello World <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#OS系统命令"><span class="nav-number">1.</span> <span class="nav-text">OS系统命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#系统信息（RHEL-Fedora）"><span class="nav-number">1.1.</span> <span class="nav-text">系统信息（RHEL&#x2F;Fedora）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用命令-工具"><span class="nav-number">2.</span> <span class="nav-text">常用命令&#x2F;工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#系统监控"><span class="nav-number">2.1.</span> <span class="nav-text">系统监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络相关"><span class="nav-number">2.2.</span> <span class="nav-text">网络相关</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序-进程相关"><span class="nav-number">3.</span> <span class="nav-text">程序&#x2F;进程相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#静态信息"><span class="nav-number">3.1.</span> <span class="nav-text">静态信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#动态信息"><span class="nav-number">3.2.</span> <span class="nav-text">动态信息</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

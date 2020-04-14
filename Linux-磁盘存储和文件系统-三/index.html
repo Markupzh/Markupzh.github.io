@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="LVM允许对卷进行方便操作的抽象层,包括重新设定文件系统的大小  允许在多个物理设备间重新组织文件系统  ​    • 将设备指定为物理卷  ​    • 用一个或者多个物理卷来创建一个卷组  ​    • 物理卷是用固定大小的物理区域(Physical Extent,PE)来定义的  ​    • 在物理卷上创建的逻辑卷 是由物理区域(PE)组成  ​    • 可以在逻辑卷上创建文件系统  L">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 磁盘存储和文件系统(三)">
+<meta property="og:url" content="http://yoursite.com/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="LVM允许对卷进行方便操作的抽象层,包括重新设定文件系统的大小  允许在多个物理设备间重新组织文件系统  ​    • 将设备指定为物理卷  ​    • 用一个或者多个物理卷来创建一个卷组  ​    • 物理卷是用固定大小的物理区域(Physical Extent,PE)来定义的  ​    • 在物理卷上创建的逻辑卷 是由物理区域(PE)组成  ​    • 可以在逻辑卷上创建文件系统  L">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-10-25T12:56:34.000Z">
+<meta property="article:modified_time" content="2019-01-02T15:53:03.146Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="base">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 磁盘存储和文件系统(三) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 磁盘存储和文件系统(三)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-10-25 20:56:34" itemprop="dateCreated datePublished" datetime="2015-10-25T20:56:34+08:00">2015-10-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:53:03" itemprop="dateModified" datetime="2019-01-02T23:53:03+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="LVM"><a href="#LVM" class="headerlink" title="LVM"></a>LVM</h3><p>允许对卷进行方便操作的抽象层,包括重新设定文件系统的大小 </p>
+<p>允许在多个物理设备间重新组织文件系统 </p>
+<p>​    • 将设备指定为物理卷 </p>
+<p>​    • 用一个或者多个物理卷来创建一个卷组 </p>
+<p>​    • 物理卷是用固定大小的物理区域(Physical Extent,PE)来定义的 </p>
+<p>​    • 在物理卷上创建的逻辑卷 是由物理区域(PE)组成 </p>
+<p>​    • 可以在逻辑卷上创建文件系统 </p>
+<h4 id="LVM介绍"><a href="#LVM介绍" class="headerlink" title="LVM介绍"></a>LVM介绍</h4><p>LVM: Logical Volume Manager, Version: 2 </p>
+<p>dm: device mapper:将一个或多个底层块设备组织成一个逻辑设备的模块 </p>
+<p>设备名:/dev/dm-# </p>
+<p>软链接: </p>
+<p>​    /dev/mapper/VG_NAME-LV_NAME </p>
+<p>​        /dev/mapper/vol0-root </p>
+<p>​    /dev/VG_NAME/LV_NAME </p>
+<p>​        /dev/vol0/root </p>
+<h4 id="pv管理工具"><a href="#pv管理工具" class="headerlink" title="pv管理工具"></a>pv管理工具</h4><p>显示pv信息 </p>
+<p>​    pvs:简要pv信息显示 </p>
+<p>​    pvdisplay </p>
+<p>创建pv </p>
+<p>​    pvcreate </p>
+<p>​    /dev/DEVICE </p>
+<h4 id="vg管理工具"><a href="#vg管理工具" class="headerlink" title="vg管理工具"></a>vg管理工具</h4><p>显示卷组 </p>
+<p>​    vgs </p>
+<p>​    vgdisplay </p>
+<p>创建卷组 </p>
+<p>​    vgcreate [-s #[kKmMgGtTpPeE]] VolumeGroupName </p>
+<p>​    PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>管理卷组 </p>
+<p>​    vgextend VolumeGroupName PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>​    vgreduce VolumeGroupName PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>删除卷组 </p>
+<p>​    先做pvmove,</p>
+<p>​    再做vgremove </p>
+<h4 id="lv管理工具"><a href="#lv管理工具" class="headerlink" title="lv管理工具"></a>lv管理工具</h4><p>显示逻辑卷 </p>
+<p>​    lvs </p>
+<p>​    Lvdisplay </p>
+<p>创建逻辑卷 </p>
+<p>​    lvcreate -L #[mMgGtT] -n NAME VolumeGroup </p>
+<p>​    lvcreate -l 60%VG -n mylv testvg </p>
+<p>​    lvcreate -l 100%FREE -n yourlv testvg </p>
+<p>删除逻辑卷 </p>
+<p>​    lvremove /dev/VG_NAME/LV_NAME </p>
+<p>重设文件系统大小 </p>
+<p>​    fsadm [options] resize device [new_size[BKMGTEP]] </p>
+<p>​    resize2fs [-f]/[-F]/[-M]/[-P]/[-p] device [new_size]</p>
+<h4 id="扩展和缩减逻辑卷"><a href="#扩展和缩减逻辑卷" class="headerlink" title="扩展和缩减逻辑卷"></a>扩展和缩减逻辑卷</h4><p>扩展逻辑卷: </p>
+<p>​    lvextend -L [+]#[mMgGtT] /dev/VG_NAME/LV_NAME </p>
+<p>​    resize2fs /dev/VG_NAME/LV_NAME </p>
+<p>​    lvresize -r -l +100%FREE /dev/VG_NAME/LV_NAME </p>
+<p>缩减逻辑卷: </p>
+<p>​    umount /dev/VG_NAME/LV_NAME </p>
+<p>​    e2fsck -f /dev/VG_NAME/LV_NAME </p>
+<p>​    resize2fs /dev/VG_NAME/LV_NAME #[mMgGtT] </p>
+<p>​    lvreduce -L [-]#[mMgGtT] /dev/VG_NAME/LV_NAME </p>
+<p>​    mount </p>
+<h4 id="跨主机迁移卷组"><a href="#跨主机迁移卷组" class="headerlink" title="跨主机迁移卷组"></a>跨主机迁移卷组</h4><p>源计算机上 </p>
+<p>​    1 在旧系统中,umount所有卷组上的逻辑卷 </p>
+<p>​    2 vgchange –a n vg0 lvdisplay </p>
+<p>​    3 vgexport vg0 </p>
+<p>​        pvscan </p>
+<p>​        vgdisplay </p>
+<p>​        拆下旧硬盘 </p>
+<p> 在目标计算机上 </p>
+<p>​    4 在新系统中安装旧硬盘,并vgimport vg0. </p>
+<p>​    5 vgchange –ay vg0 </p>
+<p>​    6 mount所有卷组上的逻辑卷 </p>
+<h4 id="创建逻辑卷示例"><a href="#创建逻辑卷示例" class="headerlink" title="创建逻辑卷示例"></a>创建逻辑卷示例</h4><p>创建物理卷 </p>
+<p>​    pvcreate /dev/sda3 </p>
+<p>为卷组分配物理卷 </p>
+<p>​    vgcreate vg0 /dev/sda3 </p>
+<p>从卷组创建逻辑卷 </p>
+<p>​    lvcreate -L 256M -n data vg0 </p>
+<p>​    mke2fs -j /dev/vg0/data </p>
+<p>mount /dev/vg0/data /mnt/data </p>
+<h4 id="逻辑卷管理器快照"><a href="#逻辑卷管理器快照" class="headerlink" title="逻辑卷管理器快照"></a>逻辑卷管理器快照</h4><p>快照是特殊的逻辑卷,它是在生成快照时存在的逻辑卷的准确拷贝 </p>
+<p>对于需要备份或者复制的现有数据临时拷贝以及其它操作来说,快照是最合适 的选择 </p>
+<p>快照只有在它们和原来的逻辑卷不同时才会消耗空间 </p>
+<p>​    在生成快照时会分配给它一定的空间,但只有在原来的逻辑卷或者快照有所 改变才会使用这些空间 </p>
+<p>​    当原来的逻辑卷中有所改变时,会将旧的数据复制到快照中。 </p>
+<p>​    快照中只含有原来的逻辑卷中更改的数据或者自生成快照后的快照中更改的 数据 </p>
+<p>​    建立快照的卷大小只需要原始逻辑卷的15%～20%就够了,也可以使用 lvextend放大快照 </p>
+<h4 id="逻辑卷管理器快照-1"><a href="#逻辑卷管理器快照-1" class="headerlink" title="逻辑卷管理器快照"></a>逻辑卷管理器快照</h4><p>快照就是将当时的系统信息记录下来,就好像照相一般,若将来有任何数据 改动了,则原始数据会被移动到快照区,没有改动的区域则由快照区和文件 系统共享 </p>
+<p>由于快照区与原本的LV共用很多PE的区块,因此快照与被快照的LV必须在同 一个VG中.系统恢复的时候的文件数量不能高于快照区的实际容量 </p>
+<h4 id="使用LVM快照"><a href="#使用LVM快照" class="headerlink" title="使用LVM快照"></a>使用LVM快照</h4><p>为现有逻辑卷创建快照 </p>
+<p>​    lvcreate -l 64 -s -n data-snapshot -p r /dev/vg0/data </p>
+<p>挂载快照 </p>
+<p>​    mkdir -p /mnt/snap </p>
+<p>​    mount -o ro /dev/vg0/data-snapshot /mnt/snap </p>
+<p>恢复快照 </p>
+<p>​    umount /dev/vg0/data-snapshot </p>
+<p>​    umount /dev/vg0/data </p>
+<p>​    lvconvert –merge /dev/vg0/data-snapshot </p>
+<p>删除快照 </p>
+<p>​    umount /mnt/databackup </p>
+<p>​    lvremove /dev/vg0/databackup </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/base/" rel="tag"># base</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%BA%8C/" rel="prev" title="Linux 磁盘存储和文件系统(二)">
+      <i class="fa fa-chevron-left"></i> Linux 磁盘存储和文件系统(二)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/" rel="next" title="Linux 中的进程和计划任务(一)">
+      Linux 中的进程和计划任务(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVM"><span class="nav-number">1.</span> <span class="nav-text">LVM</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#LVM介绍"><span class="nav-number">1.1.</span> <span class="nav-text">LVM介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#pv管理工具"><span class="nav-number">1.2.</span> <span class="nav-text">pv管理工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vg管理工具"><span class="nav-number">1.3.</span> <span class="nav-text">vg管理工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lv管理工具"><span class="nav-number">1.4.</span> <span class="nav-text">lv管理工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#扩展和缩减逻辑卷"><span class="nav-number">1.5.</span> <span class="nav-text">扩展和缩减逻辑卷</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#跨主机迁移卷组"><span class="nav-number">1.6.</span> <span class="nav-text">跨主机迁移卷组</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建逻辑卷示例"><span class="nav-number">1.7.</span> <span class="nav-text">创建逻辑卷示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#逻辑卷管理器快照"><span class="nav-number">1.8.</span> <span class="nav-text">逻辑卷管理器快照</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#逻辑卷管理器快照-1"><span class="nav-number">1.9.</span> <span class="nav-text">逻辑卷管理器快照</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用LVM快照"><span class="nav-number">1.10.</span> <span class="nav-text">使用LVM快照</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

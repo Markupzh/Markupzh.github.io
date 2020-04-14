@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/M_32px.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/M_16px.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":7,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="PAM认证机制PAM:Pluggable Authentication Modules    认证库:文本文件,MySQL,NIS,LDAP等    Sun公司于1995 年开发的一种与认证相关的通用框架机制    PAM 是关注如何为服务验证用户的 API,通过提供一些动态链接库和一套统一的API,将系统提供的服务和该服务的认证方式分开    使得系统管理员可以灵活地根据需要给不同的服务配置不同">
+<meta property="og:type" content="article">
+<meta property="og:title" content="加密与安全(五)">
+<meta property="og:url" content="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%94/index.html">
+<meta property="og:site_name" content="Mark blog">
+<meta property="og:description" content="PAM认证机制PAM:Pluggable Authentication Modules    认证库:文本文件,MySQL,NIS,LDAP等    Sun公司于1995 年开发的一种与认证相关的通用框架机制    PAM 是关注如何为服务验证用户的 API,通过提供一些动态链接库和一套统一的API,将系统提供的服务和该服务的认证方式分开    使得系统管理员可以灵活地根据需要给不同的服务配置不同">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_08.png">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_09.png">
+<meta property="og:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_10.png">
+<meta property="article:published_time" content="2018-09-20T11:30:26.000Z">
+<meta property="article:modified_time" content="2018-09-20T11:31:11.525Z">
+<meta property="article:author" content="Mark">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_08.png">
+
+<link rel="canonical" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%94/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>加密与安全(五) | Mark blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Mark blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">知行合一 划水归档</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          加密与安全(五)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-20 19:30:26 / 修改时间：19:31:11" itemprop="dateCreated datePublished" datetime="2018-09-20T19:30:26+08:00">2018-09-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="PAM认证机制"><a href="#PAM认证机制" class="headerlink" title="PAM认证机制"></a>PAM认证机制</h3><p>PAM:Pluggable Authentication Modules<br>    认证库:文本文件,MySQL,NIS,LDAP等<br>    Sun公司于1995 年开发的一种与认证相关的通用框架机制<br>    PAM 是关注如何为服务验证用户的 API,通过提供一些动态链接库和一套统一的API,将系统提供的服务和该服务的认证方式分开<br>    使得系统管理员可以灵活地根据需要给不同的服务配置不同的认证方式而无需更改服务程序<br>    一种认证框架,自身不做认证</p>
+<p>它提供了对所有服务进行认证的中央机制,适用于login,远程登录(telnet,rlogin,fsh,ftp,点对点协议 (PPP)),su等应用程序中.系统管理员通过PAM配置文件来制定不同应用程序的不同认证策略；应用程序开发者通过在服务程序中使用PAM API(pam_xxxx( ))来实现对认证方法的调用；而PAM服务模块的开发者则利用PAM SPI来编写模块(主要调用函数pam_sm_xxxx( )供PAM接口库调用,将不同的认证机制加入到系统中；PAM接口库(libpam)则读取配置文件,将应用程序和相应的PAM服务模块联系起来</p>
+<h4 id="图解PAM架构"><a href="#图解PAM架构" class="headerlink" title="图解PAM架构"></a>图解PAM架构</h4><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_08.png" alt=""></p>
+<h4 id="PAM认证原理"><a href="#PAM认证原理" class="headerlink" title="PAM认证原理"></a>PAM认证原理</h4><p>PAM认证一般遵循这样的顺序:Service(服务)→PAM(配置文件)→pam_*.so<br>PAM认证首先要确定那一项服务,然后加载相应的PAM的配置文件(位于/etc/pam.d下),最后调用认证文件(位于/lib/security下)进行安全认证</p>
+<p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_09.png" alt=""></p>
+<h4 id="PAM认证机制-1"><a href="#PAM认证机制-1" class="headerlink" title="PAM认证机制"></a>PAM认证机制</h4><h5 id="PAM相关文件"><a href="#PAM相关文件" class="headerlink" title="PAM相关文件"></a>PAM相关文件</h5><p>模块文件目录:/lib64/security/*.so<br>环境相关的设置:/etc/security/<br>主配置文件:/etc/pam.conf,默认不存在<br>为每种应用模块提供一个专用的配置文 件:/etc/pam.d/APP_NAME<br>注意:如/etc/pam.d存在,/etc/pam.conf将失效</p>
+<h5 id="PAM认证过程"><a href="#PAM认证过程" class="headerlink" title="PAM认证过程:"></a>PAM认证过程:</h5><p>1.使用者执行/usr/bin/passwd 程序,并输入密码<br>2.passwd开始调用PAM模块,PAM模块会搜寻passwd程序的PAM相关设置文件,这个设置文件一般是在/etc/pam.d/里边的与程序同名的文件,即PAM会搜寻/etc/pam.d/passwd此设置文件<br>3.经由/etc/pam.d/passwd设定文件的数据,取用PAM所提供的相关模块来进行验证<br>4.将验证结果回传给passwd这个程序,而passwd这个程序会根据PAM回传的结果决定下一个动作(重新输入密码或者通过验证)</p>
+<h5 id="PAM认证文件"><a href="#PAM认证文件" class="headerlink" title="PAM认证文件:"></a>PAM认证文件:</h5><p>通用配置文件/etc/pam.conf格式<br>    application type control module-path arguments<br>专用配置文件/etc/pam.d/* 格式<br>    type control module-path arguments<br>说明:<br>    服务名(application)<br>    telnet、login、ftp等,服务名字“OTHER”代表所有没有在该文件中明确配置的其它服务<br>    模块类型(module-type)<br>    control PAM库该如何处理与该服务相关的PAM模块的成功或失败情况<br>    module-path 用来指明本模块对应的程序文件的路径名<br>    Arguments 用来传递给该模块的参数</p>
+<h5 id="PAM模块类型-module-type"><a href="#PAM模块类型-module-type" class="headerlink" title="PAM模块类型(module-type)"></a>PAM模块类型(module-type)</h5><p>Auth 账号的认证和授权<br>Account 与账号管理相关的非认证类的功能,如:用来限制/允许用户对某个服务的访问时间,当前有效的系统资源(最多可以有多少个用户),限制用户的位置(例如:root用户只能从控制台登录)<br>Password 用户修改密码时密码复杂度检查机制等功能<br>Session 用户获取到服务之前或使用服务完成之后需要进行一些附加的操作,如:记录打开/关闭数据的信息,监视目录等<br>-type 表示因为缺失而不能加载的模块将不记录到系统日志,对于那些不总是安装在系统上的模块有用</p>
+<h5 id="PAM参数"><a href="#PAM参数" class="headerlink" title="PAM参数"></a>PAM参数</h5><p>Control:<br>PAM库如何处理与该服务相关的PAM模块成功或失败情况<br>两种方式实现:<br>    简单和复杂<br>简单方式实现:一个关健词实现<br>    required :一票否决,表示本模块必须返回成功才能通过认证,但是如果该模块返回失败,失败结果也不会立即通知用户,而是要等到同一type中的所有模块全部执行完毕再将失败结果返回给应用程序.即为必要条件</p>
+<p>requisite :一票否决,该模块必须返回成功才能通过认证,但是一旦该模块返回失败,将不再执行同一type内的任何模块,而是直接将控制权返回给应用程序.是一个必要条件<br>sufficient :一票通过,表明本模块返回成功则通过身份认证的要求,不必再执行同一type内的其它模块,但如果本模块返回失败可忽略,即为充分条件<br>optional :表明本模块是可选的,它的成功与否不会对身份认证起关键作用,其返回值一般被忽略<br>include: 调用其他的配置文件中定义的配置信息</p>
+<p>复杂详细实现:使用一个或多个“status=action”<br>[status1=action1 status2=action …]<br>    Status:检查结果的返回状态<br>    Action:采取行为 ok,done,die,bad,ignore,reset<br>ok 模块通过,继续检查<br>done 模块通过,返回最后结果给应用<br>bad 结果失败,继续检查<br>die 结果失败,返回失败结果给应用<br>ignore 结果忽略,不影响最后结果<br>reset 忽略已经得到的结果</p>
+<p>module-path: 模块路径<br>    相对路径:<br>        /lib64/security目录下的模块可使用相对路径<br>        如:pam_shells.so、pam_limits.so<br>    绝对路径:<br>模块通过读取配置文件完成用户对系统资源的使用控制<br>    /etc/security/*.conf<br>注意:修改PAM配置文件将马上生效<br>建议:编辑pam规则时,保持至少打开一个root会话,以防止root身份验证错误<br>Arguments 用来传递给该模块的参数</p>
+<h5 id="PAM文档说明"><a href="#PAM文档说明" class="headerlink" title="PAM文档说明"></a>PAM文档说明</h5><p>/user/share/doc/pam-*<br>rpm -qd pam<br>man –k pam_<br>man 模块名 如man rootok<br>《The Linux-PAM System Administrators’ Guide》</p>
+<h5 id="PAM模块示例"><a href="#PAM模块示例" class="headerlink" title="PAM模块示例"></a>PAM模块示例</h5><h6 id="模块-pam-shells"><a href="#模块-pam-shells" class="headerlink" title="模块:pam_shells"></a>模块:pam_shells</h6><p>功能:检查有效shell<br>man pam_shells<br>示例:不允许使用/bin/csh的用户本地登录<br>vim /etc/pam.d/login<br>    auth required pam_shells.so<br>vim /etc/shells<br>    去掉 /bin/csh<br>useradd –s /bin/csh testuser<br>testuser将不可登录<br>tail /var/log/secure</p>
+<h6 id="模块-pam-securetty-so"><a href="#模块-pam-securetty-so" class="headerlink" title="模块:pam_securetty.so"></a>模块:pam_securetty.so</h6><p>功能:只允许root用户在/etc/securetty列出的安全终端上登陆<br>示例:允许root在telnet登陆<br>vi /etc/pam.d/remote<br>#auth required pam_securetty.so #将这一行加上注释</p>
+<p>或者/etc/securetty文件中加入<br>pts/0,pts/1…pts/n</p>
+<h6 id="模块-pam-nologin-so"><a href="#模块-pam-nologin-so" class="headerlink" title="模块:pam_nologin.so"></a>模块:pam_nologin.so</h6><p>功能:<br>    如果/etc/nologin文件存在,将导致非root用户不能登陆<br>    如果用户shell是/sbin/nologin 时,当该用户登陆时,会显示/etc/nologin文件内容,并拒绝登陆</p>
+<h6 id="模块-pam-limits-so"><a href="#模块-pam-limits-so" class="headerlink" title="模块:pam_limits.so"></a>模块:pam_limits.so</h6><p>功能:在用户级别实现对其可使用的资源的限制,例如:可打开的文件数量,可运行的进程数量,可用内存空间<br>修改限制的实现方式:<br>(1) ulimit命令,立即生效,但无法保存<br>    -n 最多的打开的文件描述符个数<br>    -u 最大用户进程数<br>    -S 使用 soft(软)资源限制<br>    -H 使用 hard(硬)资源限制<br>(2) 配置文件:/etc/security/limits.conf, /etc/security/limits.d/*.conf<br>配置文件:每行一个定义；</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\&lt;domain\&gt;    \&lt;type\&gt;      \&lt;item\&gt;       \&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h5 id="PAM图解"><a href="#PAM图解" class="headerlink" title="PAM图解"></a>PAM图解</h5><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_10.png" alt=""></p>
+<h5 id="pam-limits-so"><a href="#pam-limits-so" class="headerlink" title="pam_limits.so"></a>pam_limits.so</h5><p> &lt;domain&gt;应用于哪些对象<br>    Username 单个用户<br>    @group 组内所有用户<br>    * 所有用户<br> &lt;type&gt;限制的类型<br>    Soft 软限制,普通用户自己可以修改<br>    Hard 硬限制,由root用户设定,且通过kernel强制生效<br>    - 二者同时限定<br> &lt;item&gt;限制的资源<br>    nofile 所能够同时打开的最大文件数量,默认为1024<br>    nproc 所能够同时运行的进程的最大数量,默认为1024<br> &lt;value&gt;指定具体值</p>
+<h6 id="pam-limits-so-1"><a href="#pam-limits-so-1" class="headerlink" title="pam_limits.so"></a>pam_limits.so</h6><p>限制用户最多打开的文件数和运行进程数<br>/etc/pam.d/system-auth<br>    session required pam_limits.so<br>vim /etc/security/limits.conf<br>    apache – nofile 10240 用户apache可打开10240个文件<br>    student hard nproc 20 用户student不能运行超过20个进程</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E5%9B%9B/" rel="prev" title="加密与安全(四)">
+      <i class="fa fa-chevron-left"></i> 加密与安全(四)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%B8%80/" rel="next" title="运维自动化-系统部署(一)">
+      运维自动化-系统部署(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#PAM认证机制"><span class="nav-number">1.</span> <span class="nav-text">PAM认证机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#图解PAM架构"><span class="nav-number">1.1.</span> <span class="nav-text">图解PAM架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PAM认证原理"><span class="nav-number">1.2.</span> <span class="nav-text">PAM认证原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PAM认证机制-1"><span class="nav-number">1.3.</span> <span class="nav-text">PAM认证机制</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM相关文件"><span class="nav-number">1.3.1.</span> <span class="nav-text">PAM相关文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM认证过程"><span class="nav-number">1.3.2.</span> <span class="nav-text">PAM认证过程:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM认证文件"><span class="nav-number">1.3.3.</span> <span class="nav-text">PAM认证文件:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM模块类型-module-type"><span class="nav-number">1.3.4.</span> <span class="nav-text">PAM模块类型(module-type)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM参数"><span class="nav-number">1.3.5.</span> <span class="nav-text">PAM参数</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM文档说明"><span class="nav-number">1.3.6.</span> <span class="nav-text">PAM文档说明</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM模块示例"><span class="nav-number">1.3.7.</span> <span class="nav-text">PAM模块示例</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#模块-pam-shells"><span class="nav-number">1.3.7.1.</span> <span class="nav-text">模块:pam_shells</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#模块-pam-securetty-so"><span class="nav-number">1.3.7.2.</span> <span class="nav-text">模块:pam_securetty.so</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#模块-pam-nologin-so"><span class="nav-number">1.3.7.3.</span> <span class="nav-text">模块:pam_nologin.so</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#模块-pam-limits-so"><span class="nav-number">1.3.7.4.</span> <span class="nav-text">模块:pam_limits.so</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#PAM图解"><span class="nav-number">1.3.8.</span> <span class="nav-text">PAM图解</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#pam-limits-so"><span class="nav-number">1.3.9.</span> <span class="nav-text">pam_limits.so</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#pam-limits-so-1"><span class="nav-number">1.3.9.1.</span> <span class="nav-text">pam_limits.so</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Mark"
+      src="/images/mark_avatar.png">
+  <p class="site-author-name" itemprop="name">Mark</p>
+  <div class="site-description" itemprop="description">半吊子民工 英特纳雄耐尔就一定要实现</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:markupzh@gmail.com" title="E-Mail → mailto:markupzh@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mark</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
