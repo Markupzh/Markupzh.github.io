@@ -183,6 +183,1036 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%89/" class="post-title-link" itemprop="url">Linux 中的进程和计划任务(三)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-11-03 21:40:53" itemprop="dateCreated datePublished" datetime="2015-11-03T21:40:53+08:00">2015-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:54:50" itemprop="dateModified" datetime="2019-01-02T23:54:50+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Linux-中进程的管理"><a href="#Linux-中进程的管理" class="headerlink" title="Linux 中进程的管理"></a>Linux 中进程的管理</h2><h3 id="进程管理工具-kill"><a href="#进程管理工具-kill" class="headerlink" title="进程管理工具 kill"></a>进程管理工具 kill</h3><p><strong>kill命令:</strong> </p>
+<pre><code>向进程发送控制信号,以实现对进程管理,每个信号对应一个数字,信号名称以SIG开头 (可省略),不区分大小写 
+
+显示当前系统可用信号: kill –l,trap -l </code></pre><p>​    常用信号:man 7 signal </p>
+<p>​    1) SIGHUP: 无须关闭进程而让其重读配置文件 </p>
+<p>​    2) SIGINT: 中止正在运行的进程;相当于Ctrl+c </p>
+<p>​    3) SIGQUIT:相当于ctrl+\ </p>
+<pre><code>9) SIGKILL: 强制杀死正在运行的进程 </code></pre><p>​    15) SIGTERM:终止正在运行的进程 </p>
+<p>​    18) SIGCONT:继续运行 </p>
+<p>​    19) SIGSTOP:后台休眠 </p>
+<pre><code>指定信号的方法: 
+
+(1) 信号的数字标识:1, 2, 9 
+
+(2) 信号完整名称:SIGHUP 
+
+(3) 信号的简写名称:HUP </code></pre><p>按PID:kill [-SIGNAL] pid … </p>
+<pre><code>kill –n SIGNAL pid;kill –s SIGNAL pid </code></pre><p>按名称:killall [-SIGNAL] comm… </p>
+<p>按模式:pkill [options] pattern </p>
+<pre><code>-SIGNAL </code></pre><p>​    -u uid: effective user,生效者 </p>
+<pre><code>-U uid: real user,真正发起运行命令者 </code></pre><p>​    -t terminal: 与指定终端相关的进程 </p>
+<pre><code>-l: 显示进程名(pgrep可用) 
+
+-a: 显示完整格式的进程名(pgrep可用) </code></pre><p>​    -P pid: 显示指定进程的子进程 </p>
+<h3 id="作业管理"><a href="#作业管理" class="headerlink" title="作业管理"></a>作业管理</h3><p> Linux的作业控制 </p>
+<pre><code>前台作业:通过终端启动,且启动后一直占据终端 
+
+后台作业:可通过终端启动,但启动后即转入后台运行(释放终端) </code></pre><p> 让作业运行于后台 </p>
+<pre><code>(1) 运行中的作业: Ctrl+z 
+
+(2) 尚未启动的作业: COMMAND &amp; </code></pre><p> 后台作业虽然被送往后台运行,但其依然与终端相关;退出终端,将关闭后台作业。如果希望 送往后台后,剥离与终端的关系 </p>
+<pre><code>nohup COMMAND &amp;&gt;/dev/null &amp; 
+
+screen;COMMAND </code></pre><p> 查看当前终端所有作业:jobs </p>
+<p> 作业控制: </p>
+<pre><code>fg [[%]JOB_NUM]:把指定的后台作业调回前台 
+
+bg [[%]JOB_NUM]:让送往后台的作业在后台继续运行 
+
+kill [%JOB_NUM]: 终止指定的作业 </code></pre><h3 id="并行运行"><a href="#并行运行" class="headerlink" title="并行运行"></a>并行运行</h3><p>同时运行多个进程,提高效率 </p>
+<p>方法1 </p>
+<pre><code>vi all.sh 
+
+f1.sh&amp; 
+
+f2.sh&amp; 
+
+f3.sh&amp; </code></pre><p>方法2 </p>
+<pre><code>(f1.sh&amp;);(f2.sh&amp;);(f3.sh&amp;) </code></pre><p>方法3 </p>
+<pre><code>{ f1.sh&amp; f2.sh&amp; f3.sh&amp; } </code></pre><h3 id="计划任务"><a href="#计划任务" class="headerlink" title="计划任务"></a>计划任务</h3><p>Linux任务计划、周期性任务执行 </p>
+<pre><code>• 未来的某时间点执行一次任务 
+
+    at 
+
+    batch:系统自行选择空闲时间去执行此处指定的任务 
+
+• 周期性运行某任务 
+
+    cron </code></pre><h4 id="at任务"><a href="#at任务" class="headerlink" title="at任务"></a>at任务</h4><p>包:at </p>
+<p> at命令:at [option] TIME </p>
+<p> 常用选项: </p>
+<pre><code>-V 显示版本信息: 
+
+-l 列出指定队列中等待运行的作业;相当于atq 
+
+-d 删除指定的作业;相当于atrm 
+
+-c 查看具体作业任务 
+
+-f /path/file 指定的文件中读取任务 
+
+-m 当任务被完成之后,将给用户发送邮件,即使没有标准输出 </code></pre><p> 注意:作业执行命令的结果中的标准输出和错误以邮件通知给相关用户 </p>
+<p> TIME:定义出什么时候进行 at 这项任务的时间 </p>
+<pre><code>HH:MM [YYYY-mm-dd] 
+
+noon, midnight, teatime(4pm) 
+
+tomorrow 
+
+now+#{minutes,hours,days, OR weeks} </code></pre><h4 id="at时间格式"><a href="#at时间格式" class="headerlink" title="at时间格式"></a>at时间格式</h4><p>HH:MM 02:00 </p>
+<pre><code>在今日的 HH:MM 进行,若该时刻已过,则明天此时执行任务 </code></pre><p>HH:MM YYYY-MM-DD 02:00 2016-09-20 </p>
+<pre><code>规定在某年某月的某一天的特殊时刻进行该项任务 HH:MM[am|pm]/[Month]/[Date] 0
+
+4pm March 17 
+
+17:20 tomorrow </code></pre><p>HH:MM[am|pm] + number [minutes|hours|days|weeks]</p>
+<pre><code>在某个时间点再加几个时间后才进行该项任务 
+
+now + 5 min 
+
+02pm + 3 days </code></pre><h4 id="at任务-1"><a href="#at任务-1" class="headerlink" title="at任务"></a>at任务</h4><p>执行方式: </p>
+<pre><code>1)交互式 2)输入重定向 3)at –f 文件 </code></pre><p>依赖与atd服务,需要启动才能实现at任务 </p>
+<p>at队列存放在/var/spool/at目录中 </p>
+<p>/etc/at.{allow,deny}控制用户是否能执行at任务 </p>
+<pre><code>白名单:/etc/at.allow 默认不存在,只有该文件中的用户才能执行at命令 
+
+黑名单:/etc/at.deny 默认存在,拒绝该文件中用户执行at命令,而没有在 at.deny 文件中的使用者则可执行 
+
+如果两个文件都不存在,只有 root 可以执行 at 命令 </code></pre><hr>
+<h4 id="周期性任务计划-cron"><a href="#周期性任务计划-cron" class="headerlink" title="周期性任务计划 cron"></a>周期性任务计划 cron</h4><p>相关的程序包: </p>
+<pre><code>cronie: 主程序包,提供crond守护进程及相关辅助工具 
+
+cronie-anacron:cronie的补充程序,用于监控cronie任务执行状况,如 cronie中的任务在过去该运行的时间点未能正常运行,则anacron会随后启动一次 此任务 
+
+crontabs:包含CentOS提供系统维护任务 </code></pre><h4 id="计划任务-1"><a href="#计划任务-1" class="headerlink" title="计划任务"></a>计划任务</h4><p>确保crond守护处于运行状态: </p>
+<pre><code>CentOS 7: 
+
+    systemctl status crond 
+
+CentOS 6: 
+
+    service crond status </code></pre><p>计划周期性执行的任务提交给crond,到指定时间会自动运行 </p>
+<pre><code>系统cron任务:系统维护作业 
+
+    /etc/crontab 
+
+用户cron任务: 
+
+    crontab命令 </code></pre><p>日志:/var/log/cron </p>
+<p>系统cron任务:/etc/crontab<br>注释行以 # 开头<br>详情参见 man 5 crontab</p>
+<p>#Example of job definition:</p>
+<p>#.—————- minute (0 - 59)</p>
+<p>#| .————- hour (0 - 23)</p>
+<p>#| | .———- day of month (1 - 31)</p>
+<p>#| | | .——- month (1 - 12) OR jan,feb,mar,apr …</p>
+<p>#| | | | .—- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat</p>
+<p>#| | | | |</p>
+<p>#* * * * * user-name command to be executed</p>
+<p>例如:晚上9点10分运行echo命令<br>10 21 * * * wang /bin/echo “Howdy!”</p>
+<p>时间表示法: </p>
+<pre><code>(1) 特定值 给定时间点有效取值范围内的值 
+
+(2) 给定时间点上有效取值范围内的所有值 表示“每...” 
+
+(3) 离散取值 
+
+   #,#,# 
+
+(4) 连续取值 
+
+   #-# 
+
+(5) 在指定时间范围上,定义步长 
+
+   /#: #即为步长 </code></pre><h4 id="时间格式"><a href="#时间格式" class="headerlink" title="时间格式"></a>时间格式</h4><p>@reboot         Run once after reboot </p>
+<p>@yearly         0 0 1 1 * </p>
+<p>@annually         0 0 1 1 * </p>
+<p>@monthly         0 0 1 * * </p>
+<p>@weekly         0 0 * * 0 </p>
+<p>@daily         0 0 * * * </p>
+<p>@hourly         0 * * * * </p>
+<p>示例:每3小时echo和wall命令 </p>
+<pre><code>0 */3 * * * centos /bin/echo “howdy”;/usr/bin/wall “show time!” </code></pre><p><strong>系统的计划任务</strong></p>
+<p>/etc/crontab             配置文件 </p>
+<p>/etc/cron.d/             配置文件 </p>
+<p>/etc/cron.hourly/         脚本 </p>
+<p>/etc/cron.daily/         脚本 </p>
+<p>/etc/cron.weekly/     脚本 </p>
+<p>/etc/cron.monthly/     脚本 </p>
+<h4 id="anacron-系统"><a href="#anacron-系统" class="headerlink" title="anacron 系统"></a>anacron 系统</h4><p>运行计算机关机时cron不运行的任务,CentOS6以后版本取消anacron服务,由 crond服务管理 </p>
+<p>对笔记本电脑、台式机、工作站、偶尔要关机的服务器及其它不一直开机的系统 很重要对很有用 </p>
+<p>配置文件:/etc/anacrontab,负责执行/etc/ cron.daily /etc/cron.weekly /etc/cron.monthly中系统任务 </p>
+<pre><code>• 字段1:如果在这些日子里没有运行这些任务…… 
+
+• 字段2:在重新引导后等待这么多分钟后运行它 
+
+• 字段3:任务识别器,在日志文件中标识 
+
+• 字段4:要执行的任务 </code></pre><p>由/etc/cron.hourly/0anacron执行 </p>
+<p>当执行任务时,更新/var/spool/anacron/cron.daily 文件的时间戳 </p>
+<h4 id="管理临时文件"><a href="#管理临时文件" class="headerlink" title="管理临时文件"></a>管理临时文件</h4><p>CentOS6使用</p>
+<pre><code>/etc/cron.daily/tmpwatch定时清除临时文件 </code></pre><p>CentOS7使用</p>
+<pre><code>systemd-tmpfiles-setup服务实现 </code></pre><p>配置文件: </p>
+<pre><code>/etc/tmpfiles.d/*.conf *
+
+/run/tmpfiles.d/*.conf *
+
+/usr/lib/tmpfiles/*.conf </code></pre><p>/usr/lib/tmpfiles.d/tmp.conf </p>
+<pre><code>d /tmp 1777 root root 10d 
+
+d /var/tmp 1777 root root 30d </code></pre><p>命令: </p>
+<pre><code>systemd-tmpfiles –clean|remove|create configfile </code></pre><h4 id="用户计划任务"><a href="#用户计划任务" class="headerlink" title="用户计划任务"></a>用户计划任务</h4><p>crontab命令定义 </p>
+<pre><code>每个用户都有专用的cron任务文件: 
+
+    /var/spool/cron/USERNAME </code></pre><p>crontab命令: </p>
+<pre><code>crontab [-u user]/[-l | -r | -e]/[-i] 
+
+-l: 列出所有任务 
+
+-e: 编辑任务 
+
+-r: 移除所有任务 
+
+-i:同-r一同使用,以交互式模式移除指定任务 
+
+-u user: 仅root可运行,指定用户管理cron任务 </code></pre><p>控制用户执行计划任务: </p>
+<pre><code>/etc/cron.{allow,deny} </code></pre><p><strong>at和crontab</strong></p>
+<p>一次性作业使用 at </p>
+<p>重复性作业使用crontab </p>
+<p>Create         at time             crontab -e </p>
+<p>List             at -l             crontab -l </p>
+<p>Details         at -c jobnum     N/A </p>
+<p>Remove         at -d jobnum     crontab -r </p>
+<p>Edit         N/A             crontab -e </p>
+<p>没有被重定向的输出会被邮寄给用户 </p>
+<p>root能够修改其它用户的作业 </p>
+<p>注意:运行结果的标准输出和错误以邮件通知给相关用户 </p>
+<pre><code>(1) COMMAND &gt; /dev/null 
+
+(2) COMMAND &amp;&gt; /dev/null </code></pre><p>对于cron任务来讲,%有特殊用途;如果在命令中要使用%,则需要转义,将% 放置于单引号中,则可不用转义 </p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%BA%8C/" class="post-title-link" itemprop="url">Linux 中的进程和计划任务(二)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-10-31 21:40:47" itemprop="dateCreated datePublished" datetime="2015-10-31T21:40:47+08:00">2015-10-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:46:24" itemprop="dateModified" datetime="2019-01-02T23:46:24+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Linux-中系统资源的管理"><a href="#Linux-中系统资源的管理" class="headerlink" title="Linux 中系统资源的管理"></a>Linux 中系统资源的管理</h2><h3 id="进程管理工具"><a href="#进程管理工具" class="headerlink" title="进程管理工具"></a>进程管理工具</h3><h4 id="top-命令"><a href="#top-命令" class="headerlink" title="top 命令"></a>top 命令</h4><p>top:有许多内置命令 </p>
+<p>​    排序: </p>
+<p>​        P:以占据的CPU百分比,%CPU </p>
+<p>​        M:占据内存百分比,%MEM </p>
+<p>​        T:累积占据CPU时长,TIME+ </p>
+<p>​    首部信息显示: </p>
+<p>​        uptime信息:l命令 </p>
+<p>​        tasks及cpu信息:t命令 </p>
+<p>​        cpu分别显示:1 (数字) </p>
+<p>​        memory信息:m命令 </p>
+<p>​    退出命令:q </p>
+<p>​    修改刷新时间间隔:s </p>
+<p>​    终止指定进程:k </p>
+<p>​    保存文件:W </p>
+<h4 id="top-命令栏位简介"><a href="#top-命令栏位简介" class="headerlink" title="top 命令栏位简介"></a>top 命令栏位简介</h4><p>​    us:用户空间 </p>
+<p>​    sy:内核空间 </p>
+<p>​    ni:调整nice时间 </p>
+<p>​    id:空闲 </p>
+<p>​    wa:等待IO时间 </p>
+<p>​    hi:硬中断 </p>
+<p>​    si:软中断(模式切换) </p>
+<p>​    st:虚拟机偷走的时间 </p>
+<h4 id="top命令扩展"><a href="#top命令扩展" class="headerlink" title="top命令扩展"></a>top命令扩展</h4><p>选项: </p>
+<p>​    -d # 指定刷新时间间隔，默认为3秒 </p>
+<p>​    -b 全部显示所有进程 </p>
+<p>​    -n # 刷新多少次后退出 </p>
+<p>​    -H 线程模式，示例:top -H -p `pidof mysqld`</p>
+<p>htop命令:EPEL源 </p>
+<p>​    选项: </p>
+<p>​        -d #: 指定延迟时间；</p>
+<p>​        -u UserName: 仅显示指定用户的进程 </p>
+<p>​        -s COLUME: 以指定字段进行排序 </p>
+<p>​    子命令: </p>
+<p>​        s:跟踪选定进程的系统调用 </p>
+<p>​        l:显示选定进程打开的文件列表 </p>
+<p>​        a:将选定的进程绑定至某指定CPU核心 </p>
+<p>​        t:显示进程树 </p>
+<hr>
+<h3 id="内存空间管理"><a href="#内存空间管理" class="headerlink" title="内存空间管理"></a>内存空间管理</h3><h4 id="查看内存空间的使用状态"><a href="#查看内存空间的使用状态" class="headerlink" title="查看内存空间的使用状态:"></a>查看内存空间的使用状态:</h4><p>free [OPTION] </p>
+<p>​    -b 以字节为单位 </p>
+<p>​    -m 以MB为单位 </p>
+<p>​    -g 以GB为单位 </p>
+<p>​    -h 易读格式 </p>
+<p>​    -o 不显示-/+buffers/cache行 </p>
+<p>​    -t 显示RAM + swap的总和 </p>
+<p>​    -s n 刷新间隔为n秒 </p>
+<p>​    -c n 刷新n次后即退出 </p>
+<p>free命令中参数的意义:</p>
+<p><img data-src="https://raw.githubusercontent.com/Markupzh/Markupzh.github.io/master/images/post_Linux_Network_1.png" alt=""></p>
+<hr>
+<h3 id="内存工具"><a href="#内存工具" class="headerlink" title="内存工具"></a>内存工具</h3><h4 id="vmstat命令"><a href="#vmstat命令" class="headerlink" title="vmstat命令"></a>vmstat命令</h4><p>vmstat命令:</p>
+<p>​    查看虚拟内存信息 </p>
+<p>​    vmstat [options]/[delay [count]] </p>
+<p>​    vmstat 2 5  </p>
+<p><strong>vmstat参数:</strong></p>
+<p>procs: </p>
+<p>​    r:可运行(正运行或等待运行)进程的个数，和核心数有关 </p>
+<p>​    b:处于不可中断睡眠态的进程个数(被阻塞的队列的长度) </p>
+<p>memory: </p>
+<p>​    swpd: 交换内存的使用总量 </p>
+<p>​    free:空闲物理内存总量 </p>
+<p>​    buffer:用于buffer的内存总量 </p>
+<p>​    cache:用于cache的内存总量 </p>
+<p>swap: </p>
+<p>​    si:从磁盘交换进内存的数据速率(kb/s) </p>
+<p>​    so:从内存交换至磁盘的数据速率(kb/s) 内存工具 </p>
+<p>io: </p>
+<p>​    bi:从块设备读入数据到系统的速率(kb/s) </p>
+<p>​    bo: 保存数据至块设备的速率 </p>
+<p>system: </p>
+<p>​    in: interrupts 中断速率，包括时钟 </p>
+<p>​    cs: context switch 进程切换速率 </p>
+<p>cpu: </p>
+<p>​    us:Time spent running non-kernel code </p>
+<p>​    sy: Time spent running kernel code </p>
+<p>​    id: Time spent idle. Linux 2.5.41前,包括IO-wait time. </p>
+<p>​    wa: Time spent waiting for IO. 2.5.41前，包括in idle. </p>
+<p>​    st: Time stolen from a virtual machine. 2.6.11前, unknown. </p>
+<p>选项:</p>
+<p>​     -s: 显示内存的统计数据 </p>
+<h4 id="其他内存工具"><a href="#其他内存工具" class="headerlink" title="其他内存工具"></a>其他内存工具</h4><p>iostat:统计CPU和设备IO信息 </p>
+<p>​    示例:iostat 1 10 </p>
+<p>pmap命令:进程对应的内存映射 </p>
+<p>pmap [options] pid […] </p>
+<p>​    -x: 显示详细格式的信息 </p>
+<p>​    示例:pmap 1 </p>
+<p>另外一种实现: </p>
+<p>​    cat /proc/PID/maps </p>
+<hr>
+<h3 id="系统监控工具"><a href="#系统监控工具" class="headerlink" title="系统监控工具"></a>系统监控工具</h3><h4 id="glances-命令"><a href="#glances-命令" class="headerlink" title="glances 命令"></a>glances 命令</h4><p>glances属于第三方EPEL源中的工具</p>
+<p>glances [-bdehmnrsvyz1]/[-B bind]/[-c server]/[-C conffile]/[-p port]/[-P password]/[– password]/[-t refresh]/[-f file]/[-o output]</p>
+<p>内建命令: </p>
+<p>a Sort processes automatically        l Show/hide logs </p>
+<p>c Sort processes by CPU%             b Bytes or bits for network I/O </p>
+<p>m Sort processes by MEM%         w Delete warning logs </p>
+<p>p Sort processes by name             x Delete warning and critical logs </p>
+<p>i Sort processes by I/O rate         1 Global CPU or per-CPU stats </p>
+<p>d Show/hide disk I/O stats         h Show/hide this help screen </p>
+<p>f Show/hide file system stats         t View network I/O as combination </p>
+<p>n Show/hide network stats         u View cumulative network I/O </p>
+<p>s Show/hide sensors stats             q Quit (Esc and Ctrl-C also work) </p>
+<p>y Show/hide hddtemp stats </p>
+<p>部分选项解释:</p>
+<p>​    -b: 以Byte为单位显示网卡数据速率 </p>
+<p>​    -d: 关闭磁盘I/O模块 </p>
+<p>​    -f /path/to/somefile: 设定输入文件位置 </p>
+<p>​    -o {HTML|CSV}:输出格式 </p>
+<p>​    -m: 禁用mount模块 </p>
+<p>​    -n: 禁用网络模块 </p>
+<p>​    -t #: 延迟时间间隔 </p>
+<p>​    -1:每个CPU的相关数据单独显示 </p>
+<p>*<em>C/S模式下运行glances命令 *</em></p>
+<p>服务器模式: </p>
+<p>​    glances -s -B IPADDR </p>
+<p>​    IPADDR: 指明监听的本机哪个地址 </p>
+<p>客户端模式: </p>
+<p>​    glances -c IPADDR </p>
+<p>​    IPADDR:要连入的服务器端地址 </p>
+<h4 id="dstat-命令"><a href="#dstat-命令" class="headerlink" title="dstat 命令"></a>dstat 命令</h4><p>dstat命令:系统资源统计,代替vmstat,iostat,需要使用yum安装 </p>
+<p>dstat [-afv]/[options..]/[delay [count]] </p>
+<p>​    -c 显示cpu相关信息 </p>
+<p>​    -C #,#,…,total </p>
+<p>​    -d 显示disk相关信息 </p>
+<p>​    -D total,sda,sdb,… </p>
+<p>​    -g 显示page相关统计数据 </p>
+<p>​    -m 显示memory相关统计数据 </p>
+<p>​    -n 显示network相关统计数据 </p>
+<p>​    -p 显示process相关统计数据 </p>
+<p>​    -r 显示io请求相关的统计数据 </p>
+<p>​    -s 显示swapped相关的统计数据 </p>
+<p>​    –tcp </p>
+<p>​    –udp </p>
+<p>​    –unix </p>
+<p>​    –raw </p>
+<p>​    –socket </p>
+<p>​    –ipc </p>
+<p>​    –top-cpu:显示最占用CPU的进程 </p>
+<p>​    –top-io: 显示最占用io的进程 </p>
+<p>​    –top-mem: 显示最占用内存的进程 </p>
+<p>​    –top-latency: 显示延迟最大的进程 </p>
+<h4 id="iotop"><a href="#iotop" class="headerlink" title="iotop"></a>iotop</h4><p>iotop命令是一个用来监视磁盘I/O使用状况的top类工具iotop具有与top相似的UI，其中包括 PID、用户、I/O、进程等相关信息，可查看每个进程是如何使用IO </p>
+<p>iotop输出 </p>
+<p>​    第一行:Read和Write速率总计 </p>
+<p>​    第二行:实际的Read和Write速率 </p>
+<p>​    第三行:</p>
+<p>​        参数如下: </p>
+<p>​            线程ID(按p切换为进程ID) </p>
+<p>​            优先级 </p>
+<p>​            用户 </p>
+<p>​            磁盘读速率 </p>
+<p>​            磁盘写速率 </p>
+<p>​            swap交换百分比 </p>
+<p>​            IO等待所占的百分比 </p>
+<p>​            线程/进程命令 </p>
+<p><strong>iotop 常用参数</strong></p>
+<p>​    -o, –only只显示正在产生I/O的进程或线程，除了传参，可以在运行过程中按o 生效 </p>
+<p>​    -b, –batch非交互模式，一般用来记录日志 </p>
+<p>​    -n NUM, –iter=NUM设置监测的次数，默认无限。在非交互模式下很有用 </p>
+<p>​    -d SEC, –delay=SEC设置每次监测的间隔，默认1秒，接受非整形数据例如1.1 </p>
+<p>​    -p PID, –pid=PID指定监测的进程/线程 </p>
+<p>​    -u USER, –user=USER指定监测某个用户产生的I/O </p>
+<p>​    -P, –processes仅显示进程，默认iotop显示所有线程 </p>
+<p>​    -a, –accumulated显示累积的I/O，而不是带宽 </p>
+<p>​    -k, –kilobytes使用kB单位，而不是对人友好的单位。在非交互模式下，脚本 编程有用 </p>
+<p>​    -t, –time 加上时间戳，非交互非模式 </p>
+<p>​    -q, –quiet 禁止头几行，非交互模式，有三种指定方式 </p>
+<p>​    -q 只在第一次监测时显示列名 </p>
+<p>​    -qq 永远不显示列名 </p>
+<p>​    -qqq 永远不显示I/O汇总 </p>
+<p><strong>iotop 交互按键</strong></p>
+<p>​    left和right方向键:改变排序 </p>
+<p>​    r:反向排序 </p>
+<p>​    o:切换至选项–only </p>
+<p>​    p:切换至–processes选项 </p>
+<p>​    a:切换至–accumulated选项 </p>
+<p>​    q:退出 </p>
+<p>​    i:改变线程的优先级 </p>
+<h4 id="lsof"><a href="#lsof" class="headerlink" title="lsof"></a>lsof</h4><p>Lsof:list open files查看当前系统文件的工具。在linux环境下，一切皆文件，用户通 过文件不仅可以访问常规数据，还可以访问网络连接和硬件如传输控制协议 (TCP) 和 用户数据报协议 (UDP)套接字等，系统在后台都为该应用程序分配了一个文件描述符</p>
+<p><strong>命令参数</strong> </p>
+<p>​    -a:列出打开文件存在的进程 </p>
+<p>​    -c&lt;进程名&gt;:列出指定进程所打开的文件 </p>
+<p>​    -g:列出GID号进程详情 </p>
+<p>​    -d&lt;文件号&gt;:列出占用该文件号的进程 </p>
+<p>​    +d&lt;目录&gt;:列出目录下被打开的文件 </p>
+<p>​    +D&lt;目录&gt;:递归列出目录下被打开的文件 </p>
+<p>​    -n&lt;目录&gt;:列出使用NFS的文件 </p>
+<p>​    -i&lt;条件&gt;:列出符合条件的进程(4、6、协议、:端口、 @ip ) </p>
+<p>​    -p&lt;进程号&gt;:列出指定进程号所打开的文件 </p>
+<p>​    -u:列出UID号进程详情 </p>
+<p>​    -h:显示帮助信息 </p>
+<p>​    -v:显示版本信息。 </p>
+<p>​    -n: 不反向解析网络名字 </p>
+<p><strong>进程管理</strong></p>
+<p>查看由登陆用户启动而非系统启动的进程 </p>
+<p>​    lsof /dev/pts1 </p>
+<p>指定进程号，可以查看该进程打开的文件 </p>
+<p>​    lsof -p 9527 </p>
+<p><strong>文件管理</strong> </p>
+<p>查看指定程序打开的文件 </p>
+<p>​    lsof -c httpd </p>
+<p>查看指定用户打开的文件 </p>
+<p>​    lsof -u root | more </p>
+<p>查看指定目录下被打开的文件 </p>
+<p>​    lsof +D /var/log/ </p>
+<p>​    lsof +d /var/log/ </p>
+<p>​    参数+D为递归列出目录下被打开的文件，参数+d为列出目录下被打开的文件 </p>
+<p><strong>网络管理</strong> </p>
+<p>查看所有网络连接 </p>
+<p>​    lsof -i –n lsof <a href="mailto:-i@127.0.0.1">-i@127.0.0.1</a> </p>
+<p>​    通过参数-i查看网络连接的情况，包括连接的ip、端口等以及一些服务的连接情况，例如: sshd等。也可以通过指定ip查看该ip的网络连接情况 </p>
+<p>查看端口连接情况 </p>
+<p>​    lsof -i :80 -n </p>
+<p>​    通过参数-i:端口可以查看端口的占用情况，-i参数还有查看协议，ip的连接情况等 </p>
+<p>查看指定进程打开的网络连接 </p>
+<p>​    lsof -i –n -a -p 9527 </p>
+<p>​    参数-i、-a、-p等，-i查看网络连接情况，-a查看存在的进程，-p指定进程 </p>
+<p>查看指定状态的网络连接 </p>
+<p>​    lsof -n -P -i TCP -s TCP:ESTABLISHED </p>
+<p>​    -n:no host names, -P:no port names,-i TCP指定协议，-s指定协议状态通过多个参数可以 清晰的查看网络连接情况、协议连接情况等 </p>
+<p><strong>恢复删除文件</strong> </p>
+<p>​    lsof |grep /var/log/messages </p>
+<p>​    rm -f /var/log/messages </p>
+<p>​    lsof |grep /var/log/messages </p>
+<p>​    cat /proc/653/fd/6 </p>
+<p>​    cat /proc/653/fd/6 &gt; /var/log/messages </p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E4%B8%AD%E7%9A%84%E8%BF%9B%E7%A8%8B%E5%92%8C%E8%AE%A1%E5%88%92%E4%BB%BB%E5%8A%A1-%E4%B8%80/" class="post-title-link" itemprop="url">Linux 中的进程和计划任务(一)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-10-28 20:05:09" itemprop="dateCreated datePublished" datetime="2015-10-28T20:05:09+08:00">2015-10-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:53:28" itemprop="dateModified" datetime="2019-01-02T23:53:28+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Linux-中进程的查看"><a href="#Linux-中进程的查看" class="headerlink" title="Linux 中进程的查看"></a>Linux 中进程的查看</h2><h3 id="进程的相关概念"><a href="#进程的相关概念" class="headerlink" title="进程的相关概念"></a>进程的相关概念</h3><p>内核的功用:进程管理、文件系统、网络功能、内存管理、驱动程序、安全功能等 </p>
+<p>Process: 运行中的程序的一个副本,是被载入内存的一个指令集合 </p>
+<p>​    进程ID(Process ID,PID)号码被用来标记各个进程UID、GID、和SELinux语境决定对文件系统的存取和访问权限,通常从执行进程的用户来继承存在生命周期 </p>
+<p>task struct:Linux内核存储进程信息的数据结构格式 </p>
+<p>task list:多个任务的的task struct组成的链表 </p>
+<p>进程创建: </p>
+<p>​    init:第一个进程 </p>
+<p>​    进程:都由其父进程创建,父子关系,CoW fork(), clone() </p>
+<h4 id="进程的基本状态和转换"><a href="#进程的基本状态和转换" class="headerlink" title="进程的基本状态和转换"></a>进程的基本状态和转换</h4><p><strong>创建状态:</strong></p>
+<p>​    进程在创建时需要申请一个空白PCB(process control block进程控 制块),向其中填写控制和管理进程的信息,完成资源分配.如果创建工作无法完 成,比如资源无法满足,就无法被调度运行,把此时进程所处状态称为创建状态 </p>
+<p><strong>就绪状态:</strong></p>
+<p>​    进程已准备好,已分配到所需资源,只要分配到CPU就能够立即运行 </p>
+<p><strong>执行状态:</strong></p>
+<p>​    进程处于就绪状态被调度后,进程进入执行状态 </p>
+<p><strong>阻塞状态:</strong></p>
+<p>​    正在执行的进程由于某些事件(I/O请求,申请缓存区失败)而暂时 无法运行,进程受到阻塞.在满足请求时进入就绪状态等待系统调用 </p>
+<p><strong>终止状态:</strong></p>
+<p>​    进程结束,或出现错误,或被系统终止,进入终止状态.无法再执行 </p>
+<h4 id="进程之间转换六种情况"><a href="#进程之间转换六种情况" class="headerlink" title="进程之间转换六种情况"></a>进程之间转换六种情况</h4><p>运行——&gt;就绪:</p>
+<p>​    1,主要是进程占用CPU的时间过长,而系统分配给该进程占 用CPU的时间是有限的:</p>
+<p>​    2,在采用抢先式优先级调度算法的系统中,当有更高 优先级的进程要运行时,该进程就被迫让出CPU,该进程便由执行状态转变为 就绪状态 </p>
+<p>就绪——&gt;运行:运行的进程的时间片用完,调度就转到就绪队列中选择合适 的进程分配CPU </p>
+<p>运行——&gt;阻塞:正在执行的进程因发生某等待事件而无法执行,则进程由执 行状态变为阻塞状态,如发生了I/O请求 </p>
+<p>阻塞——&gt;就绪:进程所等待的事件已经发生,就进入就绪队列 </p>
+<p>以下两种状态是不可能发生的: </p>
+<p>​    阻塞——&gt;运行:即使给阻塞进程分配CPU,也无法执行,操作系统在进行调 度时不会从阻塞队列进行挑选,而是从就绪队列中选取 </p>
+<p>​    就绪——&gt;阻塞:就绪态根本就没有执行,谈不上进入阻塞态 </p>
+<h4 id="进程优先级"><a href="#进程优先级" class="headerlink" title="进程优先级"></a>进程优先级</h4><p>进程优先级: </p>
+<p>​    系统优先级:数字越小,优先级越高 </p>
+<p>​        0-139(CentOS4,5) </p>
+<p>​            各有140个运行队列和过期队列 </p>
+<p>​        0-98,99(CentOS6) </p>
+<p>​    实时优先级: 99-0 值最大优先级最高 </p>
+<p>​    nice值:-20到19,对应系统优先级100-139或99 </p>
+<p>Big O:时间复杂度,用时和规模的关系 </p>
+<p>​    O(1), O(logn), O(n)线性, O(n^2)抛物线, O(2^n) </p>
+<h4 id="进程相关概念"><a href="#进程相关概念" class="headerlink" title="进程相关概念"></a>进程相关概念</h4><p>进程内存: </p>
+<p>​    Page Frame: 页框,用存储页面数据,存储Page 4k </p>
+<p>​    LRU:Least Recently Used 近期最少使用算法,释放内存物理地址空间和线性地址空间 </p>
+<p>​    MMU:Memory Management Unit负责转换线性和物理地址 </p>
+<p>​    TLB:Translation Lookaside Buffer 翻译后备缓冲器,用于保存虚拟地址和物理地址映射关系的缓存 </p>
+<p>IPC: Inter Process Communication </p>
+<p>​    同一主机:</p>
+<p>​        signal:信号 </p>
+<p>​        shm: shared memory </p>
+<p>​        semaphore:信号量,一种计数器 </p>
+<p>​    不同主机:</p>
+<p>​        socket: IP和端口号 </p>
+<p>​        RPC: remote procedure call </p>
+<p>​        MQ:消息队列,Kafka,ActiveMQ </p>
+<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h4><p>Linux内核:抢占式多任务 </p>
+<p>进程类型: </p>
+<p>​    守护进程: daemon,在系统引导过程中启动的进程,和终端无关进程 </p>
+<p>​    前台进程:跟终端相关,通过终端启动的进程 </p>
+<p>​    注意:两者可相互转化 </p>
+<p>进程状态: </p>
+<p>​    运行态:running </p>
+<p>​    就绪态:ready </p>
+<p>​    睡眠态: </p>
+<p>​        可中断:interruptable </p>
+<p>​        不可中断:uninterruptable </p>
+<p>​    停止态:stopped,暂停于内存,但不会被调度,除非手动启动 </p>
+<p>​    僵死态:zombie,结束进程,父进程结束前,子进程不关闭 </p>
+<hr>
+<h3 id="系统管理工具"><a href="#系统管理工具" class="headerlink" title="系统管理工具"></a>系统管理工具</h3><p>进程的分类: </p>
+<p>​    CPU-Bound:CPU密集型,非交互 </p>
+<p>​    IO-Bound:IO密集型,交互 </p>
+<p>Linux系统状态的查看及管理工具:pstree, ps, pidof, pgrep, top, htop, glance, pmap, vmstat, dstat, kill, pkill, job, bg, fg, nohup </p>
+<p>pstree命令: </p>
+<p>​    pstree - display a tree of processes </p>
+<p>ps: process state </p>
+<p>​    ps - report a snapshot of the current processes </p>
+<p>​    Linux系统各进程的相关信息均保存在/proc/PID目录下的各文件中 </p>
+<h4 id="查看系统进程-ps"><a href="#查看系统进程-ps" class="headerlink" title="查看系统进程 ps"></a>查看系统进程 ps</h4><p>ps [OPTION]… </p>
+<p>支持三种选项: </p>
+<p>​    UNIX选项 如-A -e </p>
+<p>​    BSD选项 如a </p>
+<p>​    GNU选项 如–help </p>
+<p>• 选项:默认显示当前终端中的进程 </p>
+<p>• a 选项包括所有终端中的进程 </p>
+<p>• x 选项包括不链接终端的进程 </p>
+<p>• u 选项显示进程所有者的信息 </p>
+<p>• f 选项显示进程树,相当于 –forest </p>
+<p>• k|–sort 属性 对属性排序,属性前加- 表示倒序 </p>
+<p>• o 属性… 选项显示定制的信息 pid、cmd、%cpu、%mem </p>
+<p>• L 显示支持的属性列表 </p>
+<h5 id="ps常见选项"><a href="#ps常见选项" class="headerlink" title="ps常见选项"></a>ps常见选项</h5><p>-C cmdlist 指定命令,多个命令用,分隔 </p>
+<p>-L 显示线程 </p>
+<p>-e: 显示所有进程,相当于-A </p>
+<p>-f: 显示完整格式程序信息 </p>
+<p>-F: 显示更完整格式的进程信息 </p>
+<p>-H: 以进程层级格式显示进程相关信息 </p>
+<p>-u userlist 指定有效的用户ID或名称 </p>
+<p>-U userlist 指定真正的用户ID或名称 </p>
+<p>-g gid或groupname 指定有效的gid或组名称 </p>
+<p>-G gid或groupname 指定真正的gid或组名称 </p>
+<p>-p pid 显示指pid的进程 </p>
+<p>–ppid pid 显示属于pid的子进程 </p>
+<p>-M 显示SELinux信息,相当于Z </p>
+<h5 id="ps输出属性"><a href="#ps输出属性" class="headerlink" title="ps输出属性"></a>ps输出属性</h5><p>VSZ: Virtual memory SiZe,虚拟内存集,线性内存 </p>
+<p>RSS: ReSident Size, 常驻内存集 </p>
+<p>STAT:进程状态 </p>
+<p>​    R:running </p>
+<p>​    S: interruptable sleeping </p>
+<p>​    D: uninterruptable sleeping </p>
+<p>​    T: stopped </p>
+<p>​    Z: zombie </p>
+<p>​    +: 前台进程 </p>
+<p>​    l: 多线程进程 </p>
+<p>​    L:内存分页并带锁 </p>
+<p>​    N:低优先级进程 </p>
+<p>​    &lt;: 高优先级进程 </p>
+<p>​    s: session leader,会话(子进程)发起者 </p>
+<h4 id="ps-输出及常见示例"><a href="#ps-输出及常见示例" class="headerlink" title="ps 输出及常见示例"></a>ps 输出及常见示例</h4><p>ni: nice值 </p>
+<p>pri: priority 优先级 </p>
+<p>psr: processor CPU编号 </p>
+<p>rtprio: 实时优先级 </p>
+<p>示例: </p>
+<p>​    ps axo pid,cmd,psr,ni,pri,rtprio </p>
+<p>常用组合: </p>
+<p>​    aux </p>
+<p>​    -ef </p>
+<p>​    -eFH </p>
+<p>​    -eo pid,tid,class,rtprio,ni,pri,psr,pcpu,stat,comm </p>
+<p>​    axo stat,euid,ruid,tty,tpgid,sess,pgrp,ppid,pid,pcpu,comm </p>
+<h5 id="ps示例"><a href="#ps示例" class="headerlink" title="ps示例"></a>ps示例</h5><p>查询你拥有的所有进程: </p>
+<p>​    ps -x </p>
+<p>显示指定用户名(RUID)或用户ID的进程: </p>
+<p>​    ps -fU apache </p>
+<p>​    ps -fu 48 </p>
+<p>显示指定用户名(EUID)或用户ID的进程: </p>
+<p>​    ps -fu mark </p>
+<p>​    ps -fu 1000 </p>
+<p>查看以root用户权限(实际和有效ID)运行的每个进程: </p>
+<p>​    ps -U root -u root </p>
+<p>列出某个组拥有的所有进程(实际组ID,RGID或名称): </p>
+<p>​    ps -fG nginx </p>
+<p>列出有效组名称(或会话)所拥有的所有进程: </p>
+<p>​    ps -fg mysql </p>
+<p>​    ps -fG 27 </p>
+<p>通过进程ID来显示所属的进程: </p>
+<p>​    ps -fp 1234 </p>
+<p>以父进程ID来显示其下所有的进程,如显示父进程为1154的所有进程: </p>
+<p>​    ps -f –ppid 1234 </p>
+<p>显示指定PID的多个进程: </p>
+<p>​    ps -fp 1204,1239,1263 </p>
+<p>要按tty显示所属进程: </p>
+<p>​    ps -ft pst/0 </p>
+<p>以进程树显示系统中的进程如何相互链接: </p>
+<p>​    ps -e –forest </p>
+<p>以进程树显示指定的进程 </p>
+<p>​    ps -f –forest -C sshd </p>
+<p>​    ps -ef –forest | grep -v grep | grep sshd </p>
+<p>要显示一个进程的所有线程,将显示LWP(轻量级进程)以及NLWP(轻量级进 程数)列: </p>
+<p>​    ps -fL -C nginx </p>
+<p>要列出所有格式说明符: </p>
+<p>​    ps L </p>
+<p>查看进程的PID,PPID,用户名和命令: </p>
+<p>​    ps -eo pid,ppid,user,cmd </p>
+<p>自定义格式显示文件系统组,ni值开始时间和进程的时间: </p>
+<p>​    ps -p 1234 -o pid,ppid,fgroup,ni,lstart,etime </p>
+<p>使用其PID查找进程名称: </p>
+<p>​    ps -p 1244 -o comm= </p>
+<p>要以其名称选择特定进程,显示其所有子进程 </p>
+<p>​    ps -C sshd,bash </p>
+<p>查找指定进程名所有的所属PID,在编写需要从std输出或文件读取PID的脚本时 这个参数很有用: </p>
+<p>​    ps -C httpd,sshd -o pid= </p>
+<p>检查一个进程的执行时间 </p>
+<p>​    ps -eo comm,etime,user | grep nginx </p>
+<p>查找占用最多内存和CPU的进程: </p>
+<p>​    ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%mem | head</p>
+<p>​    ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%cpu | head </p>
+<p>显示安全信息: </p>
+<p>​    ps -eM </p>
+<p>​    ps –context </p>
+<p>使用以下命令以用户定义的格式显示安全信息. </p>
+<p>​    ps -eo euser,ruser,suser,fuser,f,comm,label </p>
+<p>使用watch实用程序执行重复的输出以实现对就程进行实时的监视,如下面的命 令显示每秒钟的监视: </p>
+<p>​    watch -n 1 ‘ps -eo pid,ppid,cmd,%mem,%cpu –sort=-%mem | head’ </p>
+<hr>
+<h3 id="进程优先级-1"><a href="#进程优先级-1" class="headerlink" title="进程优先级"></a>进程优先级</h3><p>进程优先级调整: </p>
+<p>​    静态优先级:100-139 </p>
+<p>​    进程默认启动时的nice值为0,优先级为120 </p>
+<p>​    只有根用户才能降低nice值(提高优先性) </p>
+<p>nice命令: </p>
+<p>​    nice [OPTION]/[COMMAND /[ARG]…] </p>
+<p>renice命令: </p>
+<p>​    renice [-n] priority pid… </p>
+<p>查看: </p>
+<p>​    ps axo pid,comm,ni </p>
+<h4 id="搜索进程"><a href="#搜索进程" class="headerlink" title="搜索进程"></a>搜索进程</h4><p>最灵活:</p>
+<p>​    ps 选项 | 其它命令 </p>
+<p>按预定义的模式:pgrep </p>
+<p>​    pgrep [options] pattern </p>
+<p>​    -u uid: effective user,生效者 </p>
+<p>​    -U uid: real user,真正发起运行命令者 </p>
+<p>​    -t terminal: 与指定终端相关的进程 </p>
+<p>​    -l: 显示进程名 </p>
+<p>​    -a: 显示完整格式的进程名 </p>
+<p>​    -P pid: 显示指定进程的子进程 </p>
+<p>按确切的程序名称:/sbin/pidof </p>
+<p>​    pidof bash </p>
+<h4 id="系统工具"><a href="#系统工具" class="headerlink" title="系统工具"></a>系统工具</h4><p><strong>uptime</strong></p>
+<p>显示当前时间,系统已启动的时间、当前上线人数,系统平均负载(1、5、10 分钟的平均负载,一般不会超过1) </p>
+<p>系统平均负载: </p>
+<p>指在特定时间间隔内运行队列中的平均进程数 </p>
+<p>通常每个CPU内核的当前活动进程数不大于3,那么系统的性能良好.如果每 个CPU内核的任务数大于5,那么此主机的性能有严重问题 </p>
+<p>如果linux主机是1个双核CPU,当Load Average 为6的时候说明机器已经被 充分使用 </p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%B8%89/" class="post-title-link" itemprop="url">Linux 磁盘存储和文件系统(三)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-10-25 20:56:34" itemprop="dateCreated datePublished" datetime="2015-10-25T20:56:34+08:00">2015-10-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-02 23:53:03" itemprop="dateModified" datetime="2019-01-02T23:53:03+08:00">2019-01-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="LVM"><a href="#LVM" class="headerlink" title="LVM"></a>LVM</h3><p>允许对卷进行方便操作的抽象层,包括重新设定文件系统的大小 </p>
+<p>允许在多个物理设备间重新组织文件系统 </p>
+<p>​    • 将设备指定为物理卷 </p>
+<p>​    • 用一个或者多个物理卷来创建一个卷组 </p>
+<p>​    • 物理卷是用固定大小的物理区域(Physical Extent,PE)来定义的 </p>
+<p>​    • 在物理卷上创建的逻辑卷 是由物理区域(PE)组成 </p>
+<p>​    • 可以在逻辑卷上创建文件系统 </p>
+<h4 id="LVM介绍"><a href="#LVM介绍" class="headerlink" title="LVM介绍"></a>LVM介绍</h4><p>LVM: Logical Volume Manager, Version: 2 </p>
+<p>dm: device mapper:将一个或多个底层块设备组织成一个逻辑设备的模块 </p>
+<p>设备名:/dev/dm-# </p>
+<p>软链接: </p>
+<p>​    /dev/mapper/VG_NAME-LV_NAME </p>
+<p>​        /dev/mapper/vol0-root </p>
+<p>​    /dev/VG_NAME/LV_NAME </p>
+<p>​        /dev/vol0/root </p>
+<h4 id="pv管理工具"><a href="#pv管理工具" class="headerlink" title="pv管理工具"></a>pv管理工具</h4><p>显示pv信息 </p>
+<p>​    pvs:简要pv信息显示 </p>
+<p>​    pvdisplay </p>
+<p>创建pv </p>
+<p>​    pvcreate </p>
+<p>​    /dev/DEVICE </p>
+<h4 id="vg管理工具"><a href="#vg管理工具" class="headerlink" title="vg管理工具"></a>vg管理工具</h4><p>显示卷组 </p>
+<p>​    vgs </p>
+<p>​    vgdisplay </p>
+<p>创建卷组 </p>
+<p>​    vgcreate [-s #[kKmMgGtTpPeE]] VolumeGroupName </p>
+<p>​    PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>管理卷组 </p>
+<p>​    vgextend VolumeGroupName PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>​    vgreduce VolumeGroupName PhysicalDevicePath [PhysicalDevicePath…] </p>
+<p>删除卷组 </p>
+<p>​    先做pvmove,</p>
+<p>​    再做vgremove </p>
+<h4 id="lv管理工具"><a href="#lv管理工具" class="headerlink" title="lv管理工具"></a>lv管理工具</h4><p>显示逻辑卷 </p>
+<p>​    lvs </p>
+<p>​    Lvdisplay </p>
+<p>创建逻辑卷 </p>
+<p>​    lvcreate -L #[mMgGtT] -n NAME VolumeGroup </p>
+<p>​    lvcreate -l 60%VG -n mylv testvg </p>
+<p>​    lvcreate -l 100%FREE -n yourlv testvg </p>
+<p>删除逻辑卷 </p>
+<p>​    lvremove /dev/VG_NAME/LV_NAME </p>
+<p>重设文件系统大小 </p>
+<p>​    fsadm [options] resize device [new_size[BKMGTEP]] </p>
+<p>​    resize2fs [-f]/[-F]/[-M]/[-P]/[-p] device [new_size]</p>
+<h4 id="扩展和缩减逻辑卷"><a href="#扩展和缩减逻辑卷" class="headerlink" title="扩展和缩减逻辑卷"></a>扩展和缩减逻辑卷</h4><p>扩展逻辑卷: </p>
+<p>​    lvextend -L [+]#[mMgGtT] /dev/VG_NAME/LV_NAME </p>
+<p>​    resize2fs /dev/VG_NAME/LV_NAME </p>
+<p>​    lvresize -r -l +100%FREE /dev/VG_NAME/LV_NAME </p>
+<p>缩减逻辑卷: </p>
+<p>​    umount /dev/VG_NAME/LV_NAME </p>
+<p>​    e2fsck -f /dev/VG_NAME/LV_NAME </p>
+<p>​    resize2fs /dev/VG_NAME/LV_NAME #[mMgGtT] </p>
+<p>​    lvreduce -L [-]#[mMgGtT] /dev/VG_NAME/LV_NAME </p>
+<p>​    mount </p>
+<h4 id="跨主机迁移卷组"><a href="#跨主机迁移卷组" class="headerlink" title="跨主机迁移卷组"></a>跨主机迁移卷组</h4><p>源计算机上 </p>
+<p>​    1 在旧系统中,umount所有卷组上的逻辑卷 </p>
+<p>​    2 vgchange –a n vg0 lvdisplay </p>
+<p>​    3 vgexport vg0 </p>
+<p>​        pvscan </p>
+<p>​        vgdisplay </p>
+<p>​        拆下旧硬盘 </p>
+<p> 在目标计算机上 </p>
+<p>​    4 在新系统中安装旧硬盘,并vgimport vg0. </p>
+<p>​    5 vgchange –ay vg0 </p>
+<p>​    6 mount所有卷组上的逻辑卷 </p>
+<h4 id="创建逻辑卷示例"><a href="#创建逻辑卷示例" class="headerlink" title="创建逻辑卷示例"></a>创建逻辑卷示例</h4><p>创建物理卷 </p>
+<p>​    pvcreate /dev/sda3 </p>
+<p>为卷组分配物理卷 </p>
+<p>​    vgcreate vg0 /dev/sda3 </p>
+<p>从卷组创建逻辑卷 </p>
+<p>​    lvcreate -L 256M -n data vg0 </p>
+<p>​    mke2fs -j /dev/vg0/data </p>
+<p>mount /dev/vg0/data /mnt/data </p>
+<h4 id="逻辑卷管理器快照"><a href="#逻辑卷管理器快照" class="headerlink" title="逻辑卷管理器快照"></a>逻辑卷管理器快照</h4><p>快照是特殊的逻辑卷,它是在生成快照时存在的逻辑卷的准确拷贝 </p>
+<p>对于需要备份或者复制的现有数据临时拷贝以及其它操作来说,快照是最合适 的选择 </p>
+<p>快照只有在它们和原来的逻辑卷不同时才会消耗空间 </p>
+<p>​    在生成快照时会分配给它一定的空间,但只有在原来的逻辑卷或者快照有所 改变才会使用这些空间 </p>
+<p>​    当原来的逻辑卷中有所改变时,会将旧的数据复制到快照中。 </p>
+<p>​    快照中只含有原来的逻辑卷中更改的数据或者自生成快照后的快照中更改的 数据 </p>
+<p>​    建立快照的卷大小只需要原始逻辑卷的15%～20%就够了,也可以使用 lvextend放大快照 </p>
+<h4 id="逻辑卷管理器快照-1"><a href="#逻辑卷管理器快照-1" class="headerlink" title="逻辑卷管理器快照"></a>逻辑卷管理器快照</h4><p>快照就是将当时的系统信息记录下来,就好像照相一般,若将来有任何数据 改动了,则原始数据会被移动到快照区,没有改动的区域则由快照区和文件 系统共享 </p>
+<p>由于快照区与原本的LV共用很多PE的区块,因此快照与被快照的LV必须在同 一个VG中.系统恢复的时候的文件数量不能高于快照区的实际容量 </p>
+<h4 id="使用LVM快照"><a href="#使用LVM快照" class="headerlink" title="使用LVM快照"></a>使用LVM快照</h4><p>为现有逻辑卷创建快照 </p>
+<p>​    lvcreate -l 64 -s -n data-snapshot -p r /dev/vg0/data </p>
+<p>挂载快照 </p>
+<p>​    mkdir -p /mnt/snap </p>
+<p>​    mount -o ro /dev/vg0/data-snapshot /mnt/snap </p>
+<p>恢复快照 </p>
+<p>​    umount /dev/vg0/data-snapshot </p>
+<p>​    umount /dev/vg0/data </p>
+<p>​    lvconvert –merge /dev/vg0/data-snapshot </p>
+<p>删除快照 </p>
+<p>​    umount /mnt/databackup </p>
+<p>​    lvremove /dev/vg0/databackup </p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E7%A3%81%E7%9B%98%E5%AD%98%E5%82%A8%E5%92%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-%E4%BA%8C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1148,638 +2178,10 @@ FS_TYPE一定要与分区上已经文件类型相同 </code></pre><p>e2fsck:ext�
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E6%96%87%E4%BB%B6%E6%9F%A5%E6%89%BE%E5%92%8C%E5%8E%8B%E7%BC%A9/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E6%96%87%E4%BB%B6%E6%9F%A5%E6%89%BE%E5%92%8C%E5%8E%8B%E7%BC%A9/" class="post-title-link" itemprop="url">Linux 文件查找和压缩</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2015-09-05 20:44:29" itemprop="dateCreated datePublished" datetime="2015-09-05T20:44:29+08:00">2015-09-05</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-01-02 23:36:04" itemprop="dateModified" datetime="2019-01-02T23:36:04+08:00">2019-01-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="文件查找"><a href="#文件查找" class="headerlink" title="文件查找"></a>文件查找</h3><p>在文件系统上查找符合条件的文件 </p>
-<p>文件查找:locate, find </p>
-<p>​    非实时查找(数据库查找):locate </p>
-<p>​    实时查找:find </p>
-<h4 id="locate"><a href="#locate" class="headerlink" title="locate"></a>locate</h4><p>查询系统上预建的文件索引数据库 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/var/lib/mlocate/mlocate.db</span><br></pre></td></tr></table></figure>
-
-<p>依赖于事先构建的索引 </p>
-<p>索引的构建是在系统较为空闲时自动进行(周期性任务)，管理员手动更新数据库 (updatedb) </p>
-<p>索引构建过程需要遍历整个根文件系统，极消耗资源 </p>
-<p>工作特点: </p>
-<p>• 查找速度快 </p>
-<p>• 模糊查找 </p>
-<p>• 非实时查找 </p>
-<p>• 搜索的是文件的全路径，不仅仅是文件名 </p>
-<p>• 可能只搜索用户具备读取和执行权限的目录 </p>
-<h4 id="locate-命令"><a href="#locate-命令" class="headerlink" title="locate 命令"></a>locate 命令</h4><p>locate KEYWORD </p>
-<p>有用的选项 </p>
-<p>​    -i 不区分大小写的搜索 </p>
-<p>​    -n N 只列举前N个匹配项目 </p>
-<p>​    -r 使用正则表达式 </p>
-<p>示例 </p>
-<p>搜索名称或路径中带有”conf”的文件 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate conf</span><br></pre></td></tr></table></figure>
-
-<p>使用Regex来搜索以”.conf”结尾的文件 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">locate -r ‘\.conf$’</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="find"><a href="#find" class="headerlink" title="find"></a>find</h4><p>实时查找工具，通过遍历指定路径完成文件查找 </p>
-<p>工作特点: </p>
-<p>​    • 查找速度略慢 </p>
-<p>​    • 精确查找 </p>
-<p>​    • 实时查找 </p>
-<p>​    • 可能只搜索用户具备读取和执行权限的目录 </p>
-<p>语法: </p>
-<p>find [OPTION]… [查找路径][查找条件][处理动作] </p>
-<p>查找路径:指定具体目标路径;</p>
-<p>默认为当前目录 查找条件:指定的查找标准，可以文件名、大小、类型、权限等标准进行; 默认为找出指定路径下的所有文件 </p>
-<p>处理动作:对符合条件的文件做操作，默认输出至屏幕     </p>
-<h4 id="查找条件"><a href="#查找条件" class="headerlink" title="查找条件"></a>查找条件</h4><p>指搜索层级 </p>
-<p>​    -maxdepth level 最大搜索目录深度,指定目录为第1级 </p>
-<p>​    -mindepth level 最小搜索目录深度 </p>
-<p>根据文件名和inode查找: </p>
-<p>​    -name “文件名称”:支持使用glob </p>
-<p>​        *, ?, [], [^] </p>
-<p>​    -iname “文件名称”:不区分字母大小写 </p>
-<p>​    -inum n 按inode号查找 </p>
-<p>​    -samefile name 相同inode号的文件 </p>
-<p>​    -links n 链接数为n的文件 </p>
-<p>​    -regex “PATTERN”:以PATTERN匹配整个文件路径字符串，而不仅仅是文 件名称     </p>
-<p>根据属主、属组查找: </p>
-<p>​    -user USERNAME:查找属主为指定用户(UID)的文件 </p>
-<p>​    -group GRPNAME: 查找属组为指定组(GID)的文件 </p>
-<p>​    -uid UserID:查找属主为指定的UID号的文件 </p>
-<p>​    -gid GroupID:查找属组为指定的GID号的文件 </p>
-<p>​    -nouser:查找没有属主的文件 </p>
-<p>​    -nogroup:查找没有属组的文件     </p>
-<p>根据文件类型查找: </p>
-<p>​    -type TYPE: </p>
-<p>​    • f: 普通文件 </p>
-<p>​    • d: 目录文件 </p>
-<p>​    • l: 符号链接文件 </p>
-<p>​    • s:套接字文件 </p>
-<p>​    • b: 块设备文件 </p>
-<p>​    • c: 字符设备文件 </p>
-<p>​    • p: 管道文件     </p>
-<p>空文件或目录 </p>
-<p>​    -empty </p>
-<p>​    find /app -type d -empty     </p>
-<p>组合条件: </p>
-<p>​    与:-a </p>
-<p>​    或:-o </p>
-<p>​    非:-not, !     </p>
-<p>德·摩根定律: </p>
-<pre><code>(非 A) 或 (非 B) = 非(A 且 B) 
-
-(非 A) 且 (非 B) = 非(A 或 B) </code></pre><p>示例: </p>
-<pre><code>!A -a !B = !(A -o B) 
-
-!A -o !B = !(A -a B) </code></pre><h4 id="查找条件-1"><a href="#查找条件-1" class="headerlink" title="查找条件"></a>查找条件</h4><p>根据文件大小来查找: </p>
-<p>-size [+|-]#UNIT </p>
-<pre><code>常用单位:k, M, G，c（byte） </code></pre><p>#UNIT: (#-1, #] </p>
-<pre><code>如:6k 表示(5k,6k] </code></pre><p>-#UNIT:[0,#-1] </p>
-<pre><code>如:-6k 表示[0,5k] </code></pre><p>+#UNIT:(#,∞) </p>
-<pre><code>如:+6k 表示(6k,∞)     </code></pre><p>根据时间戳: </p>
-<p>以”天”为单位; </p>
-<p>​    -atime [+|-]#, </p>
-<p>​        #: [#,#+1) </p>
-<p>​        +#: [#+1,∞] </p>
-<p>​        -#: [0,#)     </p>
-<p>​    -mtime </p>
-<p>​    -ctime     </p>
-<p>以”分钟”为单位: </p>
-<p>​    -amin </p>
-<p>​    -mmin </p>
-<p>​    -cmin         </p>
-<p>根据权限查找: </p>
-<p>-perm [/|-]MODE </p>
-<p>MODE: 精确权限匹配 </p>
-<p>​    /MODE:任何一类(u,g,o)对象的权限中只要能一位匹配即可，或关系，+ 从centos7开始淘汰 </p>
-<p>​    -MODE:每一类对象都必须同时拥有指定权限，与关系 0 表示不关注 </p>
-<p>​    • find -perm 755 会匹配权限模式恰好是755的文件 </p>
-<p>​    • 只要当任意人有写权限时，find -perm +222就会匹配 </p>
-<p>​    • 只有当每个人都有写权限时，find -perm -222才会匹配 </p>
-<p>​    • 只有当其它人（other）有写权限时，find -perm -002才会匹配     </p>
-<h4 id="处理动作"><a href="#处理动作" class="headerlink" title="处理动作"></a>处理动作</h4><p>-print:默认的处理动作，显示至屏幕 </p>
-<p>-ls:类似于对查找到的文件执行”ls -l”命令 </p>
-<p>-delete:删除查找到的文件 </p>
-<p>-fls file:查找到的所有文件的长格式信息保存至指定文件中 </p>
-<p>-ok COMMAND {} ; </p>
-<p>​    对查找到的每个文件执行由COMMAND指定的命令，对于 每个文件执行命令之前，都会交互式要求用户确认 </p>
-<p>-exec COMMAND {} ; </p>
-<p>​    对查找到的每个文件执行由COMMAND指定的命令 </p>
-<p>{}: 用于引用查找到的文件名称自身 </p>
-<p>find传递查找到的文件至后面指定的命令时，查找到所有符合条件的文件一次性 传递给后面的命令 </p>
-<h4 id="参数替换xargs"><a href="#参数替换xargs" class="headerlink" title="参数替换xargs"></a>参数替换xargs</h4><p>由于很多命令不支持管道|来传递参数，而日常工作中有这个必要，所以就有了 xargs命令 </p>
-<p>xargs用于产生某个命令的参数，xargs 可以读入 stdin 的数据，并且以空格符 或回车符将 stdin 的数据分隔成为arguments </p>
-<p>注意:文件名或者是其他意义的名词内含有空格符的情况 </p>
-<p>有些命令不能接受过多参数，命令执行可能会失败，xargs可以解决 </p>
-<p>示例: </p>
-<p>​    ls f* |xargs rm </p>
-<p>​    find /sbin -perm +700 |ls -l 这个命令是错误的     </p>
-<p>​    find /sbin -perm +700 | xargs ls –l </p>
-<p>find和xargs格式:find | xargs COMMAND </p>
-<h3 id="压缩，解压缩及归档工具"><a href="#压缩，解压缩及归档工具" class="headerlink" title="压缩，解压缩及归档工具"></a>压缩，解压缩及归档工具</h3><p>file-roller </p>
-<p>compress/uncompress: .Z </p>
-<p>gzip/gunzip: .gz </p>
-<p>bzip2/bunzip2: .bz2 </p>
-<p>xz/unxz: .xz </p>
-<p>zip/unzip </p>
-<p>tar </p>
-<p>cpio </p>
-<h4 id="compress-uncompress"><a href="#compress-uncompress" class="headerlink" title="compress/uncompress"></a>compress/uncompress</h4><p>compress [-dfvcVr]/[-b maxbits]/[file …] </p>
-<p>​    -d: 解压缩，相当于uncompress </p>
-<p>​    -c: 结果输出至标准输出,不删除原文件 </p>
-<p>​    -v: 显示详情     </p>
-<p>uncompress 解压缩 </p>
-<p>zcat file.Z &gt;file </p>
-<h4 id="gzip-gunzip"><a href="#gzip-gunzip" class="headerlink" title="gzip/gunzip"></a>gzip/gunzip</h4><p>gzip [OPTION]… FILE … </p>
-<p>​    -d: 解压缩，相当于gunzip </p>
-<p>​    -c: 将压缩或解压缩的结果输出至标准输出 </p>
-<p>​    -#:1-9，指定压缩比，值越大压缩比越大     </p>
-<p>zcat:不显式解压缩的前提下查看文本文件内容 </p>
-<p>实例: </p>
-<p>​    gzip -c messages &gt;messages.gz </p>
-<p>​    gzip -c -d messages.gz &gt; messages </p>
-<p>​    zcat messages.gz &gt; messages     </p>
-<h4 id="bzip2-bunzip-bzcat"><a href="#bzip2-bunzip-bzcat" class="headerlink" title="bzip2/bunzip/bzcat"></a>bzip2/bunzip/bzcat</h4><p>bzip2 [OPTION]… FILE … </p>
-<p>​    -k: keep, 保留原文件 </p>
-<p>​    -d:解压缩 </p>
-<p>​    -#:1-9，压缩比，默认为9     </p>
-<p>bzcat:不显式解压缩的前提下查看文本文件内容 </p>
-<h4 id="xz-unxz-xzcat"><a href="#xz-unxz-xzcat" class="headerlink" title="xz/unxz/xzcat"></a>xz/unxz/xzcat</h4><p>xz [OPTION]… FILE … </p>
-<p>​    -k: keep, 保留原文件 </p>
-<p>​    -d:解压缩 </p>
-<p>​    -#:1-9，压缩比，默认为6     </p>
-<p>xzcat: 不显式解压缩的前提下查看文本文件内容 </p>
-<h4 id="zip-unzip"><a href="#zip-unzip" class="headerlink" title="zip/unzip"></a>zip/unzip</h4><p>打包压缩 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zip –r /testdir/sysconfig /etc/sysconfig/</span><br></pre></td></tr></table></figure>
-
-<p>解包解压缩 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">unzip sysconfig.zip </span><br><span class="line"></span><br><span class="line">cat /var/log/messages | zip messages - </span><br><span class="line"></span><br><span class="line">unzip -p message &gt; message</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="tar工具"><a href="#tar工具" class="headerlink" title="tar工具"></a>tar工具</h4><p> tar（Tape ARchive，磁带归档的缩写） </p>
-<p> tar [OPTION]… </p>
-<p>(1) 创建归档 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -cpvf /PATH/TO/SOMEFILE.tar FILE...</span><br></pre></td></tr></table></figure>
-
-<p>(2) 追加文件至归档: 注:不支持对压缩文件追加 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -r -f /PATH/TO/SOMEFILE.tar FILE...</span><br></pre></td></tr></table></figure>
-
-<p>(3) 查看归档文件中的文件列表 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -t -f /PATH/TO/SOMEFILE.tar</span><br></pre></td></tr></table></figure>
-
-<p>(4) 展开归档 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tar -x -f /PATH/TO/SOMEFILE.tar </span><br><span class="line"></span><br><span class="line">tar -x -f /PATH/TO/SOMEFILE.tar -C /PATH/</span><br></pre></td></tr></table></figure>
-
-<p>(5) 结合压缩工具实现:归档并压缩 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-j: bzip2, -z: gzip, -J: xz</span><br></pre></td></tr></table></figure>
-
-<p>-T选项指定输入文件,-X选项指定包含要排除的文件列表 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar zcvf mybackup.tgz -T /root/includefilelist -X /root/excludefilelist</span><br></pre></td></tr></table></figure>
-
-<p>分割大的 tar 文件为多份小文件: </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">split –b Size –d tar-file-name prefix-name </span><br><span class="line"></span><br><span class="line">split -b 1M –d mybackup.tgz mybackup-parts </span><br><span class="line"></span><br><span class="line">split -b 1M mybackup.tgz mybackup-parts</span><br></pre></td></tr></table></figure>
-
-<p>合并: </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat mybackup-parts* &gt; mybackup.tar.gz</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="cpio"><a href="#cpio" class="headerlink" title="cpio"></a>cpio</h4><p>功能:复制文件从或到归档 </p>
-<p>cpio命令是通过重定向的方式将文件进行打包备份，还原恢复的工具，它可以 解压以”.cpio”或者”.tar”结尾的文件 </p>
-<p>cpio [选项] &gt; 文件名或者设备名 </p>
-<p>cpio [选项] &lt; 文件名或者设备名 </p>
-<p>选项 </p>
-<p>​    -o 将文件拷贝打包成文件或者将文件输出到设备上 </p>
-<p>​    -i 解包，将打包文件解压或将设备上的备份还原到系统 </p>
-<p>​    -t 预览，查看文件内容或者输出到设备上的文件内容 </p>
-<p>​    -v 显示打包过程中的文件名称。 </p>
-<p>​    -d 解包生成目录，在cpio还原时，自动的建立目录 </p>
-<p>​    -c 一种较新的存储方式     </p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E4%BD%BF%E7%94%A8shell%E8%84%9A%E6%9C%AC%E5%AE%9E%E7%8E%B0%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/%E4%BD%BF%E7%94%A8shell%E8%84%9A%E6%9C%AC%E5%AE%9E%E7%8E%B0%E4%BF%84%E7%BD%97%E6%96%AF%E6%96%B9%E5%9D%97/" class="post-title-link" itemprop="url">使用shell脚本实现俄罗斯方块</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2015-09-02 17:24:07" itemprop="dateCreated datePublished" datetime="2015-09-02T17:24:07+08:00">2015-09-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-01-02 23:38:58" itemprop="dateModified" datetime="2019-01-02T23:38:58+08:00">2019-01-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h3><p>学习 shell 的最好方法就是去实践,网上有很多的源码可供参考</p>
-<h3 id="实现过程"><a href="#实现过程" class="headerlink" title="实现过程"></a>实现过程</h3><p>源码分析:</p>
-<p>先从游戏主程序开始分析:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">if [[ "$1" == "-h" || "$1" == "--help" ]]; then</span><br><span class="line">        Usage</span><br><span class="line">elif [[ "$1" == "--version" ]]; then</span><br><span class="line">        echo "$APP_NAME $APP_VERSION"</span><br><span class="line">elif [[ "$1" == "--show" ]]; then</span><br><span class="line">        #当发现具有参数--show时，运行显示函数</span><br><span class="line">        RunAsDisplayer</span><br><span class="line">else</span><br><span class="line">        bash $0 --show&amp;        #以参数--show将本程序再运行一遍</span><br><span class="line">        RunAsKeyReceiver $!        #以上一行产生的进程的进程号作为参数</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
-
-<p>里面出现了两个变量,查看定义后发现</p>
-<p>APP_NAME : 打印了脚本名</p>
-<p><code>APP_NAME=&quot;${0##*[\\/]}&quot;</code></p>
-<p>APP_VERSION : 自己定义了版本号</p>
-<p><code>APP_VERSION=&quot;1.0&quot;</code></p>
-<p>其中出现了3个函数</p>
-<p>Usage :显示脚本用法的函数</p>
-<p>RunAsDisplayer :处理显示和游戏流程的主函数</p>
-<p>RunAsKeyReceiver :接收输入的进程的主函数</p>
-<p>我们从头开始分析这些函数的实现</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function Usage</span><br><span class="line">&#123;</span><br><span class="line">        cat &lt;&lt; EOF</span><br><span class="line">Usage: $APP_NAME</span><br><span class="line">Start tetris game.</span><br><span class="line">  </span><br><span class="line">  -h, --help              display this help and exit</span><br><span class="line">      --version           output version information and exit</span><br><span class="line">EOF</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>可以看出 Usage 函数就是打印了一些信息,主要是用户提示.</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">function RunAsDisplayer()</span><br><span class="line">&#123;</span><br><span class="line">        local sigThis	#定义了局部变量 sigThis</span><br><span class="line">        InitDraw</span><br><span class="line">  </span><br><span class="line">        #挂载各种信号的处理函数</span><br><span class="line">        trap "sig=$sigRotate;" $sigRotate</span><br><span class="line">        trap "sig=$sigLeft;" $sigLeft</span><br><span class="line">        trap "sig=$sigRight;" $sigRight</span><br><span class="line">        trap "sig=$sigDown;" $sigDown</span><br><span class="line">        trap "sig=$sigAllDown;" $sigAllDown</span><br><span class="line">        trap "ShowExit;" $sigExit</span><br><span class="line">  </span><br><span class="line">        while :</span><br><span class="line">        do</span><br><span class="line">                #根据当前的速度级iLevel不同，设定相应的循环的次数</span><br><span class="line">                for ((i = 0; i &lt; 21 - iLevel; i++))</span><br><span class="line">                do</span><br><span class="line">                        sleep 0.02</span><br><span class="line">                        sigThis=$sig</span><br><span class="line">                        sig=0</span><br><span class="line">  </span><br><span class="line">                        #根据sig变量判断是否接受到相应的信号</span><br><span class="line">                        if ((sigThis == sigRotate)); then BoxRotate;        #旋转</span><br><span class="line">                        elif ((sigThis == sigLeft)); then BoxLeft;        #左移一列</span><br><span class="line">                        elif ((sigThis == sigRight)); then BoxRight;        #右移一列</span><br><span class="line">                        elif ((sigThis == sigDown)); then BoxDown;        #下落一行</span><br><span class="line">                        elif ((sigThis == sigAllDown)); then BoxAllDown;        #下落到底</span><br><span class="line">                        fi</span><br><span class="line">                done</span><br><span class="line">                #kill -$sigDown $$</span><br><span class="line">                BoxDown        #下落一行</span><br><span class="line">        done</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>暂时先不管 RunAsDisplayer 中调用的 InitDraw 函数,先看一下这个函数的功能.</p>
-<p>从流程上分析这个函数实现了按键信号的捕捉,然后在一个死循环中以操作时间为0.02秒,不断的执行对方块的移动操作,然后执行下落一行的操作.</p>
-<p>接下来对其中出现的参数和函数进行分析:</p>
-<p>trap 这个命令实现了shell中脚本信号的获取,可以在脚本运行中执行额外的操作,比如获取键盘的输入用来控制方块的运动轨迹.</p>
-<p>iLevel 这个参数是定义的速度级,这个稍后会提到.</p>
-<p>BoxDown : 控制方块下落的函数</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">function RunAsKeyReceiver()</span><br><span class="line">&#123;</span><br><span class="line">        local pidDisplayer key aKey sig cESC sTTY</span><br><span class="line">  </span><br><span class="line">        pidDisplayer=$1</span><br><span class="line">        aKey=(0 0 0)</span><br><span class="line">  </span><br><span class="line">        cESC=`echo -ne "\033"`</span><br><span class="line">        cSpace=`echo -ne "\040"`</span><br><span class="line">  </span><br><span class="line">        #保存终端属性。在read -s读取终端键时，终端的属性会被暂时改变。</span><br><span class="line">        #如果在read -s时程序被不幸杀掉，可能会导致终端混乱，</span><br><span class="line">        #需要在程序退出时恢复终端属性。</span><br><span class="line">        sTTY=`stty -g`</span><br><span class="line">  </span><br><span class="line">        #捕捉退出信号</span><br><span class="line">        trap "MyExit;" INT TERM</span><br><span class="line">        trap "MyExitNoSub;" $sigExit</span><br><span class="line">  </span><br><span class="line">        #隐藏光标</span><br><span class="line">        echo -ne "\033[?25l"</span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">        while :</span><br><span class="line">        do</span><br><span class="line">                #读取输入。注-s不回显，-n读到一个字符立即返回</span><br><span class="line">                read -s -n 1 key</span><br><span class="line">  </span><br><span class="line">                aKey[0]=$&#123;aKey[1]&#125;</span><br><span class="line">                aKey[1]=$&#123;aKey[2]&#125;</span><br><span class="line">                aKey[2]=$key</span><br><span class="line">                sig=0</span><br><span class="line">  </span><br><span class="line">                #判断输入了何种键</span><br><span class="line">                if [[ $key == $cESC &amp;&amp; $&#123;aKey[1]&#125; == $cESC ]]</span><br><span class="line">                then</span><br><span class="line">                        #ESC键</span><br><span class="line">                        MyExit</span><br><span class="line">                elif [[ $&#123;aKey[0]&#125; == $cESC &amp;&amp; $&#123;aKey[1]&#125; == "[" ]]</span><br><span class="line">                then</span><br><span class="line">                        if [[ $key == "A" ]]; then sig=$sigRotate        #&lt;向上键&gt;</span><br><span class="line">                        elif [[ $key == "B" ]]; then sig=$sigDown        #&lt;向下键&gt;</span><br><span class="line">                        elif [[ $key == "D" ]]; then sig=$sigLeft        #&lt;向左键&gt;</span><br><span class="line">                        elif [[ $key == "C" ]]; then sig=$sigRight        #&lt;向右键&gt;</span><br><span class="line">                        fi</span><br><span class="line">                elif [[ $key == "W" || $key == "w" ]]; then sig=$sigRotate        #W, w</span><br><span class="line">                elif [[ $key == "S" || $key == "s" ]]; then sig=$sigDown        #S, s</span><br><span class="line">                elif [[ $key == "A" || $key == "a" ]]; then sig=$sigLeft        #A, a</span><br><span class="line">                elif [[ $key == "D" || $key == "d" ]]; then sig=$sigRight        #D, d</span><br><span class="line">                elif [[ "[$key]" == "[]" ]]; then sig=$sigAllDown        #空格键</span><br><span class="line">                elif [[ $key == "Q" || $key == "q" ]]                        #Q, q</span><br><span class="line">                then</span><br><span class="line">                        MyExit</span><br><span class="line">                fi</span><br><span class="line">  </span><br><span class="line">                if [[ $sig != 0 ]]</span><br><span class="line">                then</span><br><span class="line">                        #向另一进程发送消息</span><br><span class="line">                        kill -$sig $pidDisplayer</span><br><span class="line">                fi</span><br><span class="line">        done</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这个函数是接收输入的进程的主程序,然后判断用户的输入,在这个脚本中,可以使用方向键和wasd来控制方块的运行轨迹,然后不断显示直到游戏结束.</p>
-<p>里面调用了一个MyExit的函数.</p>
-<p>接下来分析一下 RunAsDisplayer中BoxDown 这个函数</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function BoxDown()</span><br><span class="line">&#123;</span><br><span class="line">        local y s</span><br><span class="line">        ((y = boxCurY + 1))        #新的y坐标</span><br><span class="line">        if BoxMove $y $boxCurX        #测试是否可以下落一行</span><br><span class="line">        then</span><br><span class="line">                s="`DrawCurBox 0`"        #将旧的方块抹去</span><br><span class="line">                ((boxCurY = y))</span><br><span class="line">                s="$s`DrawCurBox 1`"        #显示新的下落后方块</span><br><span class="line">                echo -ne $s</span><br><span class="line">        else</span><br><span class="line">                #走到这儿, 如果不能下落了</span><br><span class="line">                Box2Map                #将当前移动中的方块贴到背景方块中</span><br><span class="line">                RandomBox        #产生新的方块</span><br><span class="line">        fi</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这个函数主要是定义了控制方块下落的功能,首先会判断是否可也下落,如果可以消除的话,先把可以消除的方块抹去,然后显示新的下落后的方块,如果不能下落了就将当前移动中的方块贴到背景方块中,然后继续产生新的方块.</p>
-<p>里面调用了四个函数</p>
-<p>BoxMove : 测试是否可以下落一行</p>
-<p>DrawCurBox : 显示方块</p>
-<p>Box2Map : 将当前移动中的方块贴到背景方块中</p>
-<p>RandomBox : 产生新的方块</p>
-<p>查看一下BoxMove这个函数,看看其中的功能是怎么实现的:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">function BoxMove()</span><br><span class="line">&#123;</span><br><span class="line">        local j i x y xTest yTest</span><br><span class="line">        yTest=$1</span><br><span class="line">        xTest=$2</span><br><span class="line">        for ((j = 0; j &lt; 8; j += 2))</span><br><span class="line">        do</span><br><span class="line">                ((i = j + 1))</span><br><span class="line">                ((y = $&#123;boxCur[$j]&#125; + yTest))</span><br><span class="line">                ((x = $&#123;boxCur[$i]&#125; + xTest))</span><br><span class="line">                if (( y &lt; 0 || y &gt;= iTrayHeight || x &lt; 0 || x &gt;= iTrayWidth))</span><br><span class="line">                then</span><br><span class="line">                        #撞到墙壁了</span><br><span class="line">                        return 1</span><br><span class="line">                fi</span><br><span class="line">                if (($&#123;iMap[y * iTrayWidth + x]&#125; != -1 ))</span><br><span class="line">                then</span><br><span class="line">                        #撞到其他已经存在的方块了</span><br><span class="line">                        return 1</span><br><span class="line">                fi</span><br><span class="line">        done</span><br><span class="line">        return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>里面定义了方块移动的相关信息,通过判断方块的位置来确定是否可以进行移动</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/shell-%E4%B8%AD%E7%89%B9%E6%AE%8A%E5%8F%98%E9%87%8F%E7%9A%84%E7%94%A8%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/shell-%E4%B8%AD%E7%89%B9%E6%AE%8A%E5%8F%98%E9%87%8F%E7%9A%84%E7%94%A8%E6%B3%95/" class="post-title-link" itemprop="url">shell 中特殊变量的用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2015-09-01 16:20:02" itemprop="dateCreated datePublished" datetime="2015-09-01T16:20:02+08:00">2015-09-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-01-02 23:34:19" itemprop="dateModified" datetime="2019-01-02T23:34:19+08:00">2019-01-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Shell 编程中的有很多特殊的变量可以打印出来很多有用的信息.在网上检索之后做个笔记.希望也可以帮助更多有需要的人</p>
-<p><strong>$$</strong> </p>
-<p>Shell本身的PID（ProcessID） </p>
-<p><strong>$!</strong> </p>
-<p>Shell最后运行的后台Process的PID </p>
-<p><strong>$?</strong> </p>
-<p>最后运行的命令的结束代码（返回值） </p>
-<p><strong>$-</strong> </p>
-<p>使用Set命令设定的Flag一览 <strong>$</strong></p>
-<p><strong>S*</strong> </p>
-<p>所有参数列表。如”$*”用「”」括起来的情况、以”$1 $2 … $n”的形式输出所有参数。 </p>
-<p><strong>$@</strong> </p>
-<p>所有参数列表。如”$@”用「”」括起来的情况、以”$1” “$2” … “$n” 的形式输出所有参数。 </p>
-<p><strong>$#</strong></p>
-<p> 添加到Shell的参数个数 </p>
-<p><strong>$0</strong></p>
-<p> Shell本身的文件名 $1～$n 添加到Shell的各参数值。$1是第1参数、$2是第2参数…。 </p>
-<hr>
-<p>我们先写一个简单的脚本，执行以后再解释各个变量的意义 </p>
-<p><code># touch variable</code> </p>
-<p><code># vi variable</code> </p>
-<p>脚本内容如下： </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/sh </span></span><br><span class="line"></span><br><span class="line">echo "number:$#" </span><br><span class="line"></span><br><span class="line">echo "scname:$0" </span><br><span class="line"></span><br><span class="line">echo "first :$1" </span><br><span class="line"></span><br><span class="line">echo "second:$2" </span><br><span class="line"></span><br><span class="line">echo "argume:$@"</span><br></pre></td></tr></table></figure>
-
-<p>保存退出 赋予脚本执行权限 </p>
-<p><code># chmod +x variable</code> </p>
-<p>执行脚本 </p>
-<p><code># ./variable aa bb</code> </p>
-<p>执行结果</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">number:2 </span><br><span class="line">scname:./variable </span><br><span class="line">first: aa </span><br><span class="line">second:bb </span><br><span class="line">argume:aa bb</span><br></pre></td></tr></table></figure>
-
-<p> 通过显示结果可以看到： </p>
-<p>$# 是传给脚本的参数个数 </p>
-<p>$0 是脚本本身的名字 </p>
-<p>$1是传递给该shell脚本的第一个参数 </p>
-<p>$2是传递给该shell脚本的第二个参数 </p>
-<p>$@ 是传给脚本的所有参数的列表 </p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-Shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E5%9B%9B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-Shell-%E8%84%9A%E6%9C%AC%E7%BC%96%E7%A8%8B%E8%BF%9B%E9%98%B6-%E5%9B%9B/" class="post-title-link" itemprop="url">Linux Shell 脚本编程进阶(四)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2015-08-30 14:26:48" itemprop="dateCreated datePublished" datetime="2015-08-30T14:26:48+08:00">2015-08-30</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-01-02 23:33:48" itemprop="dateModified" datetime="2019-01-02T23:33:48+08:00">2019-01-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="高级变量用法-有类型变量"><a href="#高级变量用法-有类型变量" class="headerlink" title="高级变量用法-有类型变量"></a>高级变量用法-有类型变量</h3><p>Shell变量一般是无类型的,但是bash Shell提供了declare和typeset两个命令用于指定变量的类型,两个命令是等价的<br>declare [选项] 变量名<br>​    -r 声明或显示只读变量<br>​    -i 将变量定义为整型数<br>​    -a 将变量定义为数组<br>​    -A 将变量定义为关联数组<br>​    -f 显示已定义的所有函数名及其内容<br>​    -F 仅显示已定义的所有函数名<br>​    -x 声明或显示环境变量和函数<br>​    -l 声明变量为小写字母 declare –l var=UPPER<br>​    -u 声明变量为大写字母 declare –u var=lower</p>
-<h3 id="eval命令"><a href="#eval命令" class="headerlink" title="eval命令"></a>eval命令</h3><p>eval命令将会首先扫描命令行进行所有的置换,然后再执行该命令.该命令适用于那些一次扫描无法实现其功能的变量.该命令对变量进行两次扫描<br> 示例:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@server ~]# CMD=whoami</span><br><span class="line">[root@server ~]# echo $CMD</span><br><span class="line">whoami</span><br><span class="line">[root@server ~]# eval $CMD</span><br><span class="line">root</span><br><span class="line">[root@server ~]# n=10</span><br><span class="line">[root@server ~]# echo &#123;0..$n&#125;</span><br><span class="line">&#123;0..10&#125;</span><br><span class="line">[root@server ~]# eval echo &#123;0..$n&#125;</span><br><span class="line">0 1 2 3 4 5 6 7 8 9 10</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="间接变量引用"><a href="#间接变量引用" class="headerlink" title="间接变量引用"></a>间接变量引用</h3><p>如果第一个变量的值是第二个变量的名字,从第一个变量引用第二个变量的值就称为间接变量引用<br>variable1的值是variable2,而variable2又是变量名,variable2的值为value,间接变量引用是指通过variable1获得变量值value的行为<br>​    variable1=variable2<br>​    variable2=value</p>
-<p>bash Shell提供了两种格式实现间接变量引用<br>​    eval tempvar=$$variable1<br>​    tempvar=${!variable1}<br>示例:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@server ~]# N=NAME</span><br><span class="line">[root@server ~]# NAME=mark</span><br><span class="line">[root@server ~]# N1=$&#123;!N&#125;</span><br><span class="line">[root@server ~]# echo $N1</span><br><span class="line">mark</span><br><span class="line">[root@server ~]# eval N2=$$N</span><br><span class="line">[root@server ~]# echo $N2</span><br><span class="line">mark</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="创建临时文件"><a href="#创建临时文件" class="headerlink" title="创建临时文件"></a>创建临时文件</h3><p>mktemp命令:创建并显示临时文件,可避免冲突<br>mktemp [OPTION]… [TEMPLATE]<br>​    TEMPLATE: filenameXXX<br>​        X至少要出现三个<br>OPTION:<br>​    -d: 创建临时目录<br>​    -p DIR或–tmpdir=DIR:指明临时文件所存放目录位置<br>示例:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mktemp /tmp/testXXX</span><br><span class="line"></span><br><span class="line">tmpdir=`mktemp –d /tmp/testdirXXX`</span><br><span class="line"></span><br><span class="line">mktemp --tmpdir=/testdir testXXXXXX</span><br></pre></td></tr></table></figure>
-
-<h3 id="安装复制文件"><a href="#安装复制文件" class="headerlink" title="安装复制文件"></a>安装复制文件</h3><p>install命令:<br>​    install [OPTION]… [-T] SOURCE DEST 单文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">install [OPTION]... SOURCE... DIRECTORY</span><br><span class="line"></span><br><span class="line">install [OPTION]... -t DIRECTORY SOURCE...</span><br><span class="line"></span><br><span class="line">install [OPTION]... -d DIRECTORY...创建空目录</span><br></pre></td></tr></table></figure>
-
-<p>选项:<br>​    -m MODE,默认755</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-o OWNER</span><br><span class="line"></span><br><span class="line">-g GROUP</span><br></pre></td></tr></table></figure>
-
-<p>示例:<br>​    install -m 700 -o mark -g admins srcfile desfile</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">install –m 770 –d &#x2F;testdir&#x2F;installdir</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="expect介绍"><a href="#expect介绍" class="headerlink" title="expect介绍"></a>expect介绍</h3><p>expect 是由Don Libes基于Tcl（ Tool Command Language ）语言开发的,主要应用于自动化交互式操作的场景,借助Expect处理交互的命令,可以将交互过程如:ssh登录,ftp登录等写在一个脚本上,使之自动化完成.尤其适用于需要对多台服务器执行相同操作的环境中,可以大大提高系统管理人员的工作效率</p>
-<h4 id="expect命令"><a href="#expect命令" class="headerlink" title="expect命令"></a>expect命令</h4><p>expect 语法:<br>expect [选项][ -c cmds ] [ [ -[f|b] ] cmdfile ][ args ]<br>选项<br>​    -c:从命令行执行expect脚本,默认expect是交互地执行的<br>​    示例:expect -c ‘expect “\n” {send “pressed enter\n”}<br>​    -d:可以输出输出调试信息<br>​    示例:expect -d ssh.exp<br>expect中相关命令<br>​    spawn:启动新的进程<br>​    send:用于向进程发送字符串<br>​    expect:从进程接收字符串<br>​    interact:允许用户交互<br>​    exp_continue 匹配多个字符串在执行动作后加此命令</p>
-<p> expect最常用的语法(tcl语言:模式-动作)<br> 单一分支模式语法:<br>​    expect “hi” {send “You said hi\n”}<br>​    匹配到hi后,会输出“you said hi”,并换行<br> 多分支模式语法:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">expect "hi" &#123; send "You said hi\n" &#125; \</span><br><span class="line">"hehe" &#123; send “Hehe yourself\n" &#125; \</span><br><span class="line">"bye" &#123; send “Good bye\n" &#125;</span><br></pre></td></tr></table></figure>
-
-<p>匹配hi,hello,bye任意字符串时,执行相应输出.等同如下:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">expect &#123;</span><br><span class="line">"hi" &#123; send "You said hi\n"&#125;</span><br><span class="line">"hehe" &#123; send "Hehe yourself\n"&#125;</span><br><span class="line">"bye" &#123; send “Good bye\n"&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="expect例程"><a href="#expect例程" class="headerlink" title="expect例程"></a>expect例程</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/usr/bin/expect</span></span><br><span class="line">spawn scp /etc/fstab 192.168.8.100:/app</span><br><span class="line">expect &#123;</span><br><span class="line">	"yes/no" &#123; send "yes\n";exp_continue &#125;</span><br><span class="line">	"password" &#123; send “mark\n" &#125;</span><br><span class="line">&#125;</span><br><span class="line">expect eof</span><br></pre></td></tr></table></figure>
-
-<p>例程:变量</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/usr/bin/expect</span></span><br><span class="line">set ip 192.168.8.100</span><br><span class="line">set user root</span><br><span class="line">set password mark</span><br><span class="line">set timeout 10</span><br><span class="line">spawn ssh $user@$ip</span><br><span class="line">expect &#123;</span><br><span class="line">	"yes/no" &#123; send "yes\n";exp_continue &#125;</span><br><span class="line">	"password" &#123; send "$password\n" &#125;</span><br><span class="line">&#125;</span><br><span class="line">interact</span><br></pre></td></tr></table></figure>
-
-<p>例程:位置参数</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/usr/bin/expect</span></span><br><span class="line">set ip [lindex $argv 0]</span><br><span class="line">set user [lindex $argv 1]</span><br><span class="line">set password [lindex $argv 2]</span><br><span class="line">spawn ssh $user@$ip</span><br><span class="line">expect &#123;</span><br><span class="line"> "yes/no" &#123; send "yes\n";exp_continue &#125;</span><br><span class="line"> "password" &#123; send "$password\n" &#125;</span><br><span class="line">&#125;</span><br><span class="line">interact</span><br><span class="line"><span class="meta">#</span><span class="bash">./ssh3.exp 192.168.8.100 root mark</span></span><br></pre></td></tr></table></figure>
-
-<p>例程:执行多个命令</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/usr/bin/expect</span></span><br><span class="line">set ip [lindex $argv 0]</span><br><span class="line">set user [lindex $argv 1]</span><br><span class="line">set password [lindex $argv 2]</span><br><span class="line">set timeout 10</span><br><span class="line">spawn ssh $user@$ip</span><br><span class="line">expect &#123;</span><br><span class="line"> "yes/no" &#123; send "yes\n";exp_continue &#125;</span><br><span class="line"> "password" &#123; send "$password\n" &#125;</span><br><span class="line">&#125;</span><br><span class="line">expect "]#" &#123; send "useradd haha\n" &#125;</span><br><span class="line">expect "]#" &#123; send "echo mark |passwd --stdin haha\n" &#125;</span><br><span class="line">send "exit\n"</span><br><span class="line">expect eof</span><br><span class="line"><span class="meta">#</span><span class="bash">./ssh4.exp 192.168.8.100 root mark</span></span><br></pre></td></tr></table></figure>
-
-<p>例程:shell脚本调用expect</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">ip=$1</span><br><span class="line">user=$2</span><br><span class="line">password=$3</span><br><span class="line">expect &lt;&lt;EOF</span><br><span class="line">set timeout 10</span><br><span class="line">spawn ssh $user@$ip</span><br><span class="line">expect &#123;</span><br><span class="line"> "yes/no" &#123; send "yes\n";exp_continue &#125;</span><br><span class="line"> "password" &#123; send "$password\n" &#125;</span><br><span class="line">&#125;</span><br><span class="line">expect "]#" &#123; send "useradd hehe\n" &#125;</span><br><span class="line">expect "]#" &#123; send "echo mark |passwd --stdin hehe\n" &#125;</span><br><span class="line">expect "]#" &#123; send "exit\n" &#125;</span><br><span class="line">expect eof</span><br><span class="line">EOF</span><br><span class="line"><span class="meta">#</span><span class="bash">./ssh5.sh 192.168.8.100 root mark</span></span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/6/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/8/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/6/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/8/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1847,7 +2249,7 @@ FS_TYPE一定要与分区上已经文件类型相同 </code></pre><p>e2fsck:ext�
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-count">64</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1860,7 +2262,7 @@ FS_TYPE一定要与分区上已经文件类型相同 </code></pre><p>e2fsck:ext�
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1896,7 +2298,7 @@ FS_TYPE一定要与分区上已经文件类型相同 </code></pre><p>e2fsck:ext�
 <div class="copyright">
   
   &copy; 2015 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

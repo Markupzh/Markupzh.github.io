@@ -183,6 +183,949 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B9%8BANSIBLE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B9%8BANSIBLE/" class="post-title-link" itemprop="url">运维自动化之ANSIBLE(一)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-12-21 13:00:51" itemprop="dateCreated datePublished" datetime="2018-12-21T13:00:51+08:00">2018-12-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-01-01 11:33:08" itemprop="dateModified" datetime="2019-01-01T11:33:08+08:00">2019-01-01</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="运维自动化发展历程及技术应用"><a href="#运维自动化发展历程及技术应用" class="headerlink" title="运维自动化发展历程及技术应用"></a>运维自动化发展历程及技术应用</h3><h5 id="企业实际应用场景分析"><a href="#企业实际应用场景分析" class="headerlink" title="企业实际应用场景分析"></a>企业实际应用场景分析</h5><p>Dev开发环境</p>
+<p>使用者:程序员</p>
+<p>功能:程序员开发软件，测试BUG的环境</p>
+<p>管理者:程序员</p>
+<p>测试环境</p>
+<p>使用者:QA测试工程师</p>
+<p>功能:测试经过Dev环境测试通过的软件的功能</p>
+<p>管理者:运维</p>
+<p>说明:测试环境往往有多套,测试环境满足测试功能即可，不宜过多</p>
+<p>1、测试人员希望测试环境有多套,公司的产品多产品线并发，即多个版本，意味着多个版本同步测试</p>
+<p>2、通常测试环境有多少套和产品线数量保持一样</p>
+<p>发布环境:代码发布机，有些公司为堡垒机（安全屏障）</p>
+<p>使用者:运维</p>
+<p>功能:发布代码至生产环境</p>
+<p>管理者:运维（有经验）</p>
+<p>发布机:往往需要有2台（主备）</p>
+<p>生产环境</p>
+<p>使用者:运维，少数情况开放权限给核心开发人员，极少数公司将权限完全开放给开发人员并其维护</p>
+<p>功能:对用户提供公司产品的服务</p>
+<p>管理者:只能是运维</p>
+<p>生产环境服务器数量:一般比较多，且应用非常重要。往往需要自动工具协助部署配置应用<br>灰度环境（生产环境的一部分）</p>
+<p>使用者:运维</p>
+<p>功能:在全量发布代码前将代码的功能面向少量精准用户发布的环境,可基于主机或用户执行灰度发布</p>
+<p>案例:共100台生产服务器，先发布其中的10台服务器，这10台服务器就是灰度服务器</p>
+<p>管理者:运维</p>
+<p>灰度环境:往往该版本功能变更较大，为保险起见特意先让一部分用户优化体验该功能，待这部分用户使用没有重大问题的时候，再全量发布至所有服务器</p>
+<h5 id="程序发布"><a href="#程序发布" class="headerlink" title="程序发布"></a>程序发布</h5><p>程序发布要求:</p>
+<p>不能导致系统故障或造成系统完全不可用</p>
+<p>不能影响用户体验</p>
+<p>预发布验证:</p>
+<p>新版本的代码先发布到服务器（跟线上环境配置完全相同，只是未接入到调度器）</p>
+<p>灰度发布:</p>
+<p>基于主机，用户，业务</p>
+<p>发布路径:</p>
+<pre><code>/webapp/markupzh 
+
+/webapp/markupzh-1.1 
+
+/webapp/markupzh-1.2</code></pre><p>发布过程:</p>
+<p>在调度器上下线一批主机(标记为maintanance状态) –&gt; 关闭服务 –&gt; 部署新版本的应用程序 –&gt; 启动服务 –&gt; 在调度器上启用这一批服务器</p>
+<p>自动化灰度发布:</p>
+<p>脚本、发布平台</p>
+<h5 id="自动化运维应用场景"><a href="#自动化运维应用场景" class="headerlink" title="自动化运维应用场景"></a>自动化运维应用场景</h5><p>文件传输</p>
+<p>应用部署</p>
+<p>配置管理</p>
+<p>任务流编排</p>
+<h5 id="常用自动化运维工具"><a href="#常用自动化运维工具" class="headerlink" title="常用自动化运维工具"></a>常用自动化运维工具</h5><pre><code>Ansible:python,Agentless,中小型应用环境
+
+Saltstack:python，一般需部署agent，执行效率更高
+
+Puppet:ruby, 功能强大,配置复杂，重型,适合大型环境
+
+Fabric:python，agentless
+
+Chef: ruby,国内应用少
+
+Cfengine
+
+func</code></pre><h3 id="企业级自动化运维工具应用实战ansible"><a href="#企业级自动化运维工具应用实战ansible" class="headerlink" title="企业级自动化运维工具应用实战ansible"></a>企业级自动化运维工具应用实战ansible</h3><p>公司计划在年底做一次大型市场促销活动，全面冲刺下交易额，为明年的上市做准备。公司要求各业务组对年底大促做准备，运维部要求所有业务容量进行三倍的扩容，并搭建出多套环境可以共开发和测试人员做测试，运维老大为了在年底有所表现，要求运维部门同学尽快实现，接到这个任务时，有没有更快的解决方案？</p>
+<h4 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h4><p>模块化:调用特定的模块，完成特定任务</p>
+<p>有Paramiko，PyYAML，Jinja2（模板语言）三个关键模块</p>
+<p>支持自定义模块</p>
+<p>基于Python语言实现</p>
+<p>部署简单，基于python和SSH(默认已安装)，agentless</p>
+<p>安全，基于OpenSSH</p>
+<p>支持playbook编排任务</p>
+<p>幂等性:一个任务执行1遍和执行n遍效果一样，不因重复执行带来意外情况</p>
+<p>无需代理不依赖PKI（无需ssl）</p>
+<p>可使用任何编程语言写模块</p>
+<p>YAML格式，编排任务，支持丰富的数据结构</p>
+<p>较强大的多层解决方案</p>
+<h4 id="Ansible主要组成部分"><a href="#Ansible主要组成部分" class="headerlink" title="Ansible主要组成部分"></a>Ansible主要组成部分</h4><p>ANSIBLE PLAYBOOKS:任务剧本（任务集），编排定义Ansible任务集的配置文件，由Ansible顺序依次执行，通常是JSON格式的YML文件</p>
+<p>INVENTORY:Ansible管理主机的清单/etc/anaible/hosts</p>
+<p>MODULES:Ansible执行命令的功能模块，多数为内置核心模块，也可自定义</p>
+<p>PLUGINS:模块功能的补充，如连接类型插件、循环插件、变量插件、过滤插件等，该功能不常用</p>
+<p>API:供第三方程序调用的应用程序编程接口</p>
+<p>ANSIBLE:组合INVENTORY、API、MODULES、PLUGINS的绿框，可以理解为是ansible命令工具，其为核心执行工具</p>
+<p>Ansible命令执行来源:</p>
+<pre><code>USER，普通用户，即SYSTEM ADMINISTRATOR
+
+CMDB（配置管理数据库） API 调用
+
+PUBLIC/PRIVATE CLOUD API调用
+
+USER-&gt; Ansible Playbook -&gt; Ansibile</code></pre><p>利用ansible实现管理的方式:</p>
+<pre><code>Ad-Hoc 即ansible命令，主要用于临时命令使用场景
+
+Ansible-playbook 主要用于长期规划好的，大型项目的场景，需要有前提的规划</code></pre><p>Ansible-playbook（剧本）执行过程:</p>
+<pre><code>将已有编排好的任务集写入Ansible-Playbook
+
+通过ansible-playbook命令分拆任务集至逐条ansible命令，按预定规则逐条执行</code></pre><p>Ansible主要操作对象:</p>
+<pre><code>HOSTS主机
+
+NETWORKING网络设备</code></pre><p>注意事项</p>
+<p>执行ansible的主机一般称为主控端，中控，master或堡垒机</p>
+<p>主控端Python版本需要2.6或以上</p>
+<p>被控端Python版本小于2.4需要安装python-simplejson</p>
+<p>被控端如开启SELinux需要安装libselinux-python</p>
+<p>windows不能做为主控端</p>
+<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><h5 id="rpm包安装-EPEL源"><a href="#rpm包安装-EPEL源" class="headerlink" title="rpm包安装: EPEL源"></a>rpm包安装: EPEL源</h5><p><code>yum install ansible</code>    </p>
+<p>编译安装:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> yum -y install python-jinja2 PyYAML python-paramiko python-babel python-crypto</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> tar xf ansible-1.5.4.tar.gz </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span> ansible-1.5.4 </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> python setup.py build </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> python setup.py install </span></span><br><span class="line"><span class="meta">#</span><span class="bash"> mkdir /etc/ansible</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> cp -r examples/* /etc/ansible</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="Git方式"><a href="#Git方式" class="headerlink" title="Git方式:"></a>Git方式:</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> git <span class="built_in">clone</span> git://github.com/ansible/ansible.git --recursive <span class="built_in">cd</span> ./ansible</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">source</span> ./hacking/env-setup</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="pip安装"><a href="#pip安装" class="headerlink" title="pip安装:"></a>pip安装:</h5><p>pip是安装Python包的管理器，类似yum </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> yum install python-pip python-devel</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> yum install gcc glibc-devel zibl-devel rpm-bulid openssl-devel pip install --upgrade pip</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> pip install ansible --upgrade</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="确认安装"><a href="#确认安装" class="headerlink" title="确认安装:"></a>确认安装:</h5><p><code>ansible --version</code></p>
+<h4 id="相关文件"><a href="#相关文件" class="headerlink" title="相关文件"></a>相关文件</h4><h5 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h5><pre><code>/etc/ansible/ansible.cfg 主配置文件，配置ansible工作特性                     
+
+/etc/ansible/hosts 主机清单
+
+/etc/ansible/roles/ 存放角色的目录</code></pre><h5 id="程序"><a href="#程序" class="headerlink" title="程序"></a>程序</h5><pre><code>/usr/bin/ansible 主程序，临时命令执行工具 
+
+/usr/bin/ansible-doc 查看配置文档，模块功能查看工具 
+
+/usr/bin/ansible-galaxy 下载/上传优秀代码或Roles模块的官网平台
+
+/usr/bin/ansible-playbook 定制自动化任务，编排剧本工具
+
+/usr/bin/ansible-pull 远程执行命令的工具
+
+/usr/bin/ansible-vault 文件加密工具 
+
+/usr/bin/ansible-console 基于Console界面与用户交互的执行工具</code></pre><h5 id="主机清单inventory"><a href="#主机清单inventory" class="headerlink" title="主机清单inventory"></a>主机清单inventory</h5><p>Inventory 主机清单</p>
+<p>ansible的主要功用在于批量主机操作，为了便捷地使用其中的部分主机，可以在inventory file中将其分组命名</p>
+<p>默认的inventory file为/etc/ansible/hosts</p>
+<p>inventory file可以有多个，且也可以通过Dynamic Inventory来动态生成</p>
+<p>/etc/ansible/hosts文件格式</p>
+<p>inventory文件遵循INI文件风格，中括号中的字符为组名。可以将同一个主机同时归并到多个不同的组中；此外，当如若目标主机使用了非默认的SSH端口，还可以在主机名称之后使用冒号加端口号来标明</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ntp.markupzh.com</span><br><span class="line">[webservers]</span><br><span class="line">www1.markupzh.com:2222</span><br><span class="line">www2.markupzh.com</span><br><span class="line">[dbservers]</span><br><span class="line">db1.markupzh.com</span><br><span class="line">db2.markupzh.com</span><br><span class="line">db3.markupzh.com</span><br></pre></td></tr></table></figure>
+
+<p>如果主机名称遵循相似的命名模式，还可以使用列表的方式标识各主机</p>
+<p>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[websrvs]</span><br><span class="line">www[01:100].example.com</span><br><span class="line">[dbsrvs] </span><br><span class="line">db-[a:f].example.com</span><br></pre></td></tr></table></figure>
+
+<h5 id="ansible-配置文件"><a href="#ansible-配置文件" class="headerlink" title="ansible 配置文件"></a>ansible 配置文件</h5><p>Ansible 配置文件/etc/ansible/ansible.cfg （一般保持默认）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[defaults]</span><br><span class="line"><span class="meta">#</span><span class="bash">inventory = /etc/ansible/hosts <span class="comment"># 主机列表配置文件</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">library = /usr/share/my_modules/ <span class="comment"># 库文件存放目录</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">remote_tmp = <span class="variable">$HOME</span>/.ansible/tmp <span class="comment">#临时py命令文件存放在远程主机目录</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">local_tmp = <span class="variable">$HOME</span>/.ansible/tmp <span class="comment"># 本机的临时命令执行目录</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">forks = 5	<span class="comment"># 默认并发数</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">sudo_user = root <span class="comment"># 默认sudo 用户</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">ask_sudo_pass = True <span class="comment">#每次执行ansible命令是否询问ssh密码</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash">ask_pass = True</span></span><br><span class="line"><span class="meta">#</span><span class="bash">remote_port = 22</span></span><br><span class="line"><span class="meta">#</span><span class="bash">host_key_checking = False <span class="comment"># 检查对应服务器的host_key，建议取消注释 #log_path=/var/log/ansible.log #日志文件</span></span></span><br></pre></td></tr></table></figure>
+
+<h4 id="ansible系列命令"><a href="#ansible系列命令" class="headerlink" title="ansible系列命令"></a>ansible系列命令</h4><p>ansible ansible-doc </p>
+<p>ansible-playbook </p>
+<p>ansible-vault </p>
+<p>ansible-console     </p>
+<p>ansible-galaxy </p>
+<p>ansible-pull</p>
+<p>ansible-doc: 显示模块帮助</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ansible-doc options</span><br><span class="line">-a	显示所有模块的文档</span><br><span class="line">-l, --list	列出可用模块</span><br><span class="line">-s, --snippet显示指定模块的playbook片段</span><br></pre></td></tr></table></figure>
+
+<h5 id="示例"><a href="#示例" class="headerlink" title="示例:"></a>示例:</h5><p>ansible-doc –l 列出所有模块<br>ansible-doc ping 查看指定模块帮助用法<br>ansible-doc –s ping 查看指定模块帮助用法</p>
+<p>ansible通过ssh实现配置管理、应用部署、任务执行等功能，建议配置ansible端能基于密钥认证的方式联系各被管理节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ansible &lt;host-pattern&gt; -m module_name</span><br><span class="line">--version 显示版本</span><br><span class="line">-m module	指定模块，默认为command</span><br><span class="line">-v 详细过程 –vv -vvv更详细</span><br><span class="line">--list-hosts 显示主机列表，可简写 --list</span><br><span class="line">-k, --ask-pass	提示输入ssh连接密码，默认Key验证</span><br><span class="line">-K, --ask-become-pass 提示输入sudo时的口令</span><br><span class="line">-C, --check	检查，并不执行</span><br><span class="line">-T, --timeout=TIMEOUT 执行命令的超时时间，默认10s </span><br><span class="line">-u, --user=REMOTE_USER 执行远程执行的用户 </span><br><span class="line">-b, --become 代替旧版的sudo 切换</span><br></pre></td></tr></table></figure>
+
+<h5 id="ansible的Host-pattern"><a href="#ansible的Host-pattern" class="headerlink" title="ansible的Host-pattern"></a>ansible的Host-pattern</h5><p>匹配主机的列表</p>
+<p>All :表示所有Inventory中的所有主机 </p>
+<pre><code>ansible all –m ping</code></pre><p><code>*</code>:通配符</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ansible "*" -m ping</span><br><span class="line">ansible 192.168.1.* -m ping</span><br><span class="line">ansible "*srvs" -m ping</span><br></pre></td></tr></table></figure>
+
+<p>或关系</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ansible "websrvs:appsrvs" -m ping</span><br><span class="line">ansible "192.168.1.10:192.168.1.20"  -m ping</span><br></pre></td></tr></table></figure>
+
+<p>逻辑与</p>
+<p><code>ansible &quot;websrvs:&amp;dbsrvs&quot; –m ping</code></p>
+<p>在websrvs组并且在dbsrvs组中的主机</p>
+<p>逻辑非</p>
+<p><code>ansible &#39;websrvs:!dbsrvs&#39; –m ping</code></p>
+<p>在websrvs组，但不在dbsrvs组中的主机注意:此处为单引号</p>
+<p>综合逻辑</p>
+<p><code>ansible &#39;websrvs:dbsrvs:&amp;appsrvs:!ftpsrvs&#39; –m ping</code></p>
+<p>正则表达式</p>
+<p><code>ansible &quot;websrvs:&amp;dbsrvs&quot; –m ping</code></p>
+<p><code>ansible &quot;~(web|db).*\.markupzh\.com&quot; –m ping</code></p>
+<h4 id="ansible命令执行过程"><a href="#ansible命令执行过程" class="headerlink" title="ansible命令执行过程"></a>ansible命令执行过程</h4><pre><code>1. 加载自己的配置文件 默认/etc/ansible/ansible.cfg
+
+2. 加载自己对应的模块文件，如command
+
+3. 通过ansible将模块或命令生成对应的临时py文件，并将该 文件传输至远程服务器的对应执行用户$HOME/.ansible/tmp/ansible-tmp-数字/XXX.PY文件
+
+4. 给文件+x执行
+
+5. 执行并返回结果
+
+6. 删除临时py文件，sleep 0退出
+
+执行状态:
+
+    绿色:执行成功并且不需要做改变的操作
+
+    黄色:执行成功并且对目标主机做变更
+
+    红色:执行失败</code></pre><h4 id="ansible使用示例"><a href="#ansible使用示例" class="headerlink" title="ansible使用示例"></a>ansible使用示例</h4><p>以mark用户执行ping存活检测 </p>
+<p><code>ansible all -m ping -u mark -k</code></p>
+<p>以mark sudo至root执行ping存活检测 </p>
+<p><code>ansible all -m ping -u mark –b -k</code></p>
+<p>以mark sudo至markupzh用户执行ping存活检测</p>
+<p><code>ansible all -m ping -u mark –b -k --become-user markupzh</code></p>
+<p>以mark sudo至root用户执行ls</p>
+<p><code>ansible all -m command -u mark --become-user=root -a &#39;ls /root&#39; -b –k -K</code></p>
+<h4 id="ansible常用模块"><a href="#ansible常用模块" class="headerlink" title="ansible常用模块"></a>ansible常用模块</h4><p>Command:在远程主机执行命令，默认模块，可忽略-m选项</p>
+<p><code>ansible srvs -m command -a &#39;service vsftpd start&#39;</code></p>
+<p><code>ansible srvs -m command -a &#39;echo markupzh |passwd --stdin mark&#39;</code>不成功</p>
+<p>此命令不支持 $VARNAME &lt; &gt; | ; &amp; 等，用shell模块实现</p>
+<p>Shell:和command相似，用shell执行命令</p>
+<p><code>ansible srv -m shell -a &#39;echo markupzh |passwd –stdin mark&#39;</code></p>
+<p>调用bash执行命令 类似 cat /tmp/stanley.md | awk -F’|’ ‘{print $1,$2}’ &amp;&gt; /tmp/example.txt 这些复杂命令，即使使用shell也可能会失败，解决办法:写到脚本时，copy到远程，执行，再把需要的结果拉回执行命令的机器</p>
+<p><strong>Script</strong>:运行脚本</p>
+<p><code>-a &quot;/PATH/TO/SCRIPT_FILE&quot;</code></p>
+<p><code>snsible websrvs -m script -a f1.sh</code></p>
+<p><strong>Copy</strong>:从服务器复制文件到客户端</p>
+<p><code>ansible srv -m copy -a &quot;src=/root/f1.sh dest=/tmp/f2.sh owner=mark mode=600 backup=yes&quot;</code></p>
+<p>如目标存在，默认覆盖，此处指定先备份</p>
+<p><code>ansible srv -m copy -a &quot;content=&#39;test content\n&#39; dest=/tmp/f1.txt&quot;</code></p>
+<p>利用内容，直接生成目标文件</p>
+<p><strong>Fetch</strong>:从客户端取文件至服务器端，copy相反，目录可先tar</p>
+<p><code>ansible srv -m fetch -a &#39;src=/root/a.sh dest=/data/scripts&#39;</code></p>
+<p><strong>File</strong>:设置文件属性</p>
+<p><code>ansible srv -m file -a &quot;path=/root/a.sh owner=mark mode=755&quot;</code></p>
+<p><code>ansible web -m file -a &#39;src=/app/testfile dest=/app/testfile-link state=link&#39;</code></p>
+<p><strong>Hostname</strong>:管理主机名</p>
+<p><code>ansible node1 -m hostname -a &quot;name=websrv&quot;</code></p>
+<p><strong>Cron</strong>:计划任务</p>
+<p>支持时间:minute，hour，day，month，weekday</p>
+<p><code>ansible srv -m cron -a &quot;minute=*/5 job=&#39;/usr/sbin/ntpdate</code></p>
+<p><code>172.16.0.1 &amp;&gt;/dev/null&#39; name=Synctime&quot;</code>创建任务</p>
+<p><code>ansible srv -m cron -a &#39;state=absent name=Synctime&#39;</code> 删除任务</p>
+<p><strong>Yum</strong>:管理包</p>
+<p><code>ansible srv -m yum -a &#39;name=httpd state=latest&#39;</code> 安装</p>
+<p><code>ansible srv -m yum -a &#39;name=httpd state=absent&#39;</code> 删除</p>
+<p><strong>Service</strong>:管理服务</p>
+<p><code>ansible srv -m service -a &#39;name=httpd state=stopped&#39;</code></p>
+<p><code>ansible srv -m service -a &#39;name=httpd state=started&#39;</code></p>
+<p><code>ansible srv –m service –a &#39;name=httpd state=reloaded&#39;</code></p>
+<p><code>ansible srv -m service -a &#39;name=httpd state=restarted&#39;</code></p>
+<p><strong>User</strong>:管理用户</p>
+<p><code>ansible srv -m user -a &#39;name=user1 comment=&quot;test user&quot; uid=2048 home=/app/user1 group=root&#39;</code></p>
+<p><code>ansible srv -m user -a &#39;name=sysuser1 system=yes home=/app/sysuser1 &#39;</code></p>
+<p><code>ansible srv -m user -a &#39;name=user1 state=absent remove=yes&#39;</code>删除用户及家目录等数据</p>
+<p><strong>Group</strong>:管理组</p>
+<p><code>ansible srv -m group -a &quot;name=testgroup system=yes&quot;</code></p>
+<p><code>ansible srv -m group -a &quot;name=testgroup state=absent&quot;</code></p>
+<h4 id="ansible系列命令-1"><a href="#ansible系列命令-1" class="headerlink" title="ansible系列命令"></a>ansible系列命令</h4><p><code>ansible-galaxy</code></p>
+<p>连接 <a href="https://galaxy.ansible.com" target="_blank" rel="noopener">https://galaxy.ansible.com</a> 下载相应的roles</p>
+<p>列出所有已安装的galaxy</p>
+<p><code>ansible-galaxy list</code></p>
+<p>安装galaxy</p>
+<p><code>ansible-galaxy install geerlingguy.redis</code></p>
+<p>删除galaxy</p>
+<p><code>ansible-galaxy remove geerlingguy.redis</code></p>
+<p>ansible-pull</p>
+<p>推送命令至远程，效率无限提升，对运维要求较高</p>
+<h5 id="Ansible-playbook"><a href="#Ansible-playbook" class="headerlink" title="Ansible-playbook"></a>Ansible-playbook</h5><p>ansible-playbook hello.yml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">cat</span> <span class="string">hello.yml</span></span><br><span class="line"><span class="comment">#hello world yml file</span></span><br><span class="line"><span class="string">-hosts:</span> <span class="string">websrvs</span></span><br><span class="line">    <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">    <span class="attr">tasks:</span></span><br><span class="line">    <span class="string">-name:</span> <span class="string">hello</span> <span class="string">world</span></span><br><span class="line">    <span class="attr">command:</span> <span class="string">/usr/bin/wall</span> <span class="string">hello</span> <span class="string">world</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="Ansible-vault"><a href="#Ansible-vault" class="headerlink" title="Ansible-vault"></a>Ansible-vault</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">功能:管理加密解密yml文件</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">[create|decrypt|edit|encrypt|rekey|view]</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">encrypt</span> <span class="string">hello.yml</span> <span class="string">加密</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">decrypt</span> <span class="string">hello.yml</span> <span class="string">解密</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">view</span> <span class="string">hello.yml</span> <span class="string">查看</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">edit</span> <span class="string">hello.yml</span> <span class="string">编辑加密文件</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">rekey</span> <span class="string">hello.yml</span> <span class="string">修改口令</span></span><br><span class="line"><span class="string">ansible-vault</span> <span class="string">create</span> <span class="string">new.yml</span> <span class="string">创建新文件</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="Ansible-console"><a href="#Ansible-console" class="headerlink" title="Ansible-console"></a>Ansible-console</h5><p>Ansible-console:2.0+新增，可交互执行命令，支持tab</p>
+<p><code>root@test (2)[f:10] $</code></p>
+<p>执行用户@当前操作的主机组 (当前组的主机数量)[f:并发数]$</p>
+<p>设置并发数: forks n 例如: forks 10</p>
+<p>切换组: cd 主机组 例如: cd web</p>
+<p>列出当前组主机列表: list</p>
+<p>列出所有的内置命令: ?或help</p>
+<p>示例:    </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">root@all (2)[f:5]$ list </span><br><span class="line">root@all (2)[f:5]$ cd appsrvs </span><br><span class="line">root@appsrvs (2)[f:5]$ list</span><br><span class="line">root@appsrvs (2)[f:5]$ yum name=httpd state=present </span><br><span class="line">root@appsrvs (2)[f:5]$ service name=httpd state=started</span><br></pre></td></tr></table></figure>
+
+<h5 id="playbook"><a href="#playbook" class="headerlink" title="playbook"></a>playbook</h5><p>playbook是由一个或多个”play”组成的列表</p>
+<p>play的主要功能在于将事先归并为一组的主机装扮成事先通过ansible中的task定义好的角色。从根本上来讲，所谓task无非是调用ansible的一个module。将多个play组织在一个playbook中，即可以让它们联同起来按事先编排的机制同唱一台大戏</p>
+<p>Playbook采用YAML语言编写</p>
+<h4 id="YAML介绍"><a href="#YAML介绍" class="headerlink" title="YAML介绍"></a>YAML介绍</h4><p>YAML是一个可读性高的用来表达资料序列的格式。YAML参考了其他多种语言，包括:XML、C语言、Python、Perl以及电子邮件格式RFC2822等。Clark Evans在2001年在首次发表了这种语言，另外Ingy döt Net与Oren Ben-Kiki也是这语言的共同设计者</p>
+<p>YAML Ain’t Markup Language，即YAML不是XML。不过，在开发的这种语言时，YAML的意思其实是:”Yet Another Markup Language”（仍是一种标记语言）</p>
+<p>特性    </p>
+<p>YAML的可读性好</p>
+<p>YAML和脚本语言的交互性好</p>
+<p>YAML使用实现语言的数据类型</p>
+<p>YAML有一个一致的信息模型</p>
+<p>YAML易于实现</p>
+<p>YAML可以基于流来处理</p>
+<p>YAML表达能力强，扩展性好</p>
+<p>更多的内容及规范参见<a href="http://www.yaml.org" target="_blank" rel="noopener">http://www.yaml.org</a></p>
+<h5 id="YAML语法简介"><a href="#YAML语法简介" class="headerlink" title="YAML语法简介"></a>YAML语法简介</h5><p>在单一档案中，可用连续三个连字号(——)区分多个档案。另外，还有选择性的连续三个点号( … )用来表示档案结尾</p>
+<p>次行开始正常写Playbook的内容，一般建议写明该Playbook的功能</p>
+<p>使用#号注释代码</p>
+<p>缩进必须是统一的，不能空格和tab混用</p>
+<p>缩进的级别也必须是一致的，同样的缩进代表同样的级别，程序判别配置的级别是通过缩进结合换行来实现的</p>
+<p>YAML文件内容是区别大小写的，k/v的值均需大小写敏感</p>
+<p>k/v的值可同行写也可换行写。同行使用:分隔</p>
+<p>v可是个字符串，也可是另一个列表</p>
+<p>一个完整的代码块功能需最少元素需包括 name: task</p>
+<p>一个name只能包括一个task</p>
+<p>YAML文件扩展名通常为yml或yaml</p>
+<p>List:列表，其所有元素均使用”-“打头</p>
+<h5 id="示例-1"><a href="#示例-1" class="headerlink" title="示例:"></a>示例:</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">A</span> <span class="string">list</span> <span class="string">of</span> <span class="string">tasty</span> <span class="string">fruits</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Apple</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Orange</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Strawberry</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">Mango</span></span><br></pre></td></tr></table></figure>
+
+<p>Dictionary:字典，通常由多个key与value构成</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="string">An</span> <span class="string">employee</span> <span class="string">record</span></span><br><span class="line"><span class="attr">name:</span> <span class="string">Example</span> <span class="string">Developer</span></span><br><span class="line"><span class="attr">job:</span> <span class="string">Developer</span></span><br><span class="line"><span class="attr">skill:</span> <span class="string">Elite</span></span><br></pre></td></tr></table></figure>
+
+<p>也可以将key:value放置于{}中进行表示，用,分隔多个key:value</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="string">An</span> <span class="string">employee</span> <span class="string">record</span></span><br><span class="line"><span class="string">&#123;name:</span> <span class="string">Example</span> <span class="string">Developer,</span> <span class="attr">job:</span> <span class="string">Developer,</span> <span class="attr">skill:</span> <span class="string">Elite&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>YAML语法</p>
+<p>YAML的语法和其他高阶语言类似，并且可以简单表达清单、散列表、标量等数据结构。其结构（Structure）通过空格来展示，序列（Sequence）里的项用”-“来代表，Map里的键值对用”:”分隔</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">John</span> <span class="string">Smith</span></span><br><span class="line"><span class="attr">age:</span> <span class="number">41</span></span><br><span class="line"><span class="attr">gender:</span> <span class="string">Male</span> </span><br><span class="line"><span class="attr">spouse:</span></span><br><span class="line">	<span class="attr">name:</span> <span class="string">Jane</span> <span class="string">Smith</span></span><br><span class="line">	<span class="attr">age:</span> <span class="number">37</span></span><br><span class="line">	<span class="attr">gender:</span> <span class="string">Female</span> </span><br><span class="line"><span class="attr">children:</span></span><br><span class="line">	<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Jimmy</span> <span class="string">Smith</span></span><br><span class="line">	<span class="attr">age:</span> <span class="number">17</span></span><br><span class="line">	<span class="attr">gender:</span> <span class="string">Male</span></span><br><span class="line">	<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Jenny</span> <span class="string">Smith</span> </span><br><span class="line">	<span class="string">age</span> <span class="number">13</span></span><br><span class="line">	<span class="attr">gender:</span> <span class="string">Female</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook核心元素"><a href="#Playbook核心元素" class="headerlink" title="Playbook核心元素"></a>Playbook核心元素</h4><p>Hosts  执行的远程主机列表<br>Tasks  任务集<br>Varniables 内置变量或自定义变量在playbook中调用<br>Templates 模板，可替换模板文件中的变量并实现一些简单逻辑的文件<br>Handlers 和notity结合使用，由特定条件触发的操作，满足条件方才执行，否则不执行<br>tags 标签 指定某条任务执行，用于选择运行playbook中的部分代码。ansible具有幂等性，因此会自动跳过没有变化的部分，即便如此，有些代码为测试其确实没有发生变化的时间依然会非常地长。此时，如果确信其没有变化，就可以通过tags跳过此些代码片断<br><code>ansible-playbook –t tagsname useradd.yml</code></p>
+<h4 id="playbook基础组件"><a href="#playbook基础组件" class="headerlink" title="playbook基础组件"></a>playbook基础组件</h4><p>Hosts:<br>playbook中的每一个play的目的都是为了让某个或某些主机以某个指定的用户身份执行任务。hosts用于指定要执行指定任务的主机，须事先定义在主机清单中<br>可以是如下形式:<br>​    one.example.com<br>​    one.example.com:two.example.com<br>​    192.168.1.50<br>​    192.168.1.*</p>
+<p>Websrvs:dbsrvs   两个组的并集</p>
+<p>Websrvs:&amp;dbsrvs   两个组的交集</p>
+<p>webservers:!phoenix 在websrvs组，但不在dbsrvs组</p>
+<p>示例: - hosts: websrvs:dbsrvs</p>
+<p>remote_user: 可用于Host和task中。也可以通过指定其通过sudo的方式在远程主机上执行任务，其可用于play全局或某任务；此外，甚至可以在sudo时使用sudo_user指定sudo时切换的用户</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">	<span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line"><span class="attr">tasks:</span></span><br><span class="line">	<span class="string">-name:</span> <span class="string">test</span> <span class="string">connection</span></span><br><span class="line"><span class="attr">ping:</span></span><br><span class="line">	<span class="attr">remote_user:</span> <span class="string">markupzh</span></span><br><span class="line">	<span class="attr">sudo:</span> <span class="literal">yes</span>	<span class="string">默认sudo为root</span></span><br><span class="line">	<span class="string">sudo_user:mark</span>	<span class="string">sudo为mark</span></span><br></pre></td></tr></table></figure>
+
+<p>task列表和action<br>play的主体部分是task list。task list中的各任务按次序逐个在hosts中指定的所有主机上执行，即在所有主机上完成第一个任务后，再开始第二个任务</p>
+<p>task的目的是使用指定的参数执行模块，而在模块参数中可以使用变量。模块执行是幂等的，这意味着多次执行是安全的，因为其结果均一致</p>
+<p>每个task都应该有其name，用于playbook的执行结果输出，建议其内容尽可能清晰地描述任务执行步骤。如果未提供name，则action的结果将用于输出</p>
+<p>playbook基础组件<br>tasks:任务列表</p>
+<p>格式:<br>(1) action: module arguments</p>
+<p>(2) module: arguments    建议使用</p>
+<p>注意:shell和command模块后面跟命令，而非key=value</p>
+<p>某任务的状态在运行后为changed时，可通过”notify”通知给相应的 handlers</p>
+<p>任务可以通过”tags”打标签，而后可在ansible-playbook命令上使用-t指定进行调用</p>
+<p>示例: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tasks:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">disable</span> <span class="string">selinux</span></span><br><span class="line">  <span class="attr">command:</span> <span class="string">/sbin/setenforce</span> <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<p>如果命令或脚本的退出码不为零，可以使用如下方式替代 </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tasks:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">run</span> <span class="string">this</span> <span class="string">command</span> <span class="string">and</span> <span class="string">ignore</span> <span class="string">the</span> <span class="string">result</span></span><br><span class="line">  <span class="attr">shell:</span> <span class="string">/usr/bin/somecommand</span> <span class="string">||</span> <span class="string">/bin/true</span></span><br></pre></td></tr></table></figure>
+
+<p>或者使用ignore_errors来忽略错误信息:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tasks:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">run</span> <span class="string">this</span> <span class="string">command</span> <span class="string">and</span> <span class="string">ignore</span> <span class="string">the</span> <span class="string">result</span></span><br><span class="line">  <span class="attr">shell:</span> <span class="string">/usr/bin/somecommand</span></span><br><span class="line">  <span class="attr">ignore_errors:</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="运行playbook"><a href="#运行playbook" class="headerlink" title="运行playbook"></a>运行playbook</h4><p>运行playbook的方式</p>
+<p><code>ansible-playbook &lt;filename.yml&gt; ... [options]</code></p>
+<p>常见选项</p>
+<p>–check 只检测可能会发生的改变，但不真正执行操作</p>
+<p>–list-hosts 列出运行任务的主机</p>
+<p>–limit 主机列表 只针对主机列表中的主机执行</p>
+<p>-v 显示过程 -vv -vvv 更详细</p>
+<p>示例</p>
+<p><code>ansible-playbook file.yml --check</code> 只检测 </p>
+<p><code>ansible-playbook file.yml</code></p>
+<p><code>ansible-playbook file.yml --limit websrvs</code></p>
+<h4 id="Playbook与ShellScripts相比较"><a href="#Playbook与ShellScripts相比较" class="headerlink" title="Playbook与ShellScripts相比较"></a>Playbook与ShellScripts相比较</h4><p>SHELL脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装Apache</span></span><br><span class="line">yum install --quiet -y httpd</span><br><span class="line"><span class="meta">#</span><span class="bash"> 复制配置文件</span></span><br><span class="line">cp /tmp/httpd.conf /etc/httpd/conf/httpd.conf </span><br><span class="line">cp /tmp/vhosts.conf /etc/httpd/conf.d/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 启动Apache，并设置开机启动 </span></span><br><span class="line">service httpd start </span><br><span class="line">chkconfig httpd on</span><br></pre></td></tr></table></figure>
+
+<p>Playbook定义</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">all</span> </span><br><span class="line"><span class="attr">tasks:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">"安装Apache"</span></span><br><span class="line">  <span class="attr">yum:</span>  <span class="string">name=httpd</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">"复制配置文件"</span></span><br><span class="line">  <span class="attr">copy:</span> <span class="string">src=/tmp/httpd.conf</span> <span class="string">dest=/etc/httpd/conf/</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">"复制配置文件"</span></span><br><span class="line">  <span class="attr">copy:</span> <span class="string">src=/tmp/vhosts.conf</span> <span class="string">dest=/etc/httpd/conf.cd/</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">"启动Apache，并设置开机启动"</span></span><br><span class="line">  <span class="attr">service:</span> <span class="string">name=httpd</span> <span class="string">state=started</span> <span class="string">enabled=yes</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook示例"><a href="#Playbook示例" class="headerlink" title="Playbook示例"></a>Playbook示例</h4><p>示例:sysuser.yml创建mysql用户</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">all</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">create</span> <span class="string">mysql</span> <span class="string">user</span></span><br><span class="line">	<span class="attr">user:</span> <span class="string">name=mysql</span> <span class="string">system=yes</span> <span class="string">uid=36</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">create</span> <span class="string">a</span> <span class="string">group</span></span><br><span class="line">	<span class="attr">group:</span> <span class="string">name=httpd</span> <span class="string">system=yes</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:httpd.yml安装httpd</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line"><span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line"><span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">httpd</span></span><br><span class="line">  <span class="attr">yum:</span> <span class="string">name=httpd</span> <span class="string">state=present</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">configure</span> <span class="string">file</span></span><br><span class="line">  <span class="attr">copy:</span> <span class="string">src=files/httpd.conf</span> <span class="string">dest=/etc/httpd/conf/</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">start</span> <span class="string">service</span></span><br><span class="line">  <span class="attr">service:</span> <span class="string">name=httpd</span> <span class="string">state=started</span> <span class="string">enabled=yes</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="handlers和notify结合使用触发条件"><a href="#handlers和notify结合使用触发条件" class="headerlink" title="handlers和notify结合使用触发条件"></a>handlers和notify结合使用触发条件</h4><p>Handlers</p>
+<p>是task列表，这些task与前述的task并没有本质上的不同,用于当关注的资源发生变化时，才会采取一定的操作</p>
+<p>Notify此action可用于在每个play的最后被触发，这样可避免多次有改变发生时每次都执行指定的操作，仅在所有的变化发生完成后一次性地执行指定操作。在notify中列出的操作称为handler，也即notify中调用handler中定义的操作</p>
+<h4 id="Playbook中handlers使用"><a href="#Playbook中handlers使用" class="headerlink" title="Playbook中handlers使用"></a>Playbook中handlers使用</h4><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">httpd</span></span><br><span class="line">    <span class="attr">yum:</span> <span class="string">name=httpd</span> <span class="string">state=present</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">configure</span> <span class="string">file</span></span><br><span class="line">    <span class="attr">copy:</span> <span class="string">src=files/httpd.conf</span> <span class="string">dest=/etc/httpd/conf/</span></span><br><span class="line">    <span class="attr">notify:</span> <span class="string">restart</span> <span class="string">httpd</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ensure</span> <span class="string">apache</span> <span class="string">is</span> <span class="string">running</span></span><br><span class="line">      <span class="attr">service:</span> <span class="string">name=httpd</span> <span class="string">state=started</span> <span class="string">enabled=yes</span> <span class="attr">handlers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">restart</span> <span class="string">httpd</span></span><br><span class="line">      <span class="attr">service:</span> <span class="string">name=httpd</span> <span class="string">status=restarted</span></span><br></pre></td></tr></table></figure>
+
+<p>示例</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line"><span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line"></span><br><span class="line"><span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">group</span> <span class="string">nginx</span></span><br><span class="line">    <span class="attr">tags:</span> <span class="string">user</span></span><br><span class="line">  <span class="attr">user:</span> <span class="string">name=nginx</span> <span class="string">state=present</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">user</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">user:</span> <span class="string">name=nginx</span> <span class="string">state=present</span> <span class="string">group=nginx</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">Nginx</span></span><br><span class="line">  <span class="attr">yum:</span> <span class="string">name=nginx</span> <span class="string">state=present</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">    <span class="attr">copy:</span> <span class="string">src=/root/config.txt</span> <span class="string">dest=/etc/nginx/nginx.conf</span></span><br><span class="line">    <span class="attr">notify:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">Restart</span> <span class="string">Nginx</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">Check</span> <span class="string">Nginx</span> <span class="string">Process</span> </span><br><span class="line"><span class="attr">handlers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Restart</span> <span class="string">Nginx</span></span><br><span class="line">  <span class="attr">service:</span> <span class="string">name=nginx</span> <span class="string">state=restarted</span> <span class="string">enabled=yes</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Check</span> <span class="string">Nginx</span> <span class="string">process</span></span><br><span class="line">  <span class="attr">shell:</span> <span class="string">killall</span> <span class="number">-0</span> <span class="string">nginx</span> <span class="string">&gt;</span> <span class="string">/tmp/nginx.log</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook中tags使用"><a href="#Playbook中tags使用" class="headerlink" title="Playbook中tags使用"></a>Playbook中tags使用</h4><p>示例:httpd.yml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">httpd</span></span><br><span class="line">      <span class="attr">yum:</span> <span class="string">name=httpd</span> <span class="string">state=present</span></span><br><span class="line">      </span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">configure</span> <span class="string">file</span></span><br><span class="line">      <span class="attr">copy:</span> <span class="string">src=files/httpd.conf</span> <span class="string">dest=/etc/httpd/conf/</span></span><br><span class="line">      <span class="attr">tags:</span> <span class="string">conf</span></span><br><span class="line"></span><br><span class="line"> 	<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">start</span> <span class="string">httpd</span> <span class="string">service</span></span><br><span class="line"> 	<span class="attr">tags:</span> <span class="string">service</span></span><br><span class="line"> 	<span class="attr">service:</span> <span class="string">name=httpd</span> <span class="string">state=started</span> <span class="string">enabled=yes</span></span><br><span class="line">  <span class="string">ansible-playbook</span> <span class="string">–t</span> <span class="string">conf</span> <span class="string">httpd.yml</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook中变量使用"><a href="#Playbook中变量使用" class="headerlink" title="Playbook中变量使用"></a>Playbook中变量使用</h4><p>变量名:</p>
+<p>仅能由字母、数字和下划线组成，且只能以字母开头</p>
+<p>变量来源:</p>
+<p>1 ansible setup facts 远程主机的所有变量都可直接调用</p>
+<p>2 在/etc/ansible/hosts中定义</p>
+<p>普通变量:主机组中主机单独定义，优先级高于公共变量公共（组）变量:针对主机组中所有主机定义统一变量</p>
+<p>3 通过命令行指定变量，优先级最高</p>
+<p>ansible-playbook –e varname=value</p>
+<p>4 在playbook中定义<br>  vars:<br>​    -    var1: value1<br>​    -    var2: value2</p>
+<p>5 在独立的变量YAML文件中定义</p>
+<p>6 在role中定义<br>变量命名<br>变量名仅能由字母、数字和下划线组成，且只能以字母开头</p>
+<p>变量定义:key=value<br>示例:http_port=80</p>
+<p>变量调用方式:<br>​<br>通过 调用变量，且变量名前后必须有空格，有时用”“才生效</p>
+<p>ansible-playbook –e 选项指定<br><code>ansible-playbook test.yml -e &quot;hosts=www user=markupzh&quot;</code></p>
+<p>示例:使用setup变量</p>
+<p>var.yml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">  </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">create</span> <span class="string">log</span> <span class="string">file</span></span><br><span class="line">    <span class="attr">file:</span> <span class="string">name=/var/log/</span> <span class="string">&#123;&#123;</span> <span class="string">ansible_fqdn</span> <span class="string">&#125;&#125;</span> <span class="string">state=touch</span></span><br><span class="line"></span><br><span class="line"><span class="string">ansible-playbook</span> <span class="string">var.yml</span></span><br></pre></td></tr></table></figure>
+<p>示例:变量</p>
+<p>var.yml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">install</span> <span class="string">package</span></span><br><span class="line">    <span class="attr">yum:</span> <span class="string">name=&#123;&#123;</span> <span class="string">pkname</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line"></span><br><span class="line"><span class="string">ansible-playbook</span> <span class="string">–e</span> <span class="string">pkname=httpd</span> <span class="string">var.yml</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:变量</p>
+<p>var.yml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">vars:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">username:</span> <span class="string">user1</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">groupname:</span> <span class="string">group1</span> </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">create</span> <span class="string">group</span></span><br><span class="line">      <span class="attr">group:</span> <span class="string">name=&#123;&#123;</span> <span class="string">groupname</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">create</span> <span class="string">user</span></span><br><span class="line">	  <span class="attr">user:</span> <span class="string">name=&#123;&#123;</span> <span class="string">username</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line"></span><br><span class="line"><span class="string">ansible-playbook</span> <span class="string">var.yml</span></span><br><span class="line"><span class="string">ansible-playbook</span> <span class="string">-e</span> <span class="string">"username=user2 groupname=group2"</span>  <span class="string">var2.yml</span></span><br></pre></td></tr></table></figure>
+
+<p>主机变量</p>
+<p>可以在inventory中定义主机时为其添加主机变量以便于在playbook中使用</p>
+<p>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[websrvs]</span><br><span class="line">www1.markupzh.com http_port=80 maxRequestsPerChild=808 www2.markupzh.com http_port=8080 maxRequestsPerChild=909</span><br></pre></td></tr></table></figure>
+
+<p>组变量</p>
+<p>组变量是指赋予给指定组内所有主机上的在playbook中可用的变量</p>
+<p>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[websrvs]</span><br><span class="line">www1.markupzh.com</span><br><span class="line">www2.markupzh.com</span><br><span class="line">[websrvs:vars]</span><br><span class="line">ntp_server=ntp.markupzh.com nfs_server=nfs.markupzh.com</span><br></pre></td></tr></table></figure>
+
+<p>普通变量</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[websrvs]</span><br><span class="line">192.168.99.101 http_port=8080 hname=www1</span><br><span class="line">192.168.99.102 http_port=80   hname=www2</span><br></pre></td></tr></table></figure>
+
+<p>公共（组）变量</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[websvrs:vars] </span><br><span class="line">http_port=808</span><br><span class="line">mark="_"</span><br><span class="line"></span><br><span class="line">[websrvs]</span><br><span class="line">192.168.99.101 http_port=8080 hname=www1</span><br><span class="line">192.168.99.102 http_port=80 hname=www2</span><br><span class="line"></span><br><span class="line">ansible websvrs –m hostname –a 'name=&#123;&#123; hname &#125;&#125;&#123;&#123; mark &#125;&#125;&#123;&#123; http_port &#125;&#125;'</span><br></pre></td></tr></table></figure>
+
+<p>命令行指定变量:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible websvrs –e http_port&#x3D;8000 –m hostname –a &#39;name&#x3D;&#123;&#123; hname &#125;&#125;&#123;&#123; mark &#125;&#125;&#123;&#123; http_port &#125;&#125;&#39;</span><br></pre></td></tr></table></figure>
+
+<p>使用变量文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cat vars.yml </span><br><span class="line"></span><br><span class="line">var1: httpd </span><br><span class="line">var2: nginx</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">cat var.yml</span><br><span class="line"></span><br><span class="line">- hosts: web</span><br><span class="line">  remote_user: root </span><br><span class="line">  vars_files:</span><br><span class="line">    - vars.yml</span><br><span class="line">  tasks:</span><br><span class="line">    - name: create httpd log</span><br><span class="line">    file: name=/app/&#123;&#123; var1 &#125;&#125;.log state=touch</span><br><span class="line">    - name: create nginx log</span><br><span class="line">    file: name=/app/&#123;&#123; var2 &#125;&#125;.log state=touch</span><br></pre></td></tr></table></figure>
+
+<p>模板templates</p>
+<p>文本文件，嵌套有脚本（使用模板编程语言编写）</p>
+<p>Jinja2语言，使用字面量，有下面形式字符串:使用单引号或双引号</p>
+<p>数字:整数，浮点数</p>
+<p>列表:[item1, item2, …]</p>
+<p>元组:(item1, item2, …)</p>
+<p>字典:{key1:value1, key2:value2, …}</p>
+<p>布尔型:true/false</p>
+<p>算术运算:+, -, <em>, /, //, %, *</em></p>
+<p>比较操作:==, !=, &gt;, &gt;=, &lt;, &lt;=</p>
+<p>逻辑运算:and, or, not</p>
+<p>流表达式:For If When</p>
+<h4 id="templates"><a href="#templates" class="headerlink" title="templates"></a>templates</h4><p>templates功能:根据模块文件动态生成对应的配置文件</p>
+<p>templates文件必须存放于templates目录下，且命名为 .j2 结尾</p>
+<p>yaml/yml 文件需和templates目录平级，目录结构如下:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">./</span><br><span class="line">├── temnginx.yml</span><br><span class="line">└── templates</span><br><span class="line">	  └── nginx.conf.j2</span><br></pre></td></tr></table></figure>
+
+<h4 id="Templates示例"><a href="#Templates示例" class="headerlink" title="Templates示例"></a>Templates示例</h4><p>示例:利用templates 同步nginx配置文件准备templates/nginx.conf.j2文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">vim temnginx.yml</span><br><span class="line"></span><br><span class="line">- hosts: websrvs</span><br><span class="line">  remote_user: root</span><br><span class="line"></span><br><span class="line">  tasks:</span><br><span class="line">    - name: template config to remote hosts</span><br><span class="line">	 template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf</span><br><span class="line"></span><br><span class="line">ansible-playbook temnginx.yml</span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook中template变更替换"><a href="#Playbook中template变更替换" class="headerlink" title="Playbook中template变更替换"></a>Playbook中template变更替换</h4><p>修改文件nginx.conf.j2 下面行为</p>
+<p><code>worker_processes ;</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cat temnginx2.yml</span><br><span class="line"></span><br><span class="line">- hosts: websrvs</span><br><span class="line">  remote_user: root</span><br><span class="line"></span><br><span class="line">  tasks:</span><br><span class="line">	- name: template config to remote hosts</span><br><span class="line">	template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf</span><br><span class="line"></span><br><span class="line">ansible-playbook temnginx2.yml</span><br></pre></td></tr></table></figure>
+
+<h4 id="Playbook中template算术运算"><a href="#Playbook中template算术运算" class="headerlink" title="Playbook中template算术运算"></a>Playbook中template算术运算</h4><p>算法运算:</p>
+<p>示例:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">vim nginx.conf.j2</span><br><span class="line"></span><br><span class="line">worker_processes &#123;&#123; ansible_processor_vcpus**2 &#125;&#125;; </span><br><span class="line">worker_processes &#123;&#123; ansible_processor_vcpus+2 &#125;&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="when"><a href="#when" class="headerlink" title="when"></a>when</h4><p>条件测试:如果需要根据变量、facts或此前任务的执行结果来做为某task执行与否的前提时要用到条件测试,通过when语句实现，在task中使用，jinja2的语法格式</p>
+<p>when语句</p>
+<p>在task后添加when子句即可使用条件测试；when语句支持Jinja2表达式语法</p>
+<p>示例:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">"shutdown RedHat flavored systems"</span></span><br><span class="line">  <span class="attr">command:</span> <span class="string">/sbin/shutdown</span> <span class="string">-h</span> <span class="string">now</span></span><br><span class="line">  <span class="attr">when:</span> <span class="string">ansible_os_family</span> <span class="string">==</span> <span class="string">"RedHat"</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:when条件判断</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">group</span> <span class="string">nginx</span></span><br><span class="line">      <span class="attr">tags:</span> <span class="string">user</span></span><br><span class="line">      <span class="attr">user:</span> <span class="string">name=nginx</span> <span class="string">state=present</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">user</span> <span class="string">nginx</span></span><br><span class="line">      <span class="attr">user:</span> <span class="string">name=nginx</span> <span class="string">state=present</span> <span class="string">group=nginx</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">Nginx</span></span><br><span class="line">      <span class="attr">yum:</span> <span class="string">name=nginx</span> <span class="string">state=present</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">restart</span> <span class="string">Nginx</span></span><br><span class="line">      <span class="attr">service:</span> <span class="string">name=nginx</span> <span class="string">state=restarted</span></span><br><span class="line">      <span class="attr">when:</span> <span class="string">ansible_distribution_major_version</span> <span class="string">==</span> <span class="string">"6"</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:when条件判断</p>
+<p>示例: </p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tasks:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">install</span> <span class="string">conf</span> <span class="string">file</span> <span class="string">to</span> <span class="string">centos7</span></span><br><span class="line">    <span class="attr">template:</span> <span class="string">src=nginx.conf.c7.j2</span></span><br><span class="line">    <span class="attr">when:</span> <span class="string">ansible_distribution_major_version</span> <span class="string">==</span> <span class="string">"7"</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">install</span> <span class="string">conf</span> <span class="string">file</span> <span class="string">to</span> <span class="string">centos6</span></span><br><span class="line">    <span class="attr">template:</span> <span class="string">src=nginx.conf.c6.j2</span></span><br><span class="line">    <span class="attr">when:</span> <span class="string">ansible_distribution_major_version</span> <span class="string">==</span> <span class="string">"6"</span></span><br></pre></td></tr></table></figure>
+
+<p>迭代:with_items</p>
+<p>迭代:当有需要重复性执行的任务时，可以使用迭代机制</p>
+<p>对迭代项的引用，固定变量名为”item”</p>
+<p>要在task中使用with_items给定要迭代的元素列表</p>
+<p>列表格式:</p>
+<p>字符串</p>
+<p>字典</p>
+<p>示例:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">several</span> <span class="string">users</span></span><br><span class="line">  <span class="attr">user:</span> <span class="string">name=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span> <span class="string">groups=wheel</span> </span><br><span class="line">  <span class="attr">with_items:</span></span><br><span class="line">   <span class="bullet">-</span> <span class="string">testuser1</span></span><br><span class="line">   <span class="bullet">-</span> <span class="string">testuser2</span></span><br></pre></td></tr></table></figure>
+
+<p>上面语句的功能等同于下面的语句:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">user</span> <span class="string">testuser1</span></span><br><span class="line">  <span class="attr">user:</span> <span class="string">name=testuser1</span> <span class="string">state=present</span> <span class="string">groups=wheel</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">user</span> <span class="string">testuser2</span></span><br><span class="line">  <span class="attr">user:</span> <span class="string">name=testuser2</span> <span class="string">state=present</span> <span class="string">groups=wheel</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:迭代</p>
+<p>将多个文件进行copy到被控端</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">testsrv</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line"></span><br><span class="line"><span class="string">tasks</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Create</span> <span class="string">rsyncd</span> <span class="string">config</span></span><br><span class="line">  <span class="attr">copy:</span> <span class="string">src=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">dest=/etc/&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="attr">with_items:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">rsyncd.secrets</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">rsyncd.conf</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:迭代</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">copy</span> <span class="string">file</span></span><br><span class="line">	  <span class="attr">copy:</span> <span class="string">src=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">dest=/tmp/&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span></span><br><span class="line">	  <span class="attr">with_items:</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">file1</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">file2</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">file3</span></span><br><span class="line">	<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">yum</span> <span class="string">install</span> <span class="string">httpd</span></span><br><span class="line">	  <span class="attr">yum:</span> <span class="string">name=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line">	  <span class="attr">with_items:</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">apr</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">apr-util</span></span><br><span class="line">		  <span class="bullet">-</span> <span class="string">httpd</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:迭代</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">hosts:websrvs</span> </span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">  </span><br><span class="line">  <span class="string">tasks</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">install</span> <span class="string">some</span> <span class="string">packages</span></span><br><span class="line">	  <span class="attr">yum:</span> <span class="string">name=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line">	  <span class="attr">with_items:</span></span><br><span class="line">		<span class="bullet">-</span> <span class="string">nginx</span></span><br><span class="line">		<span class="bullet">-</span> <span class="string">memcached</span></span><br><span class="line">		<span class="bullet">-</span> <span class="string">php-fpm</span></span><br></pre></td></tr></table></figure>
+
+<p>示例:迭代嵌套子变量</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">hosts:websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span></span><br><span class="line">  <span class="attr">tasks:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">some</span> <span class="string">groups</span></span><br><span class="line">      <span class="attr">group:</span> <span class="string">name=&#123;&#123;</span> <span class="string">item</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span></span><br><span class="line">      <span class="attr">with_items:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">group1</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">group2</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">group3</span></span><br><span class="line">	<span class="bullet">-</span> <span class="attr">name:</span> <span class="string">add</span> <span class="string">some</span> <span class="string">users</span></span><br><span class="line">	  <span class="attr">user:</span> <span class="string">name=&#123;&#123;</span> <span class="string">item.name</span> <span class="string">&#125;&#125;</span> <span class="string">group=&#123;&#123;</span> <span class="string">item.group</span> <span class="string">&#125;&#125;</span> <span class="string">state=present</span> <span class="attr">with_items:</span></span><br><span class="line">	    <span class="bullet">-</span> <span class="string">&#123;</span> <span class="attr">name:</span> <span class="string">'user1'</span><span class="string">,</span> <span class="attr">group:</span> <span class="string">'group1'</span> <span class="string">&#125;</span></span><br><span class="line">	    <span class="bullet">-</span> <span class="string">&#123;</span> <span class="attr">name:</span> <span class="string">'user2'</span><span class="string">,</span> <span class="attr">group:</span> <span class="string">'group2'</span> <span class="string">&#125;</span></span><br><span class="line">	    <span class="bullet">-</span> <span class="string">&#123;</span> <span class="attr">name:</span> <span class="string">'user3'</span><span class="string">,</span> <span class="attr">group:</span> <span class="string">'group3'</span> <span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="roles"><a href="#roles" class="headerlink" title="roles"></a>roles</h4><p>ansilbe自1.2版本引入的新特性，用于层次性、结构化地组织playbook。roles能够根据层次型结构自动装载变量文件、tasks以及handlers等。要使用roles只需要在playbook中使用include指令即可。简单来讲，roles就是通过分别将变量、文件、任务、模板及处理器放置于单独的目录中，并可以便捷地include它们的一种机制。角色一般用于基于主机构建服务的场景中，但也可以是用于构建守护进程等场景中</p>
+<p>复杂场景:建议使用roles，代码复用度高</p>
+<p>变更指定主机或主机组</p>
+<p>如命名不规范维护和传承成本大</p>
+<p>某些功能需多个Playbook，通过Includes即可实现</p>
+<p>角色(roles):角色集合 </p>
+<p>roles/</p>
+<p>  mysql/</p>
+<p>  httpd/</p>
+<p>  nginx/</p>
+<p>  memcached/</p>
+<h4 id="roles目录结构"><a href="#roles目录结构" class="headerlink" title="roles目录结构"></a>roles目录结构</h4><p>每个角色，以特定的层级目录结构进行组织</p>
+<p>roles目录结构: </p>
+<p>playbook.yml </p>
+<p>  roles/<br>​     project/<br>​     tasks/<br>​     files/<br>​     vars/<br>​     templates/<br>​     handlers/<br>​     default/  不常用<br>​     meta/    不常用</p>
+<p>Roles各目录作用:</p>
+<pre><code>/roles/project/ :项目名称,有以下子目录
+
+files/ :存放由copy或script模块等调用的文件
+
+templates/:template模块查找所需要模板文件的目录
+
+tasks/:定义task,role的基本元素，至少应该包含一个名为main.yml的文件；其它的文件需要在此文件中通过include进行包含
+
+handlers/:至少应该包含一个名为main.yml的文件；其它的文件需要在此文件中通过include进行包含
+
+vars/:定义变量，至少应该包含一个名为main.yml的文件；其它的文件需要在此文件中通过include进行包含
+
+meta/:定义当前角色的特殊设定及其依赖关系,至少应该包含一个名为main.yml的文件，其它文件需在此文件中通过include进行包含
+
+default/:设定默认变量时使用此目录中的main.yml文件</code></pre><p>创建role:</p>
+<pre><code>创建role的步骤
+
+(1) 创建以roles命名的目录
+
+(2) 在roles目录中分别创建以各角色名称命名的目录，如webservers等
+
+(3) 在每个角色命名的目录中分别创建files、handlers、meta、tasks、templates和vars目录；用不到的目录可以创建为空目录，也可以不创建
+
+(4) 在playbook文件中，调用各角色</code></pre><h4 id="playbook调用角色"><a href="#playbook调用角色" class="headerlink" title="playbook调用角色"></a>playbook调用角色</h4><p>调用角色方法1:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span> <span class="string">websrvs</span></span><br><span class="line">  <span class="attr">remote_user:</span> <span class="string">root</span> </span><br><span class="line">  <span class="attr">roles:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">mysql</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">memcached</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">nginx</span></span><br></pre></td></tr></table></figure>
+
+<p>调用角色方法2:传递变量给角色</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">hosts:</span></span><br><span class="line">  <span class="attr">remote_user:</span></span><br><span class="line">  <span class="attr">roles:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">mysql</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&#123;</span> <span class="attr">role:</span> <span class="string">nginx,</span> <span class="attr">username:</span> <span class="string">nginx</span> <span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>键role用于指定角色名称</p>
+<p>后续的k/v用于传递变量给角色</p>
+<p>调用角色方法3:还可基于条件测试实现角色调用 roles:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="string">&#123;</span> <span class="attr">role:</span> <span class="string">nginx,</span> <span class="attr">username:</span> <span class="string">nginx,</span> <span class="attr">when:</span> <span class="string">ansible_distribution_major_version</span> <span class="string">==</span> <span class="string">'7'</span> <span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="推荐资料"><a href="#推荐资料" class="headerlink" title="推荐资料"></a>推荐资料</h4><pre><code>http://galaxy.ansible.com
+https://galaxy.ansible.com/explore#/
+http://github.com/
+http://ansible.com.cn/
+https://github.com/ansible/ansible
+https://github.com/ansible/ansible-examples</code></pre>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E9%85%8D%E7%BD%AELinux%E4%B8%BB%E6%9C%BA%E4%B9%8B%E9%97%B4SSH%E4%BA%92%E4%BF%A1%E8%BF%9E%E6%8E%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/%E9%85%8D%E7%BD%AELinux%E4%B8%BB%E6%9C%BA%E4%B9%8B%E9%97%B4SSH%E4%BA%92%E4%BF%A1%E8%BF%9E%E6%8E%A5/" class="post-title-link" itemprop="url">配置Linux主机之间SSH互信连接</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-12-05 15:16:37 / 修改时间：15:37:11" itemprop="dateCreated datePublished" datetime="2018-12-05T15:16:37+08:00">2018-12-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>无论在本地搭建实验环境还是在生产环境中,多节点并行计算设置中,建立Linux主机间的SSH互信是非常重要的环节.常见的互信机制包括RSH和SSH两种,其中SSH互信较常用到,下面介绍SSH的原理及其配置方法.</p>
+<p>首先,我们先了解下配置ssh互信的原理,ssh互信,说白了,就是在目标机器上,预先设置好经过认证的key文件,当需要访问目标机器时,目标机器通过key文件,对访问者进行自动认证,从而实现互信.</p>
+<p>了解了ssh互信的原理,我们把配置ssh互信的步骤,进行有效的分割:</p>
+<p>1.首先,在要配置互信的机器上,生成各自的经过认证的key文件;</p>
+<p>2.其次,将所有的key文件汇总到一个总的认证文件中;</p>
+<p>3.将这个包含了所有互信机器认证key的认证文件,分发到各个机器中去;</p>
+<p>4.验证互信;</p>
+<p>实例演示:CentOS 7.5系统的两台电脑,IP分别为192.168.0.100和192.168.0.101,主机名(hostname)分别为node0和node1,默认都已安装SSH服务,要实现两个名称相同的账号root间的互信连接.</p>
+<p>备注:主机名可以通过root用户修改/etc/sysconfig/network中的hostname变量名,重启设定生效,而hostname命令只修改当前显示的主机名,重启后即失效. </p>
+<p>1.节点node1上,以root身份修改/etc/hosts文件,以建立主机IP和主机名(hostname)间的映射,其文件格式如下:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> Do not remove the following line, or various programs</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> that require network functionality will fail.</span></span><br><span class="line">127.0.0.1       localhost.localdomain localhost</span><br><span class="line">::1             localhost6.localdomain6 localhost6</span><br><span class="line">192.168.100.100 node1.localdomain     node1</span><br><span class="line">192.168.100.101 node2.localdomain     node2</span><br></pre></td></tr></table></figure>
+
+<p>IP hostname.domainname hostname,其中各项以Tab键隔开.</p>
+<p>注意:修改该文件不是必须步骤,但方便以后用主机名直接访问各主机,省去了输入IP地址的麻烦.在节点node2上进行相同操作.</p>
+<p> 2.用户root身份,在node1上生成认证RSA密钥(这里有个细节,就是ssh互信的认证文件,需要放在用户的home目录下的.ssh目录中,因此我们要首先建立这个目录,并且保证这个目录的权限是700):</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">cd</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> mkdir .ssh</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> chmod 700 .ssh</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ssh-keygen -t rsa</span></span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">Enter file in which to save the key (/home/deven/.ssh/id_rsa): </span><br><span class="line">Enter passphrase (empty for no passphrase): </span><br><span class="line">Enter same passphrase again:</span><br><span class="line">Your identification has been saved in /home/deven/.ssh/id_rsa.</span><br><span class="line">Your public key has been saved in /home/deven/.ssh/id_rsa.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">89:56:d6:4a:b2:6c:4a:05:86:ae:cd:7d:80:dd:3c:f1 deven@node1</span><br></pre></td></tr></table></figure>
+
+<p>中间过程直接3个回车.在~/.ssh/目录下,生成了两个文件:id_rsa(私钥文件放在本地) 和 id_rsa.pub(公钥文件放在信任服务器).</p>
+<p>在node2上,以用户root身份进行相同操作.</p>
+<p>3.将所有的公钥文件 id_rsa.pub汇总到一个总的认证文件authorized-keys中:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> cat ~/.ssh/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> ssh root@node2 cat ~/.ssh/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys</span></span><br></pre></td></tr></table></figure>
+
+<p>4.经过1,2两步,目前node1上存在一份完整的认证key文件,这时候,把她拷到node2主机的对应目录下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> scp ~/.ssh/authorized_keys root@node2:~/.ssh/authorized_keys</span></span><br></pre></td></tr></table></figure>
+
+<p>5.大功告成,这时候,再互相用ssh命令连接,看看是否配置成功.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/vmware-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%89%E7%A7%8D%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F-%E6%A1%A5%E6%8E%A5-NAT-%E4%BB%85%E4%B8%BB%E6%9C%BA%E5%8C%BA%E5%88%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/vmware-%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%89%E7%A7%8D%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F-%E6%A1%A5%E6%8E%A5-NAT-%E4%BB%85%E4%B8%BB%E6%9C%BA%E5%8C%BA%E5%88%AB/" class="post-title-link" itemprop="url">vmware 虚拟机三种网络模式 桥接 NAT 仅主机</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-12-04 14:58:37" itemprop="dateCreated datePublished" datetime="2018-12-04T14:58:37+08:00">2018-12-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-12-05 12:18:12" itemprop="dateModified" datetime="2018-12-05T12:18:12+08:00">2018-12-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>vmware为我们提供了3种网络工作模式,分别是:Bridge(桥接模式),NAT(网络地址转换模式),Host-Only(仅主机模式).</p>
+<p>首先在说到VMware的网络模型前,先说一下VMware的几个虚拟设备:</p>
+<p>VMnet0:这是VMware用于虚拟机桥接网络下的虚拟交换机</p>
+<p>VMnet1:这是VMware用于Host-Only网络下的虚拟交换机</p>
+<p>VMnet8:这是VMware用于虚拟NAT网络下的虚拟交换机</p>
+<p>VMware Network Adapter VMnet1:这是Host用于Host-Only虚拟网络进行通信的虚拟网卡</p>
+<p>VMware Network Adapter VMnet8:这是Host用于NAT虚拟网络进行通信的虚拟网卡</p>
+<p>那么如何查看这些网卡的信息呢?</p>
+<p>在windows主机命令行提示符环境中输入 ipconfig 便可以查询到VMware Network Adapter VMnet1,VMware Network Adapter VMnet8的ip地址.</p>
+<h4 id="Bridge-桥接模式"><a href="#Bridge-桥接模式" class="headerlink" title="Bridge(桥接模式)"></a>Bridge(桥接模式)</h4><p>桥接模式就是将主机网卡与虚拟机网卡利用虚拟网桥进行通信,在桥接的作用下,类似把主机虚拟为一个交换机,所有桥接设置的虚拟机连接到这个交换机的一个接口上,物理主机也同样连接到这个交换机中,所以所有桥接下的网卡与网卡都是交换模式的,相互可以访问而不干扰,在桥接模式下,虚拟机的ip地址需要与主机在同一个网段,如果需要联网,则网关与DNS需要与主机网卡一致.</p>
+<p>在桥接模式下,VMware虚拟出来的操作系统就像是局域网中的一台独立的主机,它可以访问该类网段内任何一台机器.</p>
+<p>桥接网络环境下需要做到:</p>
+<p>1.手动为虚拟机系统配置ip地址,子网掩码</p>
+<p>2.在桥接的模式下虚拟机必须与物理机处于同一网段,(举个例子,物理机ip:192.168.1.2 虚拟机ip:192.168.1.3)这样虚拟系统才能和真实主机进行通信.</p>
+<p>当我们想利用VMware在局域网内新建一个虚拟服务器,为局域网用户提供网络服务,就应该选择桥接模式,便可将虚拟机模拟接入主机所在的局域网,桥接网络相当于虚拟机与主机在一台交换机上,同时上网,虚拟机对物理机的直接影响较小.</p>
+<p>但是桥接模式也有一定的问题,如果网络环境很缺少,或者对ip的管理比较严格的话,那桥接模式就不太适用了.如果解决这个问题就引入了vmware的另一种网络模式:NAT模式</p>
+<h4 id="NAT-地址转换模式"><a href="#NAT-地址转换模式" class="headerlink" title="NAT(地址转换模式)"></a>NAT(地址转换模式)</h4><p>在NAT网络中,会使用到VMnet8虚拟交换机,物理机上的VMware Network Adapter VMnet8 虚拟网卡将会和VMnet8交换机相连,来实现物理机与虚拟机之间的通信.</p>
+<p>注意:VMware Network Adapter VMnet8虚拟网卡仅仅是用于和VMnet8网段通信用的,它并不为VMnet8网段提供路由功能,处于虚拟NAT网络下的Guest是使用虚拟的NAT服务器连接的Internet的.</p>
+<p>VMware Network Adapter VMnet8 虚拟网卡它仅仅是为Host和NAT虚拟网络下的Guest通信提供一个接口,所以,即便去掉这块网卡,虚拟机仍然是可以上网的,只是物理机无法再访问到VMnet8网段而已.</p>
+<p>1.主机需要开启vmdhcp和vmnat服务.</p>
+<p>2.NAT模式下的虚拟机的TCP/IP配置信息将由VMnet8(NAT)虚拟网络的DHCP服务器自动分配,需要开启DHCP功能.</p>
+<p>使用NAT模式,就是让虚拟系统借助NAT功能,通过物理机所在的网络来访问外网,也就是说,使用NAT模式可以实现在虚拟机里访问到互联网,NAT模式下的虚拟机的TCP/IP配置信息是由VMnet8(NAT)虚拟网络的DHCP服务器提供的,无法进行手动修改,因此虚拟系统也就无法和本局域网中的其他真实主机进行通讯,采用NAT模式最大的优势就是虚拟系统接入互联网非常简单,不需要进行任何其他的配置,只需要宿主机能访问互联网即可.</p>
+<p>NAT模式下的网络,相当于说虚拟机是通过物理机连接上的网络,等于物理机是个路由器,申请到一个上网的名额,带着隐藏在它下下面的虚拟机上网,自然所有的虚拟机使用的网络总和都限制在实体机的一个网络通道内,虚拟机会抢占物理机的网络,对物理机上网会有很大的影响.</p>
+<h4 id="Host-Only-仅主机模式"><a href="#Host-Only-仅主机模式" class="headerlink" title="Host-Only(仅主机模式)"></a>Host-Only(仅主机模式)</h4><p>Host-Only模式其实就是NAT模式去除了虚拟NAT设备,然后使用VMware Network Adapter VMnet1 虚拟网卡连接VMnet1虚拟交换机来与虚拟机通信的,Host-Only模式将虚拟机与外网隔开,是虚拟机成为一个独立的系统,只与主机相互通讯.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%BA%8C/" class="post-title-link" itemprop="url">运维自动化-系统部署(二)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-20 20:38:21 / 修改时间：20:46:57" itemprop="dateCreated datePublished" datetime="2018-09-20T20:38:21+08:00">2018-09-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="使用cobbler"><a href="#使用cobbler" class="headerlink" title="使用cobbler"></a>使用cobbler</h3><p>Cobbler:<br>    快速网络安装linux操作系统的服务，支持众多的Linux发行版：Red Hat、Fedora、CentOS、Debian、Ubuntu和SuSE，也可以支持网络安装windows<br>    PXE的二次封装，将多种安装参数封装到一个菜单<br>    Python编写<br>    提供了CLI和Web的管理形式</p>
+<h4 id="cobbler-工作流程"><a href="#cobbler-工作流程" class="headerlink" title="cobbler 工作流程"></a>cobbler 工作流程</h4><pre><code>client裸机配置了从网络启动后，开机后会广播包请求DHCP服务器（cobbler server）发送其分配好的一个IP
+DHCP服务器（cobbler server）收到请求后发送responese，包括其ip地址
+client裸机拿到ip后再向cobbler server发送请求OS引导文件的请求
+cobbler server告诉裸机OS引导文件的名字和TFTP server的ip和port
+client裸机通过上面告知的TFTP server地址通信，下载引导文件
+client裸机执行执行该引导文件，确定加载信息，选择要安装的os，期间会再向 cobbler server请求kickstart文件和os image
+cobbler server发送请求的kickstart和os iamge
+client裸机加载kickstart文件
+client裸机接收os image，安装该os image</code></pre><h4 id="cobbler-介绍"><a href="#cobbler-介绍" class="headerlink" title="cobbler 介绍"></a>cobbler 介绍</h4><p>安装包<br>    cobbler 基于EPEL源<br>cobbler 服务集成<br>    PXE<br>    DHCP<br>    rsync<br>    Http<br>    DNS<br>    Kickstart<br>    IPMI 电源管理<br>检查cobbler环境<br>    cobbler check</p>
+<p>cobbler 相关术语<br>    发行版：<br>        表示一个操作系统版本，它承载了内核和 initrd 的信息，以及内核参数等其他数据<br>    配置文件：<br>        包含一个发行版、一个 kickstart 文件以及可能的存储库，还包含更多特定的内核参数等其他数据<br>    系统：<br>        表示要配置的主机，它包含一个配置文件或一个镜像，还包含 IP 和 MAC 地址、电源管理（地址、凭据、类型）以及更为专业的数据等信息<br>    存储库：<br>        保存一个 yum 或 rsync 存储库的镜像信息</p>
+<h4 id="cobbler-各种配置目录说明"><a href="#cobbler-各种配置目录说明" class="headerlink" title="cobbler 各种配置目录说明"></a>cobbler 各种配置目录说明</h4><pre><code>安装：yum install cobbler dhcp
+配置文件目录 /etc/cobbler
+    /etc/cobbler/settings : cobbler 主配置文件
+    /etc/cobbler/iso/: iso模板配置文件
+    /etc/cobbler/pxe: pxe模板文件
+    /etc/cobbler/power: 电源配置文件
+    /etc/cobbler/user.conf: web服务授权配置文件
+    /etc/cobbler/users.digest: web访问的用户名密码配置文件
+    /etc/cobbler/dhcp.template : dhcp服务器的的配置末班
+    /etc/cobbler/dnsmasq.template : dns服务器的配置模板
+    /etc/cobbler/tftpd.template : tftp服务的配置模板
+    /etc/cobbler/modules.conf : 模块的配置文件</code></pre><h4 id="cobbler-目录介绍"><a href="#cobbler-目录介绍" class="headerlink" title="cobbler 目录介绍"></a>cobbler 目录介绍</h4><p>数据目录<br>    /var/lib/cobbler/config/: 用于存放distros，system，profiles 等信息配置文件<br>    /var/lib/cobbler/triggers/: 用于存放用户定义的cobbler命令<br>    /var/lib/cobbler/kickstart/: 默认存放kickstart文件<br>    /var/lib/cobbler/loaders/: 存放各种引导程序</p>
+<p>镜像目录<br>    /var/www/cobbler/ks_mirror/: 导入的发行版系统的所有数据<br>    /var/www/cobbler/images/ : 导入发行版的kernel和initrd镜像用于远程网络启动<br>    /var/www/cobbler/repo_mirror/: yum 仓库存储目录</p>
+<p>日志目录<br>    /var/log/cobbler/installing: 客户端安装日志<br>    /var/log/cobbler/cobbler.log : cobbler日志</p>
+<h4 id="cobbler-命令介绍"><a href="#cobbler-命令介绍" class="headerlink" title="cobbler 命令介绍"></a>cobbler 命令介绍</h4><p>cobbler check 核对当前设置是否有问题<br>cobbler list 列出所有的cobbler元素<br>cobbler report 列出元素的详细信息<br>cobbler sync 同步配置到数据目录,更改配置最好都要执行下<br>cobbler reposync 同步yum仓库<br>cobbler distro 查看导入的发行版系统信息<br>cobbler system 查看添加的系统信息<br>cobbler profile 查看配置信息</p>
+<h4 id="cobbler-重要的参数"><a href="#cobbler-重要的参数" class="headerlink" title="cobbler 重要的参数"></a>cobbler 重要的参数</h4><pre><code>/etc/cobbler/settings中重要的参数设置
+default_password_crypted: &quot;$1$gEc7ilpP$pg5iSOj/mlxTxEslhRvyp/&quot;
+manage_dhcp：1
+manage_tftpd：1
+pxe_just_once：1
+next_server：&lt; tftp服务器的 IP 地址&gt;
+server：&lt;cobbler服务器的 IP 地址&gt;</code></pre><h4 id="cobbler-环境检查"><a href="#cobbler-环境检查" class="headerlink" title="cobbler 环境检查"></a>cobbler 环境检查</h4><p>执行Cobbler check命令会报如下异常</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1 : The ‘server’ field in &#x2F;etc&#x2F;cobbler&#x2F;settings must be set to something other than localhost, or kickstarting features will not work. This should be a resolvable hostname or IP for the boot server as reachable by all machines that will use it.</span><br><span class="line">2 : For PXE to be functional, the ‘next_server’ field in &#x2F;etc&#x2F;cobbler&#x2F;settings must be set to something other than 127.0.0.1, and should match the IP of the boot server on the PXE network.</span><br><span class="line">3 : some network boot-loaders are missing from &#x2F;var&#x2F;lib&#x2F;cobbler&#x2F;loaders, you may run ‘cobbler get-loaders’ to download them, or, if you only want to handle x86&#x2F;x86_64 netbooting, you may ensure that you have installed a recent version of the syslinux package installed and can ignore this message entirely. Files in this directory, should you want to support all architectures, should include pxelinux.0, menu.c32, elilo.efi, and yaboot. The ‘cobbler get-loaders’ command is the easiest way to resolve these requirements.</span><br><span class="line">4 : change ‘disable’ to ‘no’ in &#x2F;etc&#x2F;xinetd.d&#x2F;rsync</span><br><span class="line">5 : comment ‘dists’ on &#x2F;etc&#x2F;debmirror.conf for proper debian support</span><br><span class="line">6 : comment ‘arches’ on &#x2F;etc&#x2F;debmirror.conf for proper debian support</span><br><span class="line">7 : The default password used by the sample templates for newly installed machines (default_password_crypted in &#x2F;etc&#x2F;cobbler&#x2F;settings)</span><br><span class="line">is still set to ‘cobbler’ and should be changed, try: “openssl passwd -1 -salt ‘random-phrase-here’ ‘your-password-here’” to generate new one</span><br><span class="line">8 : fencing tools were not found, and are required to use the (optional) power management features. install cman or fence-agents to use them</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="cobbler-报错解决"><a href="#cobbler-报错解决" class="headerlink" title="cobbler 报错解决"></a>cobbler 报错解决</h4><pre><code>执行Cobbler check报错解决方式
+修改/etc/cobbler/settings文件中的server参数的值为提供cobbler服务的主机相应的IP地址或主机名
+修改/etc/cobbler/settings文件中的next_server参数的值为提供PXE服务的主机相应的IP地址
+如果当前节点可以访问互联网，执行“cobbler get-loaders”命令即可；否则，需要安装syslinux程序包，而后复制/usr/share/syslinux/{pxelinux.0,memu.c32}等文件至/var/lib/cobbler/loaders/目录中
+执行“chkconfig rsync on”命令即可
+执行“openssl passwd -1 生成密码，并用其替换/etc/cobbler/settings文件中default_password_crypted参数的值</code></pre><h4 id="cobbler-相关管理"><a href="#cobbler-相关管理" class="headerlink" title="cobbler 相关管理"></a>cobbler 相关管理</h4><pre><code>下载启动菜单：
+    联网：cobbler get-loaders
+    不联网：cp /usr/share/syslinux/{pxelinux.0,menu.c32}  /var/lib/tftpboot
+
+管理distro
+    cobbler import --name=centos-7.5-x86_64 --path=/media/cdrom --arch=x86_64
+
+管理profile
+    cobbler profile add --name=centos-7.5-x86_64-basic --distro=centos-7.5-x86_64 --kickstart= /var/lib/cobbler/kickstarts/centos7_x86_64.cfg</code></pre><h4 id="cobbler-命令"><a href="#cobbler-命令" class="headerlink" title="cobbler 命令"></a>cobbler 命令</h4><pre><code>查看profiles
+    cobbler profile list
+查看引导文件
+    cat /var/lib/tftpboot/pxelinux.cfg/default
+同步cobbler配置
+    cobbler sync
+多系统引导方案
+    cobbler import --name=CentOS-7-x86_64 --path=/media/cdrom 
+    cobbler distro list
+    cobbler profile list 
+    cobbler sync</code></pre><h4 id="cobbler-实现步骤"><a href="#cobbler-实现步骤" class="headerlink" title="cobbler 实现步骤"></a>cobbler 实现步骤</h4><pre><code>安装包，并设置服务
+检查配置
+根据上面提示修改配置
+下载启动相关文件菜单
+配置DHCP服务
+分别导入centos的安装源,并查看
+准备kickstart文件并导入cobbler
+测试</code></pre><h4 id="cobbler的web管理实现"><a href="#cobbler的web管理实现" class="headerlink" title="cobbler的web管理实现"></a>cobbler的web管理实现</h4><p>cobbler-web</p>
+<pre><code>提供cobbler的基于web管理界面，epel源 yum install cobbler-web
+
+认证方式
+    认证方法配置文件：/etc/cobbler/modules.conf
+    支持多种认证方法：
+        authn_configfile
+        authn_pam</code></pre><p>  使用authn_configfile模块认证cobbler_web用户<br>        vim /etc/cobbler/modules.conf<br>        [authentication]<br>        module=authn_configfile</p>
+<p>创建其认证文件/etc/cobbler/users.digest，并添加所需的用户 htdigest -c /etc/cobbler/users.digest Cobbler admin<br>注意:添加第一个用户时,使用“-c”选项，后续添加其他用户时不要再使用，cobbler_web的realm只能为Cobbler</p>
+<pre><code>使用authn_pam模块认证cobbler_web用户
+    vim /etc/cobbler/modules.conf 
+    [authentication]
+    module = authn_pam
+创建cobbler用户：useradd cobbler
+    vim /etc/cobbler/users.conf
+    [admins]
+    admin = &quot;cobbler“
+
+Web访问cobbler
+    重启cobblerd服务
+    通过https://cobblerserver/cobbler_web访问</code></pre>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E8%BF%90%E7%BB%B4%E8%87%AA%E5%8A%A8%E5%8C%96-%E7%B3%BB%E7%BB%9F%E9%83%A8%E7%BD%B2-%E4%B8%80/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -556,415 +1499,10 @@ label local
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%94/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%94/" class="post-title-link" itemprop="url">Linux 启动和内核管理(五)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 16:54:08 / 修改时间：16:54:58" itemprop="dateCreated datePublished" datetime="2018-09-11T16:54:08+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="CentOS7-引导顺序"><a href="#CentOS7-引导顺序" class="headerlink" title="CentOS7 引导顺序"></a>CentOS7 引导顺序</h3><p>UEFi或BIOS初始化,运行POST开机自检<br>选择启动设备<br>引导装载程序, centos7是grub2<br>加载装载程序的配置文件：<br>    /etc/grub.d/<br>    /etc/default/grub<br>    /boot/grub2/grub.cfg<br>加载initramfs驱动模块<br>加载内核选项<br>内核初始化,centos7使用systemd代替init<br>执行initrd.target所有单元,包括挂载/etc/fstab<br>从initramfs根文件系统切换到磁盘根目录<br>systemd执行默认target配置,配置文件/etc/systemd/system/default.target</p>
-<p>systemd执行sysinit.target初始化系统及basic.target准备操作系统<br>systemd启动multi-user.target下的本机与服务器服务<br>systemd执行multi-user.target下的/etc/rc.d/rc.local<br>Systemd执行multi-user.target下的getty.target及登录服务<br>systemd执行graphical需要的服务</p>
-<h3 id="设置内核参数"><a href="#设置内核参数" class="headerlink" title="设置内核参数"></a>设置内核参数</h3><p>设置内核参数,只影响当次启动<br>启动时,在linux16行后添加systemd.unit=desired.target<br>systemd.unit=emergency.target<br>systemd.unit=rescue.target<br>rescue.target 比emergency 支持更多的功能,例如日志等<br>systemctl default 进入默认target</p>
-<h3 id="启动排错"><a href="#启动排错" class="headerlink" title="启动排错"></a>启动排错</h3><p>文件系统损坏<br>先尝试自动修复,失败则进入emergency shell,提示用户修复<br>在/etc/fstab不存在对应的设备和UUID<br>等一段时间,如不可用,进入emergency shell<br>在/etc/fstab不存在对应挂载点<br>systemd 尝试创建挂载点,否则提示进入emergency shell.<br>在/etc/fstab不正确的挂载选项<br>提示进入emergency shell</p>
-<h4 id="破解CentOS7的root口令方法一"><a href="#破解CentOS7的root口令方法一" class="headerlink" title="破解CentOS7的root口令方法一"></a>破解CentOS7的root口令方法一</h4><p>启动时任意键暂停启动<br>按e键进入编辑模式<br>将光标移动linux16开始的行,添加内核参数rd.break<br>按ctrl-x启动<br>mount –o remount,rw /sysroot<br>chroot /sysroot<br>passwd root<br>touch /.autorelabel<br>exit<br>reboot</p>
-<h3 id="破解CentOS7的root口令方法二"><a href="#破解CentOS7的root口令方法二" class="headerlink" title="破解CentOS7的root口令方法二"></a>破解CentOS7的root口令方法二</h3><p>启动时任意键暂停启动<br>按e键进入编辑模式<br>将光标移动linux16开始的行,改为rw init=/sysroot/bin/sh<br>按ctrl-x启动<br>chroot /sysroot<br>passwd root<br>touch /.autorelabel<br>exit<br>reboot</p>
-<h3 id="修复GRUB2"><a href="#修复GRUB2" class="headerlink" title="修复GRUB2"></a>修复GRUB2</h3><p>GRUB”the Grand Unified Bootloader”<br>引导提示时可以使用命令行界面<br>可从文件系统引导<br>主要配置文件 /boot/grub2/grub.cfg<br>修复配置文件<br>grub2-mkconfig &gt; /boot/grub2/grub.cfg<br>修复grub<br>grub2-install /dev/sda BIOS环境<br>grub2-install UEFI环境<br>调整默认启动内核<br>    vim /etc/default/grub<br>    GRUB_DEFAULT=0</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E5%9B%9B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E5%9B%9B/" class="post-title-link" itemprop="url">Linux 启动和内核管理(四)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 16:47:54 / 修改时间：16:53:44" itemprop="dateCreated datePublished" datetime="2018-09-11T16:47:54+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="systemd"><a href="#systemd" class="headerlink" title="systemd"></a>systemd</h3><p>POST –&gt; Boot Sequence –&gt; Bootloader –&gt; kernel + initramfs(initrd) –&gt; rootfs –&gt; /sbin/init<br>    init:     CentOS 5: SysV init<br>            CentOS 6: Upstart<br>            CentOS 7: Systemd<br>Systemd：系统启动和服务器守护进程管理器,负责在系统启动或运行时,激活系统资源,服务器进程和其它进程<br>Systemd新特性：<br>    系统引导时实现服务并行启动<br>    按需启动守护进程<br>    自动化的服务依赖关系管理<br>    同时采用socket式与D-Bus总线式激活服务<br>    系统状态快照</p>
-<p>核心概念：unit<br>    unit表示不同类型的systemd对象,通过配置文件进行标识和配置；文件中主要包含了系统服务、监听socket、保存的系统快照以及其它与init相关的信息<br>配置文件：<br>    /usr/lib/systemd/system:每个服务最主要的启动脚本设置,类似于之前的/etc/init.d/<br>    /run/systemd/system：系统执行过程中所产生的服务脚本,比上面目录优先运行<br>    /etc/systemd/system：管理员建立的执行脚本,类似于/etc/rc.d/rcN.d/Sxx类的功能,比上面目录优先运行</p>
-<h3 id="Unit类型"><a href="#Unit类型" class="headerlink" title="Unit类型"></a>Unit类型</h3><p>Systemctl –t help 查看unit类型<br>Service unit: 文件扩展名为.service, 用于定义系统服务<br>Target unit: 文件扩展名为.target,用于模拟实现运行级别<br>Device unit: .device, 用于定义内核识别的设备<br>Mount unit: .mount, 定义文件系统挂载点<br>Socket unit: .socket, 用于标识进程间通信用的socket文件,也可在系统启动时,延迟启动服务,实现按需启动<br>Snapshot unit: .snapshot, 管理系统快照<br>Swap unit: .swap, 用于标识swap设备<br>Automount unit: .automount,文件系统的自动挂载点<br>Path unit: .path,用于定义文件系统中的一个文件或目录使用,常用于当文件系统变化时,延迟激活服务,如：spool 目录</p>
-<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><p>关键特性：<br>    基于socket的激活机制：socket与服务程序分离<br>    基于d-bus的激活机制：<br>    基于device的激活机制：<br>    基于path的激活机制：<br>    系统快照：保存各unit的当前状态信息于持久存储设备中<br>    向后兼容sysv init脚本<br>不兼容：<br>    systemctl命令固定不变,不可扩展<br>    非由systemd启动的服务,systemctl无法与之通信和控制</p>
-<h3 id="管理服务"><a href="#管理服务" class="headerlink" title="管理服务"></a>管理服务</h3><p>管理系统服务：<br>    CentOS 7: service unit<br>    注意：能兼容早期的服务脚本<br>命令：systemctl COMMAND name.service<br>启动：service name start ==&gt; systemctl start name.service<br>停止：service name stop ==&gt; systemctl stop name.service<br>重启：service name restart ==&gt; systemctl restart name.service<br>状态：service name status ==&gt; systemctl status name.service</p>
-<p>条件式重启：已启动才重启,否则不做操作</p>
-<pre><code>service name condrestart ==&gt; systemctl try-restart name.service</code></pre><p>重载或重启服务：先加载,再启动</p>
-<pre><code>systemctl reload-or-restart name.service</code></pre><p>重载或条件式重启服务：</p>
-<pre><code>systemctl reload-or-try-restart name.service</code></pre><p>禁止自动和手动启动：</p>
-<pre><code>systemctl mask name.service</code></pre><p>取消禁止：</p>
-<pre><code>systemctl unmask name.service</code></pre><h3 id="服务查看"><a href="#服务查看" class="headerlink" title="服务查看"></a>服务查看</h3><p>查看某服务当前激活与否的状态：</p>
-<pre><code>systemctl is-active name.service</code></pre><p>查看所有已经激活的服务：</p>
-<pre><code>systemctl list-units --type|-t service</code></pre><p>查看所有服务：</p>
-<pre><code>systemctl list-units --type service --all|-a</code></pre><p>chkconfig命令的对应关系：</p>
-<p>设定某服务开机自启：</p>
-<pre><code>chkconfig name on ==&gt; systemctl enable name.service</code></pre><p>设定某服务开机禁止启动：</p>
-<pre><code>chkconfig name off ==&gt; systemctl disable name.service</code></pre><p>查看所有服务的开机自启状态：<br>    chkconfig –list ==&gt; systemctl list-unit-files –type service</p>
-<p>用来列出该服务在哪些运行级别下启用和禁用<br>    chkconfig sshd –list ==&gt;<br>    ls /etc/systemd/system/*.wants/sshd.service</p>
-<p>查看服务是否开机自启：<br>    systemctl is-enabled name.service</p>
-<p>其它命令：<br>    查看服务的依赖关系：<br>    systemctl list-dependencies name.service</p>
-<p>杀掉进程：<br>    systemctl kill unitname</p>
-<h3 id="服务状态"><a href="#服务状态" class="headerlink" title="服务状态"></a>服务状态</h3><p>systemctl list-unit-files –type service –all显示状态<br>loaded:Unit配置文件已处理<br>active(running):一次或多次持续处理的运行<br>active(exited):成功完成一次性的配置<br>active(waiting):运行中,等待一个事件<br>inactive:不运行<br>enabled:开机启动<br>disabled:开机不启动<br>static:开机不启动,但可被另一个启用的服务激活</p>
-<h3 id="systemctl"><a href="#systemctl" class="headerlink" title="systemctl"></a>systemctl</h3><p>显示所有单元状态<br>    systemctl 或 systemctl list-units<br>只显示服务单元的状态<br>    systemctl –type=service<br>显示sshd服务单元<br>    systemctl –l status sshd.service<br>验证sshd服务当前是否活动<br>    systemctl is-active sshd<br>启动,停止和重启sshd服务<br>    systemctl start sshd.service<br>    systemctl stop sshd.service<br>    systemctl restart sshd.service</p>
-<p>重新加载配置<br>    systemctl reload sshd.service<br>列出活动状态的所有服务单元<br>    systemctl list-units –type=service<br>列出所有服务单元<br>    systemctl list-units –type=service –all<br>查看服务单元的启用和禁用状态<br>    systemctl list-unit-files –type=service<br>列出失败的服务<br>    systemctl –failed –type=service</p>
-<p>列出依赖的单元<br>    systemctl list-dependencies sshd<br>验证sshd服务是否开机启动<br>    systemctl is-enabled sshd<br>禁用network,使之不能自动启动,但手动可以<br>    systemctl disable network<br>启用network<br>    systemctl enable network<br>禁用network,使之不能手动或自动启动<br>    systemctl mask network<br>启用network<br>    systemctl unmask network</p>
-<h3 id="service-unit文件格式"><a href="#service-unit文件格式" class="headerlink" title="service unit文件格式"></a>service unit文件格式</h3><p>/etc/systemd/system：系统管理员和用户使用/usr/lib/systemd/system：发行版打包者使用<br>以 “#” 开头的行后面的内容会被认为是注释<br>相关布尔值,1、yes、on、true 都是开启,0、no、off、false 都是关闭<br>时间单位默认是秒,所以要用毫秒（ms）分钟（m）等须显式说明<br>service unit file文件通常由三部分组成：<br>    [Unit]：定义与Unit类型无关的通用选项；用于提供unit的描述信息、unit行为及依赖关系等<br>    [Service]：与特定类型相关的专用选项；此处为Service类型<br>    [Install]：定义由”systemctl enable”以及”systemctl disable”命令在实现服务启用或禁用时用到的一些选项</p>
-<p>Unit段的常用选项：<br>Description：描述信息<br>After：定义unit的启动次序,表示当前unit应该晚于哪些unit启动,其功能与Before相反<br>Requires：依赖到的其它units,强依赖,被依赖的units无法激活时,当前unit也无法激活<br>Wants：依赖到的其它units,弱依赖<br>Conflicts：定义units间的冲突关系</p>
-<p>Service段的常用选项：<br>Type：定义影响ExecStart及相关参数的功能的unit进程启动类型<br>• simple：默认值,这个daemon主要由ExecStart接的指令串来启动,启动后常驻于内存中<br>• forking：由ExecStart启动的程序透过spawns延伸出其他子程序来作为此daemon的主要服务.原生父程序在启动结束后就会终止<br>• oneshot：与simple类似,不过这个程序在工作完毕后就结束了,不会常驻在内存中<br>• dbus：与simple类似,但这个daemon必须要在取得一个D-Bus的名称后,才会继续运作.因此通常也要同时设定BusNname= 才行<br>• notify：在启动完成后会发送一个通知消息.还需要配合 NotifyAccess 来让Systemd 接收消息<br>• idle：与simple类似,要执行这个daemon必须要所有的工作都顺利执行完毕后才会执行.这类的daemon通常是开机到最后才执行即可的服务</p>
-<p>EnvironmentFile：环境配置文件<br>ExecStart：指明启动unit要运行命令或脚本的绝对路径<br>ExecStartPre： ExecStart前运行<br>ExecStartPost： ExecStart后运行<br>ExecStop：指明停止unit要运行的命令或脚本<br>Restart：当设定Restart=1 时,则当次daemon服务意外终止后,会再次自动启动此服务</p>
-<p>Install段的常用选项：<br>• Alias：别名,可使用systemctl command Alias.service<br>• RequiredBy：被哪些units所依赖,强依赖<br>• WantedBy：被哪些units所依赖,弱依赖<br>• Also：安装本服务的时候还要安装别的相关服务<br>注意：对于新创建的unit文件,或者修改了的unit文件,要通知systemd重载此配置文件,而后可以选择重启<br>    systemctl daemon-reload</p>
-<h3 id="服务Unit文件示例"><a href="#服务Unit文件示例" class="headerlink" title="服务Unit文件示例:"></a>服务Unit文件示例:</h3><p>vim /etc/systemd/system/bak.service<br>[Unit]<br>Description=backup /etc<br>Requires=atd.service<br>[Service]<br>Type=simple<br>ExecStart=/bin/bash -c “echo /testdir/bak.sh|at now”<br>[Install]<br>WantedBy=multi-user.target<br>systemctl daemon-reload<br>systemctl start bak</p>
-<h3 id="运行级别"><a href="#运行级别" class="headerlink" title="运行级别"></a>运行级别</h3><p>target units：<br>    unit配置文件：.target<br>    ls /usr/lib/systemd/system/*.target<br>    systemctl list-unit-files –type target –all<br>运行级别：<br>    0 ==&gt; runlevel0.target, poweroff.target<br>    1 ==&gt; runlevel1.target, rescue.target<br>    2 ==&gt; runlevel2.target, multi-user.target<br>    3 ==&gt; runlevel3.target, multi-user.target<br>    4 ==&gt; runlevel4.target, multi-user.target<br>    5 ==&gt; runlevel5.target, graphical.target<br>    6 ==&gt; runlevel6.target, reboot.target<br>查看依赖性：<br>    systemctl list-dependencies graphical.target</p>
-<p>级别切换：init N ==&gt; systemctl isolate name.target<br>    systemctl isolate multi-user.target<br>    注：只有/lib/systemd/system/*.target文件中AllowIsolate=yes 才能切换(修改文件需执行systemctl daemon-reload才能生效)<br>查看target：<br>    runlevel :who -r<br>    systemctl list-units –type target<br>获取默认运行级别：<br>    /etc/inittab ==&gt; systemctl get-default<br>修改默认级别：<br>/etc/inittab ==&gt; systemctl set-default name.target<br>    systemctl set-default multi-user.target<br>    ls –l /etc/systemd/system/default.target</p>
-<h3 id="其他命令"><a href="#其他命令" class="headerlink" title="其他命令"></a>其他命令</h3><p>切换至紧急救援模式：<br>    systemctl rescue<br>切换至emergency模式：<br>    systemctl emergency<br>其它常用命令：<br>    传统命令init,poweroff,halt,reboot都成为<br>    systemctl的软链接<br>    关机：systemctl halt、systemctl poweroff<br>    重启：systemctl reboot<br>    挂起：systemctl suspend<br>    休眠：systemctl hibernate<br>    休眠并挂起：systemctl hybrid-sleep</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%89/" class="post-title-link" itemprop="url">Linux 启动和内核管理(三)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 16:47:47 / 修改时间：16:52:56" itemprop="dateCreated datePublished" datetime="2018-09-11T16:47:47+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h3><p>单内核体系设计、但充分借鉴了微内核设计体系的优点,为内核引入模块化机制<br>内核组成部分：<br>    kernel: 内核核心,一般为bzImage,通常在/boot目录下,名称为vmlinuzVERSION-RELEASE<br>    kernel object: 内核对象,一般放置于<br>        /lib/modules/VERSION-RELEASE/</p>
-<pre><code>\[]:N
-
-\[M]:M
-
-\[*]:Y
-
-辅助文件：</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ramdisk</span><br><span class="line">initrd</span><br><span class="line">initramfs</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="内核版本"><a href="#内核版本" class="headerlink" title="内核版本"></a>内核版本</h3><p>运行中的内核：<br>    uname命令：<br>        uname - print system information<br>        uname [OPTION]…<br>            -n: 显示节点名称<br>            -r: 显示VERSION-RELEASE<br>            -a:显示所有信息</p>
-<h3 id="内核模块命令"><a href="#内核模块命令" class="headerlink" title="内核模块命令"></a>内核模块命令</h3><p>lsmod命令：<br>    显示由核心已经装载的内核模块<br>    显示的内容来自于: /proc/modules文件<br>modinfo命令：<br>    显示模块的详细描述信息<br>    modinfo [ -k kernel ][ modulename|filename… ]<br>        -n: 只显示模块文件路径<br>        -p: 显示模块参数<br>        -a: author<br>        -d: description<br>        -l: license<br>lsmod |grep xfs:modinfo xfs</p>
-<h3 id="内核模块管理"><a href="#内核模块管理" class="headerlink" title="内核模块管理"></a>内核模块管理</h3><p>modprobe命令：<br>装载或卸载内核模块<br>modprobe [ -C config-file ][ modulename ][ module parame-ters… ]</p>
-<p>配置文件：/etc/modprobe.conf, /etc/modprobe.d/*.conf</p>
-<p>modprobe [ -r ] modulename…</p>
-<p>depmod命令：<br>    内核模块依赖关系文件及系统信息映射文件的生成工具<br>装载或卸载内核模块：<br>insmod命令：指定模块文件,不自动解决依赖模块<br>    insmod [ filename ][ module options… ]<br>    insmod `modinfo –n exportfs`<br>    lnsmod `modinfo –n xfs`<br>rmmod命令：卸载模块<br>    rmmod [ modulename ]<br>    rmmod xfs<br>    rmmod exportfs</p>
-<h3 id="编译内核"><a href="#编译内核" class="headerlink" title="编译内核"></a>编译内核</h3><p>前提：<br>    (1) 准备好开发环境<br>    (2) 获取目标主机上硬件设备的相关信息<br>    (3) 获取目标主机系统功能的相关信息<br>        例如:需要启用相应的文件系统<br>    (4) 获取内核源代码包<br>        <a href="http://www.kernel.org" target="_blank" rel="noopener">www.kernel.org</a></p>
-<h3 id="开发环境准备"><a href="#开发环境准备" class="headerlink" title="开发环境准备"></a>开发环境准备</h3><p>包组(CentOS 6)：<br>    Server Platform Development<br>    Development Tools<br>目标主机硬件设备相关信息：<br>    CPU：<br>    cat /proc/cpuinfo<br>    x86info -a<br>    lscpu</p>
-<h3 id="硬件设备"><a href="#硬件设备" class="headerlink" title="硬件设备"></a>硬件设备</h3><p>PCI设备：<br>    lspci<br>        -v<br>        -vv<br>    lsusb<br>        -v<br>        -vv<br>    lsblk 块设备<br>了解全部硬件设备信息<br>    hal-device:CentOS6</p>
-<h3 id="内核编译安装系统"><a href="#内核编译安装系统" class="headerlink" title="内核编译安装系统"></a>内核编译安装系统</h3><p>安装开发包组<br>下载源码文件<br>.config：准备文本配置文件<br>make menuconfig：配置内核选项<br>make [-j #]<br>make modules_install：安装模块<br>make install ：安装内核相关文件<br>    安装bzImage为/boot/vmlinuz-VERSION-RELEASE<br>    生成initramfs文件<br>    编辑grub的配置文件</p>
-<h3 id="编译安装内核示例"><a href="#编译安装内核示例" class="headerlink" title="编译安装内核示例"></a>编译安装内核示例</h3><p>tar xf linux-3.10.67.tar.xz -C /usr/src<br>cd /usr/src<br>ln -sv linux-3.10.67 linux<br>cd /usr/src/linux<br>cp /boot/config-$(uname -r) ./.config<br>make help<br>make menuconfig<br>make -j 2<br>make modules_install<br>make install<br>reboot </p>
-<h3 id="编译内核-1"><a href="#编译内核-1" class="headerlink" title="编译内核"></a>编译内核</h3><p>(1) 配置内核选项<br>    支持”更新”模式进行配置：make help<br>    (a) make config：基于命令行以遍历的方式配置内核中可配置的每个选项<br>    (b) make menuconfig：基于curses的文本窗口界面<br>    (c) make gconfig：基于GTK (GNOME）环境窗口界面<br>    (d) make xconfig：基于QT(KDE)环境的窗口界面<br>    支持”全新配置”模式进行配置<br>    (a) make defconfig：基于内核为目标平台提供的”默认”配置进行配置<br>    (b) make allyesconfig: 所有选项均回答为”yes”<br>    (c) make allnoconfig: 所有选项均回答为”no”</p>
-<p>(2) 编译<br>全编译:make [-j #]<br>编译内核的一部分功能：<br>    (a) 只编译某子目录中的相关代码<br>        cd /usr/src/linux<br>        make dir/<br>    (b) 只编译一个特定的模块<br>        cd /usr/src/linux<br>        make dir/file.ko<br>        例如：只为e1000编译驱动：<br>    make drivers/net/ethernet/intel/e1000/e1000.ko</p>
-<p>如何交叉编译内核：<br>    编译的目标平台与当前平台不相同<br>    make ARCH=arch_name<br>要获取特定目标平台的使用帮助<br>    make ARCH=arch_name help<br>    make ARCH=arm help</p>
-<h3 id="内核编译-1"><a href="#内核编译-1" class="headerlink" title="内核编译"></a>内核编译</h3><p>在已经执行过编译操作的内核源码树做重新编译<br>需要事先清理操作：<br>    make clean：清理大多数编译生成的文件,但会保留config文件等<br>    make mrproper: 清理所有编译生成的文件、config及某些备份文件<br>    make distclean：mrproper、patches以及编辑器备份文件</p>
-<h3 id="卸载内核"><a href="#卸载内核" class="headerlink" title="卸载内核"></a>卸载内核</h3><p>删除/lib/modules/目录下不需要的内核库文件<br>删除/usr/src/linux/目录下不需要的内核源码<br>删除/boot目录下启动的内核和内核映像文件<br>更改grub的配置文件,删除不需要的内核启动列表</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%89/" class="post-title-link" itemprop="url">加密与安全(三)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-09-11 13:19:07" itemprop="dateCreated datePublished" datetime="2018-09-11T13:19:07+08:00">2018-09-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-09-20 19:28:30" itemprop="dateModified" datetime="2018-09-20T19:28:30+08:00">2018-09-20</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="SSH"><a href="#SSH" class="headerlink" title="SSH"></a>SSH</h3><p>ssh: secure shell, protocol, 22/tcp, 安全的远程登录<br>具体的软件实现:<br>    OpenSSH: ssh协议的开源实现,CentOS默认安装<br>    dropbear:另一个开源实现<br>SSH协议版本<br>    v1: 基于CRC-32做MAC,不安全；man-in-middle<br>    v2:双方主机协议选择安全的MAC方式<br>    基于DH算法做密钥交换,基于RSA或DSA实现身份认证<br>两种方式的用户登录认证:<br>    基于password<br>    基于key</p>
-<h4 id="Openssh-软件组成"><a href="#Openssh-软件组成" class="headerlink" title="Openssh 软件组成"></a>Openssh 软件组成</h4><p>OpenSSH介绍<br>相关包:<br>    openssh<br>    openssh-clients<br>    openssh-server<br>工具:<br>    基于C/S结构<br>    Client: ssh, scp, sftp,slogin<br>        Windows客户端:<br>        xshell, putty, securecrt, sshsecureshellclient<br>    Server: sshd</p>
-<h5 id="ssh客户端"><a href="#ssh客户端" class="headerlink" title="ssh客户端"></a>ssh客户端</h5><p>客户端组件:<br> ssh, 配置文件:/etc/ssh/ssh_config<br>    Host PATTERN<br>        StrictHostKeyChecking no 首次登录不显示检查提示<br> 格式:ssh [user@]host [COMMAND]<br>    ssh [-l user] host [COMMAND]<br> 常见选项<br>    -p port:远程服务器监听的端口<br>    -b:指定连接的源IP<br>    -v:调试模式<br>    -C:压缩方式<br>    -X:支持x11转发<br>    -t:强制伪tty分配<br>        ssh -t remoteserver1 ssh remoteserver2</p>
-<p>允许实现对远程系统经验证地加密安全访问<br>当用户远程连接ssh服务器时,会复制ssh服务器/etc/ssh/ssh_host*key.pub (CentOS7默认是ssh_host_ecdsa_key.pub)文件中的公钥到客户机的~./ssh/know_hosts中.下次连接时,会自动匹配相应私钥,不能匹配,将拒绝连接</p>
-<h4 id="ssh服务登录验证"><a href="#ssh服务登录验证" class="headerlink" title="ssh服务登录验证"></a>ssh服务登录验证</h4><p>ssh服务登录验证方式:<br>    用户/口令<br>    基于密钥<br>基于用户和口令登录验证<br>    1 客户端发起ssh请求,服务器会把自己的公钥发送给用户<br>    2 用户会根据服务器发来的公钥对密码进行加密<br>    3 加密后的信息回传给服务器,服务器用自己的私钥解密,如果密码正确,则用户登录成功</p>
-<h5 id="图解基于用户口令登录验证"><a href="#图解基于用户口令登录验证" class="headerlink" title="图解基于用户口令登录验证"></a>图解基于用户口令登录验证</h5><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_06.png" alt=""></p>
-<h5 id="基于密钥的登录方式"><a href="#基于密钥的登录方式" class="headerlink" title="基于密钥的登录方式"></a>基于密钥的登录方式</h5><p>1 首先在客户端生成一对密钥(ssh-keygen)<br>2 并将客户端的公钥ssh-copy-id 拷贝到服务端<br>3 当客户端再次发送一个连接请求,包括ip、用户名<br>4 服务端得到客户端的请求后,会到authorized_keys中查找,如果有响应的IP和用户,就会随机生成一个字符串,例如:acdf<br>5 服务端将使用客户端拷贝过来的公钥进行加密,然后发送给客户端<br>6 得到服务端发来的消息后,客户端会使用私钥进行解密,然后将解密后的字符串发送给服务端<br>7服务端接受到客户端发来的字符串后,跟之前的字符串进行对比,如果一致,就允许免密码登录</p>
-<h5 id="图解基于密钥的登录方式"><a href="#图解基于密钥的登录方式" class="headerlink" title="图解基于密钥的登录方式"></a>图解基于密钥的登录方式</h5><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_07.png" alt=""></p>
-<h5 id="基于key认证"><a href="#基于key认证" class="headerlink" title="基于key认证"></a>基于key认证</h5><p>基于密钥的认证:</p>
-<h6 id="1-在客户端生成密钥对"><a href="#1-在客户端生成密钥对" class="headerlink" title="(1) 在客户端生成密钥对"></a>(1) 在客户端生成密钥对</h6><p><code>ssh-keygen -t rsa [-P &#39;&#39;]\[-f “~/.ssh/id_rsa&quot;]</code></p>
-<h6 id="2-把公钥文件传输至远程服务器对应用户的家目录"><a href="#2-把公钥文件传输至远程服务器对应用户的家目录" class="headerlink" title="(2) 把公钥文件传输至远程服务器对应用户的家目录"></a>(2) 把公钥文件传输至远程服务器对应用户的家目录</h6><p><code>ssh-copy-id [-i [identity_file]]\[user@]host</code></p>
-<h6 id="3-测试"><a href="#3-测试" class="headerlink" title="(3) 测试"></a>(3) 测试</h6><h6 id="4-在SecureCRT或Xshell实现基于key验证"><a href="#4-在SecureCRT或Xshell实现基于key验证" class="headerlink" title="(4) 在SecureCRT或Xshell实现基于key验证:"></a>(4) 在SecureCRT或Xshell实现基于key验证:</h6><p>在SecureCRT工具—&gt;创建公钥—&gt;生成Identity.pub文件转化为openssh兼容格式(适合SecureCRT,Xshell不需要转化格式),并复制到需登录主机上相应文件authorized_keys中,注意权限必须为600,在需登录的ssh</p>
-<p>主机上执行:</p>
-<p><code>ssh-keygen -i -f Identity.pub &gt;&gt; .ssh/authorized_keys</code></p>
-<h6 id="5-重设私钥口令"><a href="#5-重设私钥口令" class="headerlink" title="(5)重设私钥口令:"></a>(5)重设私钥口令:</h6><p><code>ssh-keygen –p</code></p>
-<h6 id="6-验证代理-authentication-agent-保密解密后的密钥"><a href="#6-验证代理-authentication-agent-保密解密后的密钥" class="headerlink" title="(6)验证代理(authentication agent)保密解密后的密钥"></a>(6)验证代理(authentication agent)保密解密后的密钥</h6><p>• 这样口令就只需要输入一次<br>• 在GNOME中,代理被自动提供给root用户<br>• 否则运行ssh-agent bash</p>
-<h6 id="7-钥匙通过命令添加给代理"><a href="#7-钥匙通过命令添加给代理" class="headerlink" title="(7)钥匙通过命令添加给代理"></a>(7)钥匙通过命令添加给代理</h6><p><code>ssh-add</code></p>
-<h5 id="scp命令"><a href="#scp命令" class="headerlink" title="scp命令"></a>scp命令</h5><p>scp [options] SRC… DEST/<br>两种方式:<br>    scp [options][user@]host:/sourcefile /destpath<br>    scp [options] /sourcefile [user@]host:/destpath<br>常用选项:<br>    -C 压缩数据流<br>    -r 递归复制<br>    -p 保持原文件的属性信息<br>    -q 静默模式<br>    -P PORT 指明remote host的监听的端口</p>
-<h5 id="rsync命令"><a href="#rsync命令" class="headerlink" title="rsync命令"></a>rsync命令</h5><p>基于ssh和rsh服务实现高效率的远程系统之间复制文件(增量更新)<br> 使用安全的shell连接做为传输方式<br>    • rsync –av /etc server1:/tmp 复制目录和目录下文件<br>    • rsync –av /etc/ server1:/tmp 只复制目录下文件<br> 比scp更快,只复制不同的文件<br> 选项:<br>    -n 模拟复制过程<br>    -v 显示详细过程<br>    -r 递归复制目录树<br>    -p 保留权限<br>    -t 保留时间戳<br>    -g 保留组信息<br>    -o 保留所有者信息<br>    -l 将软链接文件本身进行复制(默认)<br>    -L 将软链接文件指向的文件复制<br>    -a 存档,相当于–rlptgoD,但不保留ACL(-A)和SELinux属性(-X)</p>
-<h5 id="sftp命令"><a href="#sftp命令" class="headerlink" title="sftp命令"></a>sftp命令</h5><p>交互式文件传输工具<br>用法和传统的ftp工具相似<br>利用ssh服务实现安全的文件上传和下载<br>使用ls cd mkdir rmdir pwd get put等指令,可用？或help获取帮助信息<br>    sftp [user@]host<br>    sftp&gt; help</p>
-<h5 id="pssh工具"><a href="#pssh工具" class="headerlink" title="pssh工具"></a>pssh工具</h5><p> pssh是一个python编写可以在多台服务器上执行命令的工具,也可实现文件复制<br> 选项如下:<br>     –version:查看版本<br>     -h:主机文件列表,内容格式”[user@]host[:port]”<br>     -H:主机字符串,内容格式”[user@]host[:port]”<br>     -A:手动输入密码模式<br>     -i:每个服务器内部处理信息输出<br>     -l:登录使用的用户名<br>     -p:并发的线程数【可选】<br>     -o:输出的文件目录【可选】<br>     -e:错误输入文件【可选】<br>     -t:TIMEOUT 超时时间设置,0无限制【可选】<br>     -O:SSH的选项<br>     -P:打印出服务器返回信息<br>     -v:详细模式</p>
-<h6 id="pssh示例"><a href="#pssh示例" class="headerlink" title="pssh示例"></a>pssh示例</h6><p>通过pssh批量关闭seLinux</p>
-<p>pssh -H <a href="mailto:root@192.168.1.10">root@192.168.1.10</a> -i “sed -i “s/SELINUX=enforcing/SELINUX=disabled/“  /etc/selinux/config”</p>
-<p>批量发送指令:<br>    pssh -H <a href="mailto:root@192.168.1.10">root@192.168.1.10</a> -i setenforce 0<br>    pssh -H <a href="mailto:xuewb@192.168.1.10">xuewb@192.168.1.10</a> -i hostname<br>当不支持ssh的key认证时,通过 -A选项,使用密码认证批量执行指令<br>    pssh -H <a href="mailto:xuewb@192.168.1.10">xuewb@192.168.1.10</a> -A -i hostname<br>将标准错误和标准正确重定向都保存至/app目录下<br>    pssh -H 192.168.1.10 -o /app -e /app -i “hostname”</p>
-<h5 id="PSCP-PSSH"><a href="#PSCP-PSSH" class="headerlink" title="PSCP.PSSH"></a>PSCP.PSSH</h5><p>pscp.pssh功能是将本地文件批量复制到远程主机<br>    pscp [-vAr][-h hosts_file] [-H [user@]host[:port]][-l user] [-p par][-o outdir] [-e errdir][-t timeout] [-O options][-x args] [-X arg] local remote</p>
-<p>Pscp-pssh选项<br>    -v 显示复制过程<br>    -r 递归复制目录<br>将本地curl.sh 复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 /root/test/curl.sh /app/<br>    pscp.pssh -h host.txt /root/test/curl.sh /app/<br>将本地多个文件批量复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 /root/f1.sh /root/f2.sh /app/<br>将本地目录批量复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 -r /root/test/ /app/</p>
-<h5 id="PSLURP"><a href="#PSLURP" class="headerlink" title="PSLURP"></a>PSLURP</h5><p>pslurp功能是将远程主机的文件批量复制到本地<br>    pslurp [-vAr][-h hosts_file] [-H [user@]host[:port]][-l user] [-p par][-o outdir] [-e errdir][-t timeout][-O options][-x args][-X arg][-L localdir]</p>
-<p>remote local(本地名)<br>Pslurp选项<br>    -L 指定从远程主机下载到本机的存储的目录,local是下载到本地后的名称<br>    -r 递归复制目录<br>批量下载目标服务器的passwd文件至/app下,并更名为user<br>    pslurp -H 192.168.1.10 -L /app/ /etc/passwd user</p>
-<h4 id="SSH端口转发"><a href="#SSH端口转发" class="headerlink" title="SSH端口转发"></a>SSH端口转发</h4><h5 id="本地转发"><a href="#本地转发" class="headerlink" title="本地转发:"></a>本地转发:</h5><p><code>-L localport:remotehost:remotehostport sshserver</code></p>
-<p>选项:<br>    -f 后台启用<br>    -N 不打开远程shell,处于等待状态<br>    -g 启用网关功能<br>示例<br>    ssh –L 9527:telnetsrv:23 -N sshsrv<br>    telnet 127.0.0.1 9527<br>    当访问本机的9527的端口时,被加密后转发到sshsrv的ssh服务,再解密被转发到telnetsrv:23<br>data &lt;- -&gt; localhost:9527 &lt;- -&gt; localhost:XXXXX &lt;- -&gt; sshsrv:22  &lt;- -&gt; sshsrv:YYYYY &lt;- -&gt; telnetsrv:23</p>
-<h5 id="远程转发"><a href="#远程转发" class="headerlink" title="远程转发:"></a>远程转发:</h5><p><code>-R sshserverport:remotehost:remotehostport sshserver</code></p>
-<p>示例:<br>    ssh –R 9527:telnetsrv:23 –N sshsrv<br>    让sshsrv侦听9527端口的访问,如有访问,就加密后通过ssh服务转发请求到本机ssh客户端,再由本机解密后转发到telnetsrv:23<br>Data &lt;- -&gt; sshsrv:9527 &lt;- -&gt; sshsrv:22 &lt;- -&gt; localhost:XXXXX &lt;- -&gt; localhost:YYYYY &lt;- -&gt; telnetsrv:23</p>
-<h5 id="动态端口转发"><a href="#动态端口转发" class="headerlink" title="动态端口转发:"></a>动态端口转发:</h5><p>当用firefox访问internet时,本机的1080端口做为代理服务器,firefox的访问请求被转发到sshserver上,由sshserver替之访问internet<br>    ssh -D 1080 root@sshserver<br>在本机firefox设置代理socket proxy:127.0.0.1:1080<br>    curl –socks5 127.0.0.1:1080 <a href="http://www.qq.com" target="_blank" rel="noopener">http://www.qq.com</a></p>
-<h5 id="X-协议转发"><a href="#X-协议转发" class="headerlink" title="X 协议转发"></a>X 协议转发</h5><p>所有图形化应用程序都是X客户程序<br>    • 能够通过tcp/ip连接远程X服务器<br>    • 数据没有加密机,但是它通过ssh连接隧道安全进行<br>ssh -X user@remotehost gedit<br>    remotehost主机上的gedit工具,将会显示在本机的X服务器上传输的数据将通过ssh连接加密</p>
-<h4 id="ssh服务器"><a href="#ssh服务器" class="headerlink" title="ssh服务器"></a>ssh服务器</h4><p>服务器端:sshd, 配置文件: /etc/ssh/sshd_config<br>常用参数:<br>    Port<br>    ListenAddress ip<br>    LoginGraceTime 2m<br>    PermitRootLogin yes<br>    StrictModes yes 检查.ssh/文件的所有者,权限等<br>    MaxAuthTries 6<br>    MaxSessions 10 同一个连接最大会话<br>    PubkeyAuthentication yes<br>    PermitEmptyPasswords no<br>    PasswordAuthentication yes</p>
-<pre><code>GatewayPorts no
-
-ClientAliveInterval:单位:秒
-
-ClientAliveCountMax:默认3
-
-UseDNS yes
-
-GSSAPIAuthentication yes 提高速度可改为no
-
-MaxStartups 未认证连接最大值,默认值10
-
-Banner /path/file
-
-限制可登录用户的办法:
-
-    AllowUsers user1 user2 user3
-
-        DenyUsers
-
-        AllowGroups
-
-        DenyGroups    </code></pre><h4 id="ssh服务的最佳实践"><a href="#ssh服务的最佳实践" class="headerlink" title="ssh服务的最佳实践"></a>ssh服务的最佳实践</h4><p>建议使用非默认端口<br>禁止使用protocol version 1<br>限制可登录用户<br>设定空闲会话超时时长<br>利用防火墙设置ssh访问策略<br>仅监听特定的IP地址<br>基于口令认证时,使用强密码策略<br>    tr -dc A-Za-z0-9_ &lt; /dev/urandom | head -c 30| xargs<br>使用基于密钥的认证<br>禁止使用空密码<br>禁止root用户直接登录<br>限制ssh的访问频度和并发在线数<br>经常分析日志</p>
-<h4 id="编译安装dropbear示例"><a href="#编译安装dropbear示例" class="headerlink" title="编译安装dropbear示例"></a>编译安装dropbear示例</h4><p>ssh协议的另一个实现:dropbear<br>源码编译安装:<br>• 1、安装开发包组:yum groupinstall “Development tools”<br>• 2、下载dropbear-2017.75.tar.bz2<br>• 3、tar xf dropbear-2017.75.tar.bz2<br>• 4、less INSTALL README<br>• 5、./configure<br>• 6、make PROGRAMS=”dropbear dbclient dropbearkey dropbearconvert scp”<br>• 7、make PROGRAMS=”dropbear dbclient dropbearkey dropbearconvert scp” install</p>
-<p>启动ssh服务:<br>• 8、ls /usr/local/sbin/ /usr/local/bin/<br>• 9、/usr/local/sbin/dropbear -h<br>• 10、mkdir /etc/dropbear<br>• 11、dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key -s 2048<br>• 12、dropbearkey -t dss -f /etc/dropbear/dropbear_dsa_host_key<br>• 13、运行dropbear:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dropbear -p :2222 -F –E 	#前台运行</span><br><span class="line">dropbear -p :2222 		#后台运行</span><br></pre></td></tr></table></figure>
-
-<p>客户端访问:<br>• 14、ssh -p 2222 <a href="mailto:root@127.0.0.1">root@127.0.0.1</a><br>• 15、dbclient -p 2222 <a href="mailto:root@127.0.0.1">root@127.0.0.1</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1032,7 +1570,7 @@ Banner /path/file
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-count">64</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1045,7 +1583,7 @@ Banner /path/file
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1081,7 +1619,7 @@ Banner /path/file
 <div class="copyright">
   
   &copy; 2015 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

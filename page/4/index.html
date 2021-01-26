@@ -183,6 +183,411 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%94/" class="post-title-link" itemprop="url">Linux 启动和内核管理(五)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-11 16:54:08 / 修改时间：16:54:58" itemprop="dateCreated datePublished" datetime="2018-09-11T16:54:08+08:00">2018-09-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="CentOS7-引导顺序"><a href="#CentOS7-引导顺序" class="headerlink" title="CentOS7 引导顺序"></a>CentOS7 引导顺序</h3><p>UEFi或BIOS初始化,运行POST开机自检<br>选择启动设备<br>引导装载程序, centos7是grub2<br>加载装载程序的配置文件：<br>    /etc/grub.d/<br>    /etc/default/grub<br>    /boot/grub2/grub.cfg<br>加载initramfs驱动模块<br>加载内核选项<br>内核初始化,centos7使用systemd代替init<br>执行initrd.target所有单元,包括挂载/etc/fstab<br>从initramfs根文件系统切换到磁盘根目录<br>systemd执行默认target配置,配置文件/etc/systemd/system/default.target</p>
+<p>systemd执行sysinit.target初始化系统及basic.target准备操作系统<br>systemd启动multi-user.target下的本机与服务器服务<br>systemd执行multi-user.target下的/etc/rc.d/rc.local<br>Systemd执行multi-user.target下的getty.target及登录服务<br>systemd执行graphical需要的服务</p>
+<h3 id="设置内核参数"><a href="#设置内核参数" class="headerlink" title="设置内核参数"></a>设置内核参数</h3><p>设置内核参数,只影响当次启动<br>启动时,在linux16行后添加systemd.unit=desired.target<br>systemd.unit=emergency.target<br>systemd.unit=rescue.target<br>rescue.target 比emergency 支持更多的功能,例如日志等<br>systemctl default 进入默认target</p>
+<h3 id="启动排错"><a href="#启动排错" class="headerlink" title="启动排错"></a>启动排错</h3><p>文件系统损坏<br>先尝试自动修复,失败则进入emergency shell,提示用户修复<br>在/etc/fstab不存在对应的设备和UUID<br>等一段时间,如不可用,进入emergency shell<br>在/etc/fstab不存在对应挂载点<br>systemd 尝试创建挂载点,否则提示进入emergency shell.<br>在/etc/fstab不正确的挂载选项<br>提示进入emergency shell</p>
+<h4 id="破解CentOS7的root口令方法一"><a href="#破解CentOS7的root口令方法一" class="headerlink" title="破解CentOS7的root口令方法一"></a>破解CentOS7的root口令方法一</h4><p>启动时任意键暂停启动<br>按e键进入编辑模式<br>将光标移动linux16开始的行,添加内核参数rd.break<br>按ctrl-x启动<br>mount –o remount,rw /sysroot<br>chroot /sysroot<br>passwd root<br>touch /.autorelabel<br>exit<br>reboot</p>
+<h3 id="破解CentOS7的root口令方法二"><a href="#破解CentOS7的root口令方法二" class="headerlink" title="破解CentOS7的root口令方法二"></a>破解CentOS7的root口令方法二</h3><p>启动时任意键暂停启动<br>按e键进入编辑模式<br>将光标移动linux16开始的行,改为rw init=/sysroot/bin/sh<br>按ctrl-x启动<br>chroot /sysroot<br>passwd root<br>touch /.autorelabel<br>exit<br>reboot</p>
+<h3 id="修复GRUB2"><a href="#修复GRUB2" class="headerlink" title="修复GRUB2"></a>修复GRUB2</h3><p>GRUB”the Grand Unified Bootloader”<br>引导提示时可以使用命令行界面<br>可从文件系统引导<br>主要配置文件 /boot/grub2/grub.cfg<br>修复配置文件<br>grub2-mkconfig &gt; /boot/grub2/grub.cfg<br>修复grub<br>grub2-install /dev/sda BIOS环境<br>grub2-install UEFI环境<br>调整默认启动内核<br>    vim /etc/default/grub<br>    GRUB_DEFAULT=0</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E5%9B%9B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E5%9B%9B/" class="post-title-link" itemprop="url">Linux 启动和内核管理(四)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-11 16:47:54 / 修改时间：16:53:44" itemprop="dateCreated datePublished" datetime="2018-09-11T16:47:54+08:00">2018-09-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="systemd"><a href="#systemd" class="headerlink" title="systemd"></a>systemd</h3><p>POST –&gt; Boot Sequence –&gt; Bootloader –&gt; kernel + initramfs(initrd) –&gt; rootfs –&gt; /sbin/init<br>    init:     CentOS 5: SysV init<br>            CentOS 6: Upstart<br>            CentOS 7: Systemd<br>Systemd：系统启动和服务器守护进程管理器,负责在系统启动或运行时,激活系统资源,服务器进程和其它进程<br>Systemd新特性：<br>    系统引导时实现服务并行启动<br>    按需启动守护进程<br>    自动化的服务依赖关系管理<br>    同时采用socket式与D-Bus总线式激活服务<br>    系统状态快照</p>
+<p>核心概念：unit<br>    unit表示不同类型的systemd对象,通过配置文件进行标识和配置；文件中主要包含了系统服务、监听socket、保存的系统快照以及其它与init相关的信息<br>配置文件：<br>    /usr/lib/systemd/system:每个服务最主要的启动脚本设置,类似于之前的/etc/init.d/<br>    /run/systemd/system：系统执行过程中所产生的服务脚本,比上面目录优先运行<br>    /etc/systemd/system：管理员建立的执行脚本,类似于/etc/rc.d/rcN.d/Sxx类的功能,比上面目录优先运行</p>
+<h3 id="Unit类型"><a href="#Unit类型" class="headerlink" title="Unit类型"></a>Unit类型</h3><p>Systemctl –t help 查看unit类型<br>Service unit: 文件扩展名为.service, 用于定义系统服务<br>Target unit: 文件扩展名为.target,用于模拟实现运行级别<br>Device unit: .device, 用于定义内核识别的设备<br>Mount unit: .mount, 定义文件系统挂载点<br>Socket unit: .socket, 用于标识进程间通信用的socket文件,也可在系统启动时,延迟启动服务,实现按需启动<br>Snapshot unit: .snapshot, 管理系统快照<br>Swap unit: .swap, 用于标识swap设备<br>Automount unit: .automount,文件系统的自动挂载点<br>Path unit: .path,用于定义文件系统中的一个文件或目录使用,常用于当文件系统变化时,延迟激活服务,如：spool 目录</p>
+<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><p>关键特性：<br>    基于socket的激活机制：socket与服务程序分离<br>    基于d-bus的激活机制：<br>    基于device的激活机制：<br>    基于path的激活机制：<br>    系统快照：保存各unit的当前状态信息于持久存储设备中<br>    向后兼容sysv init脚本<br>不兼容：<br>    systemctl命令固定不变,不可扩展<br>    非由systemd启动的服务,systemctl无法与之通信和控制</p>
+<h3 id="管理服务"><a href="#管理服务" class="headerlink" title="管理服务"></a>管理服务</h3><p>管理系统服务：<br>    CentOS 7: service unit<br>    注意：能兼容早期的服务脚本<br>命令：systemctl COMMAND name.service<br>启动：service name start ==&gt; systemctl start name.service<br>停止：service name stop ==&gt; systemctl stop name.service<br>重启：service name restart ==&gt; systemctl restart name.service<br>状态：service name status ==&gt; systemctl status name.service</p>
+<p>条件式重启：已启动才重启,否则不做操作</p>
+<pre><code>service name condrestart ==&gt; systemctl try-restart name.service</code></pre><p>重载或重启服务：先加载,再启动</p>
+<pre><code>systemctl reload-or-restart name.service</code></pre><p>重载或条件式重启服务：</p>
+<pre><code>systemctl reload-or-try-restart name.service</code></pre><p>禁止自动和手动启动：</p>
+<pre><code>systemctl mask name.service</code></pre><p>取消禁止：</p>
+<pre><code>systemctl unmask name.service</code></pre><h3 id="服务查看"><a href="#服务查看" class="headerlink" title="服务查看"></a>服务查看</h3><p>查看某服务当前激活与否的状态：</p>
+<pre><code>systemctl is-active name.service</code></pre><p>查看所有已经激活的服务：</p>
+<pre><code>systemctl list-units --type|-t service</code></pre><p>查看所有服务：</p>
+<pre><code>systemctl list-units --type service --all|-a</code></pre><p>chkconfig命令的对应关系：</p>
+<p>设定某服务开机自启：</p>
+<pre><code>chkconfig name on ==&gt; systemctl enable name.service</code></pre><p>设定某服务开机禁止启动：</p>
+<pre><code>chkconfig name off ==&gt; systemctl disable name.service</code></pre><p>查看所有服务的开机自启状态：<br>    chkconfig –list ==&gt; systemctl list-unit-files –type service</p>
+<p>用来列出该服务在哪些运行级别下启用和禁用<br>    chkconfig sshd –list ==&gt;<br>    ls /etc/systemd/system/*.wants/sshd.service</p>
+<p>查看服务是否开机自启：<br>    systemctl is-enabled name.service</p>
+<p>其它命令：<br>    查看服务的依赖关系：<br>    systemctl list-dependencies name.service</p>
+<p>杀掉进程：<br>    systemctl kill unitname</p>
+<h3 id="服务状态"><a href="#服务状态" class="headerlink" title="服务状态"></a>服务状态</h3><p>systemctl list-unit-files –type service –all显示状态<br>loaded:Unit配置文件已处理<br>active(running):一次或多次持续处理的运行<br>active(exited):成功完成一次性的配置<br>active(waiting):运行中,等待一个事件<br>inactive:不运行<br>enabled:开机启动<br>disabled:开机不启动<br>static:开机不启动,但可被另一个启用的服务激活</p>
+<h3 id="systemctl"><a href="#systemctl" class="headerlink" title="systemctl"></a>systemctl</h3><p>显示所有单元状态<br>    systemctl 或 systemctl list-units<br>只显示服务单元的状态<br>    systemctl –type=service<br>显示sshd服务单元<br>    systemctl –l status sshd.service<br>验证sshd服务当前是否活动<br>    systemctl is-active sshd<br>启动,停止和重启sshd服务<br>    systemctl start sshd.service<br>    systemctl stop sshd.service<br>    systemctl restart sshd.service</p>
+<p>重新加载配置<br>    systemctl reload sshd.service<br>列出活动状态的所有服务单元<br>    systemctl list-units –type=service<br>列出所有服务单元<br>    systemctl list-units –type=service –all<br>查看服务单元的启用和禁用状态<br>    systemctl list-unit-files –type=service<br>列出失败的服务<br>    systemctl –failed –type=service</p>
+<p>列出依赖的单元<br>    systemctl list-dependencies sshd<br>验证sshd服务是否开机启动<br>    systemctl is-enabled sshd<br>禁用network,使之不能自动启动,但手动可以<br>    systemctl disable network<br>启用network<br>    systemctl enable network<br>禁用network,使之不能手动或自动启动<br>    systemctl mask network<br>启用network<br>    systemctl unmask network</p>
+<h3 id="service-unit文件格式"><a href="#service-unit文件格式" class="headerlink" title="service unit文件格式"></a>service unit文件格式</h3><p>/etc/systemd/system：系统管理员和用户使用/usr/lib/systemd/system：发行版打包者使用<br>以 “#” 开头的行后面的内容会被认为是注释<br>相关布尔值,1、yes、on、true 都是开启,0、no、off、false 都是关闭<br>时间单位默认是秒,所以要用毫秒（ms）分钟（m）等须显式说明<br>service unit file文件通常由三部分组成：<br>    [Unit]：定义与Unit类型无关的通用选项；用于提供unit的描述信息、unit行为及依赖关系等<br>    [Service]：与特定类型相关的专用选项；此处为Service类型<br>    [Install]：定义由”systemctl enable”以及”systemctl disable”命令在实现服务启用或禁用时用到的一些选项</p>
+<p>Unit段的常用选项：<br>Description：描述信息<br>After：定义unit的启动次序,表示当前unit应该晚于哪些unit启动,其功能与Before相反<br>Requires：依赖到的其它units,强依赖,被依赖的units无法激活时,当前unit也无法激活<br>Wants：依赖到的其它units,弱依赖<br>Conflicts：定义units间的冲突关系</p>
+<p>Service段的常用选项：<br>Type：定义影响ExecStart及相关参数的功能的unit进程启动类型<br>• simple：默认值,这个daemon主要由ExecStart接的指令串来启动,启动后常驻于内存中<br>• forking：由ExecStart启动的程序透过spawns延伸出其他子程序来作为此daemon的主要服务.原生父程序在启动结束后就会终止<br>• oneshot：与simple类似,不过这个程序在工作完毕后就结束了,不会常驻在内存中<br>• dbus：与simple类似,但这个daemon必须要在取得一个D-Bus的名称后,才会继续运作.因此通常也要同时设定BusNname= 才行<br>• notify：在启动完成后会发送一个通知消息.还需要配合 NotifyAccess 来让Systemd 接收消息<br>• idle：与simple类似,要执行这个daemon必须要所有的工作都顺利执行完毕后才会执行.这类的daemon通常是开机到最后才执行即可的服务</p>
+<p>EnvironmentFile：环境配置文件<br>ExecStart：指明启动unit要运行命令或脚本的绝对路径<br>ExecStartPre： ExecStart前运行<br>ExecStartPost： ExecStart后运行<br>ExecStop：指明停止unit要运行的命令或脚本<br>Restart：当设定Restart=1 时,则当次daemon服务意外终止后,会再次自动启动此服务</p>
+<p>Install段的常用选项：<br>• Alias：别名,可使用systemctl command Alias.service<br>• RequiredBy：被哪些units所依赖,强依赖<br>• WantedBy：被哪些units所依赖,弱依赖<br>• Also：安装本服务的时候还要安装别的相关服务<br>注意：对于新创建的unit文件,或者修改了的unit文件,要通知systemd重载此配置文件,而后可以选择重启<br>    systemctl daemon-reload</p>
+<h3 id="服务Unit文件示例"><a href="#服务Unit文件示例" class="headerlink" title="服务Unit文件示例:"></a>服务Unit文件示例:</h3><p>vim /etc/systemd/system/bak.service<br>[Unit]<br>Description=backup /etc<br>Requires=atd.service<br>[Service]<br>Type=simple<br>ExecStart=/bin/bash -c “echo /testdir/bak.sh|at now”<br>[Install]<br>WantedBy=multi-user.target<br>systemctl daemon-reload<br>systemctl start bak</p>
+<h3 id="运行级别"><a href="#运行级别" class="headerlink" title="运行级别"></a>运行级别</h3><p>target units：<br>    unit配置文件：.target<br>    ls /usr/lib/systemd/system/*.target<br>    systemctl list-unit-files –type target –all<br>运行级别：<br>    0 ==&gt; runlevel0.target, poweroff.target<br>    1 ==&gt; runlevel1.target, rescue.target<br>    2 ==&gt; runlevel2.target, multi-user.target<br>    3 ==&gt; runlevel3.target, multi-user.target<br>    4 ==&gt; runlevel4.target, multi-user.target<br>    5 ==&gt; runlevel5.target, graphical.target<br>    6 ==&gt; runlevel6.target, reboot.target<br>查看依赖性：<br>    systemctl list-dependencies graphical.target</p>
+<p>级别切换：init N ==&gt; systemctl isolate name.target<br>    systemctl isolate multi-user.target<br>    注：只有/lib/systemd/system/*.target文件中AllowIsolate=yes 才能切换(修改文件需执行systemctl daemon-reload才能生效)<br>查看target：<br>    runlevel :who -r<br>    systemctl list-units –type target<br>获取默认运行级别：<br>    /etc/inittab ==&gt; systemctl get-default<br>修改默认级别：<br>/etc/inittab ==&gt; systemctl set-default name.target<br>    systemctl set-default multi-user.target<br>    ls –l /etc/systemd/system/default.target</p>
+<h3 id="其他命令"><a href="#其他命令" class="headerlink" title="其他命令"></a>其他命令</h3><p>切换至紧急救援模式：<br>    systemctl rescue<br>切换至emergency模式：<br>    systemctl emergency<br>其它常用命令：<br>    传统命令init,poweroff,halt,reboot都成为<br>    systemctl的软链接<br>    关机：systemctl halt、systemctl poweroff<br>    重启：systemctl reboot<br>    挂起：systemctl suspend<br>    休眠：systemctl hibernate<br>    休眠并挂起：systemctl hybrid-sleep</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%89/" class="post-title-link" itemprop="url">Linux 启动和内核管理(三)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2018-09-11 16:47:47 / 修改时间：16:52:56" itemprop="dateCreated datePublished" datetime="2018-09-11T16:47:47+08:00">2018-09-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h3><p>单内核体系设计、但充分借鉴了微内核设计体系的优点,为内核引入模块化机制<br>内核组成部分：<br>    kernel: 内核核心,一般为bzImage,通常在/boot目录下,名称为vmlinuzVERSION-RELEASE<br>    kernel object: 内核对象,一般放置于<br>        /lib/modules/VERSION-RELEASE/</p>
+<pre><code>\[]:N
+
+\[M]:M
+
+\[*]:Y
+
+辅助文件：</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ramdisk</span><br><span class="line">initrd</span><br><span class="line">initramfs</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="内核版本"><a href="#内核版本" class="headerlink" title="内核版本"></a>内核版本</h3><p>运行中的内核：<br>    uname命令：<br>        uname - print system information<br>        uname [OPTION]…<br>            -n: 显示节点名称<br>            -r: 显示VERSION-RELEASE<br>            -a:显示所有信息</p>
+<h3 id="内核模块命令"><a href="#内核模块命令" class="headerlink" title="内核模块命令"></a>内核模块命令</h3><p>lsmod命令：<br>    显示由核心已经装载的内核模块<br>    显示的内容来自于: /proc/modules文件<br>modinfo命令：<br>    显示模块的详细描述信息<br>    modinfo [ -k kernel ][ modulename|filename… ]<br>        -n: 只显示模块文件路径<br>        -p: 显示模块参数<br>        -a: author<br>        -d: description<br>        -l: license<br>lsmod |grep xfs:modinfo xfs</p>
+<h3 id="内核模块管理"><a href="#内核模块管理" class="headerlink" title="内核模块管理"></a>内核模块管理</h3><p>modprobe命令：<br>装载或卸载内核模块<br>modprobe [ -C config-file ][ modulename ][ module parame-ters… ]</p>
+<p>配置文件：/etc/modprobe.conf, /etc/modprobe.d/*.conf</p>
+<p>modprobe [ -r ] modulename…</p>
+<p>depmod命令：<br>    内核模块依赖关系文件及系统信息映射文件的生成工具<br>装载或卸载内核模块：<br>insmod命令：指定模块文件,不自动解决依赖模块<br>    insmod [ filename ][ module options… ]<br>    insmod `modinfo –n exportfs`<br>    lnsmod `modinfo –n xfs`<br>rmmod命令：卸载模块<br>    rmmod [ modulename ]<br>    rmmod xfs<br>    rmmod exportfs</p>
+<h3 id="编译内核"><a href="#编译内核" class="headerlink" title="编译内核"></a>编译内核</h3><p>前提：<br>    (1) 准备好开发环境<br>    (2) 获取目标主机上硬件设备的相关信息<br>    (3) 获取目标主机系统功能的相关信息<br>        例如:需要启用相应的文件系统<br>    (4) 获取内核源代码包<br>        <a href="http://www.kernel.org" target="_blank" rel="noopener">www.kernel.org</a></p>
+<h3 id="开发环境准备"><a href="#开发环境准备" class="headerlink" title="开发环境准备"></a>开发环境准备</h3><p>包组(CentOS 6)：<br>    Server Platform Development<br>    Development Tools<br>目标主机硬件设备相关信息：<br>    CPU：<br>    cat /proc/cpuinfo<br>    x86info -a<br>    lscpu</p>
+<h3 id="硬件设备"><a href="#硬件设备" class="headerlink" title="硬件设备"></a>硬件设备</h3><p>PCI设备：<br>    lspci<br>        -v<br>        -vv<br>    lsusb<br>        -v<br>        -vv<br>    lsblk 块设备<br>了解全部硬件设备信息<br>    hal-device:CentOS6</p>
+<h3 id="内核编译安装系统"><a href="#内核编译安装系统" class="headerlink" title="内核编译安装系统"></a>内核编译安装系统</h3><p>安装开发包组<br>下载源码文件<br>.config：准备文本配置文件<br>make menuconfig：配置内核选项<br>make [-j #]<br>make modules_install：安装模块<br>make install ：安装内核相关文件<br>    安装bzImage为/boot/vmlinuz-VERSION-RELEASE<br>    生成initramfs文件<br>    编辑grub的配置文件</p>
+<h3 id="编译安装内核示例"><a href="#编译安装内核示例" class="headerlink" title="编译安装内核示例"></a>编译安装内核示例</h3><p>tar xf linux-3.10.67.tar.xz -C /usr/src<br>cd /usr/src<br>ln -sv linux-3.10.67 linux<br>cd /usr/src/linux<br>cp /boot/config-$(uname -r) ./.config<br>make help<br>make menuconfig<br>make -j 2<br>make modules_install<br>make install<br>reboot </p>
+<h3 id="编译内核-1"><a href="#编译内核-1" class="headerlink" title="编译内核"></a>编译内核</h3><p>(1) 配置内核选项<br>    支持”更新”模式进行配置：make help<br>    (a) make config：基于命令行以遍历的方式配置内核中可配置的每个选项<br>    (b) make menuconfig：基于curses的文本窗口界面<br>    (c) make gconfig：基于GTK (GNOME）环境窗口界面<br>    (d) make xconfig：基于QT(KDE)环境的窗口界面<br>    支持”全新配置”模式进行配置<br>    (a) make defconfig：基于内核为目标平台提供的”默认”配置进行配置<br>    (b) make allyesconfig: 所有选项均回答为”yes”<br>    (c) make allnoconfig: 所有选项均回答为”no”</p>
+<p>(2) 编译<br>全编译:make [-j #]<br>编译内核的一部分功能：<br>    (a) 只编译某子目录中的相关代码<br>        cd /usr/src/linux<br>        make dir/<br>    (b) 只编译一个特定的模块<br>        cd /usr/src/linux<br>        make dir/file.ko<br>        例如：只为e1000编译驱动：<br>    make drivers/net/ethernet/intel/e1000/e1000.ko</p>
+<p>如何交叉编译内核：<br>    编译的目标平台与当前平台不相同<br>    make ARCH=arch_name<br>要获取特定目标平台的使用帮助<br>    make ARCH=arch_name help<br>    make ARCH=arm help</p>
+<h3 id="内核编译-1"><a href="#内核编译-1" class="headerlink" title="内核编译"></a>内核编译</h3><p>在已经执行过编译操作的内核源码树做重新编译<br>需要事先清理操作：<br>    make clean：清理大多数编译生成的文件,但会保留config文件等<br>    make mrproper: 清理所有编译生成的文件、config及某些备份文件<br>    make distclean：mrproper、patches以及编辑器备份文件</p>
+<h3 id="卸载内核"><a href="#卸载内核" class="headerlink" title="卸载内核"></a>卸载内核</h3><p>删除/lib/modules/目录下不需要的内核库文件<br>删除/usr/src/linux/目录下不需要的内核源码<br>删除/boot目录下启动的内核和内核映像文件<br>更改grub的配置文件,删除不需要的内核启动列表</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/mark_avatar.png">
+      <meta itemprop="name" content="Mark">
+      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Mark blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%B8%89/" class="post-title-link" itemprop="url">加密与安全(三)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-11 13:19:07" itemprop="dateCreated datePublished" datetime="2018-09-11T13:19:07+08:00">2018-09-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-09-20 19:28:30" itemprop="dateModified" datetime="2018-09-20T19:28:30+08:00">2018-09-20</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="SSH"><a href="#SSH" class="headerlink" title="SSH"></a>SSH</h3><p>ssh: secure shell, protocol, 22/tcp, 安全的远程登录<br>具体的软件实现:<br>    OpenSSH: ssh协议的开源实现,CentOS默认安装<br>    dropbear:另一个开源实现<br>SSH协议版本<br>    v1: 基于CRC-32做MAC,不安全；man-in-middle<br>    v2:双方主机协议选择安全的MAC方式<br>    基于DH算法做密钥交换,基于RSA或DSA实现身份认证<br>两种方式的用户登录认证:<br>    基于password<br>    基于key</p>
+<h4 id="Openssh-软件组成"><a href="#Openssh-软件组成" class="headerlink" title="Openssh 软件组成"></a>Openssh 软件组成</h4><p>OpenSSH介绍<br>相关包:<br>    openssh<br>    openssh-clients<br>    openssh-server<br>工具:<br>    基于C/S结构<br>    Client: ssh, scp, sftp,slogin<br>        Windows客户端:<br>        xshell, putty, securecrt, sshsecureshellclient<br>    Server: sshd</p>
+<h5 id="ssh客户端"><a href="#ssh客户端" class="headerlink" title="ssh客户端"></a>ssh客户端</h5><p>客户端组件:<br> ssh, 配置文件:/etc/ssh/ssh_config<br>    Host PATTERN<br>        StrictHostKeyChecking no 首次登录不显示检查提示<br> 格式:ssh [user@]host [COMMAND]<br>    ssh [-l user] host [COMMAND]<br> 常见选项<br>    -p port:远程服务器监听的端口<br>    -b:指定连接的源IP<br>    -v:调试模式<br>    -C:压缩方式<br>    -X:支持x11转发<br>    -t:强制伪tty分配<br>        ssh -t remoteserver1 ssh remoteserver2</p>
+<p>允许实现对远程系统经验证地加密安全访问<br>当用户远程连接ssh服务器时,会复制ssh服务器/etc/ssh/ssh_host*key.pub (CentOS7默认是ssh_host_ecdsa_key.pub)文件中的公钥到客户机的~./ssh/know_hosts中.下次连接时,会自动匹配相应私钥,不能匹配,将拒绝连接</p>
+<h4 id="ssh服务登录验证"><a href="#ssh服务登录验证" class="headerlink" title="ssh服务登录验证"></a>ssh服务登录验证</h4><p>ssh服务登录验证方式:<br>    用户/口令<br>    基于密钥<br>基于用户和口令登录验证<br>    1 客户端发起ssh请求,服务器会把自己的公钥发送给用户<br>    2 用户会根据服务器发来的公钥对密码进行加密<br>    3 加密后的信息回传给服务器,服务器用自己的私钥解密,如果密码正确,则用户登录成功</p>
+<h5 id="图解基于用户口令登录验证"><a href="#图解基于用户口令登录验证" class="headerlink" title="图解基于用户口令登录验证"></a>图解基于用户口令登录验证</h5><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_06.png" alt=""></p>
+<h5 id="基于密钥的登录方式"><a href="#基于密钥的登录方式" class="headerlink" title="基于密钥的登录方式"></a>基于密钥的登录方式</h5><p>1 首先在客户端生成一对密钥(ssh-keygen)<br>2 并将客户端的公钥ssh-copy-id 拷贝到服务端<br>3 当客户端再次发送一个连接请求,包括ip、用户名<br>4 服务端得到客户端的请求后,会到authorized_keys中查找,如果有响应的IP和用户,就会随机生成一个字符串,例如:acdf<br>5 服务端将使用客户端拷贝过来的公钥进行加密,然后发送给客户端<br>6 得到服务端发来的消息后,客户端会使用私钥进行解密,然后将解密后的字符串发送给服务端<br>7服务端接受到客户端发来的字符串后,跟之前的字符串进行对比,如果一致,就允许免密码登录</p>
+<h5 id="图解基于密钥的登录方式"><a href="#图解基于密钥的登录方式" class="headerlink" title="图解基于密钥的登录方式"></a>图解基于密钥的登录方式</h5><p><img data-src="https://github.com/Markupzh/Markupzh.github.io/blob/master/photo/post_secure_safe_07.png" alt=""></p>
+<h5 id="基于key认证"><a href="#基于key认证" class="headerlink" title="基于key认证"></a>基于key认证</h5><p>基于密钥的认证:</p>
+<h6 id="1-在客户端生成密钥对"><a href="#1-在客户端生成密钥对" class="headerlink" title="(1) 在客户端生成密钥对"></a>(1) 在客户端生成密钥对</h6><p><code>ssh-keygen -t rsa [-P &#39;&#39;]\[-f “~/.ssh/id_rsa&quot;]</code></p>
+<h6 id="2-把公钥文件传输至远程服务器对应用户的家目录"><a href="#2-把公钥文件传输至远程服务器对应用户的家目录" class="headerlink" title="(2) 把公钥文件传输至远程服务器对应用户的家目录"></a>(2) 把公钥文件传输至远程服务器对应用户的家目录</h6><p><code>ssh-copy-id [-i [identity_file]]\[user@]host</code></p>
+<h6 id="3-测试"><a href="#3-测试" class="headerlink" title="(3) 测试"></a>(3) 测试</h6><h6 id="4-在SecureCRT或Xshell实现基于key验证"><a href="#4-在SecureCRT或Xshell实现基于key验证" class="headerlink" title="(4) 在SecureCRT或Xshell实现基于key验证:"></a>(4) 在SecureCRT或Xshell实现基于key验证:</h6><p>在SecureCRT工具—&gt;创建公钥—&gt;生成Identity.pub文件转化为openssh兼容格式(适合SecureCRT,Xshell不需要转化格式),并复制到需登录主机上相应文件authorized_keys中,注意权限必须为600,在需登录的ssh</p>
+<p>主机上执行:</p>
+<p><code>ssh-keygen -i -f Identity.pub &gt;&gt; .ssh/authorized_keys</code></p>
+<h6 id="5-重设私钥口令"><a href="#5-重设私钥口令" class="headerlink" title="(5)重设私钥口令:"></a>(5)重设私钥口令:</h6><p><code>ssh-keygen –p</code></p>
+<h6 id="6-验证代理-authentication-agent-保密解密后的密钥"><a href="#6-验证代理-authentication-agent-保密解密后的密钥" class="headerlink" title="(6)验证代理(authentication agent)保密解密后的密钥"></a>(6)验证代理(authentication agent)保密解密后的密钥</h6><p>• 这样口令就只需要输入一次<br>• 在GNOME中,代理被自动提供给root用户<br>• 否则运行ssh-agent bash</p>
+<h6 id="7-钥匙通过命令添加给代理"><a href="#7-钥匙通过命令添加给代理" class="headerlink" title="(7)钥匙通过命令添加给代理"></a>(7)钥匙通过命令添加给代理</h6><p><code>ssh-add</code></p>
+<h5 id="scp命令"><a href="#scp命令" class="headerlink" title="scp命令"></a>scp命令</h5><p>scp [options] SRC… DEST/<br>两种方式:<br>    scp [options][user@]host:/sourcefile /destpath<br>    scp [options] /sourcefile [user@]host:/destpath<br>常用选项:<br>    -C 压缩数据流<br>    -r 递归复制<br>    -p 保持原文件的属性信息<br>    -q 静默模式<br>    -P PORT 指明remote host的监听的端口</p>
+<h5 id="rsync命令"><a href="#rsync命令" class="headerlink" title="rsync命令"></a>rsync命令</h5><p>基于ssh和rsh服务实现高效率的远程系统之间复制文件(增量更新)<br> 使用安全的shell连接做为传输方式<br>    • rsync –av /etc server1:/tmp 复制目录和目录下文件<br>    • rsync –av /etc/ server1:/tmp 只复制目录下文件<br> 比scp更快,只复制不同的文件<br> 选项:<br>    -n 模拟复制过程<br>    -v 显示详细过程<br>    -r 递归复制目录树<br>    -p 保留权限<br>    -t 保留时间戳<br>    -g 保留组信息<br>    -o 保留所有者信息<br>    -l 将软链接文件本身进行复制(默认)<br>    -L 将软链接文件指向的文件复制<br>    -a 存档,相当于–rlptgoD,但不保留ACL(-A)和SELinux属性(-X)</p>
+<h5 id="sftp命令"><a href="#sftp命令" class="headerlink" title="sftp命令"></a>sftp命令</h5><p>交互式文件传输工具<br>用法和传统的ftp工具相似<br>利用ssh服务实现安全的文件上传和下载<br>使用ls cd mkdir rmdir pwd get put等指令,可用？或help获取帮助信息<br>    sftp [user@]host<br>    sftp&gt; help</p>
+<h5 id="pssh工具"><a href="#pssh工具" class="headerlink" title="pssh工具"></a>pssh工具</h5><p> pssh是一个python编写可以在多台服务器上执行命令的工具,也可实现文件复制<br> 选项如下:<br>     –version:查看版本<br>     -h:主机文件列表,内容格式”[user@]host[:port]”<br>     -H:主机字符串,内容格式”[user@]host[:port]”<br>     -A:手动输入密码模式<br>     -i:每个服务器内部处理信息输出<br>     -l:登录使用的用户名<br>     -p:并发的线程数【可选】<br>     -o:输出的文件目录【可选】<br>     -e:错误输入文件【可选】<br>     -t:TIMEOUT 超时时间设置,0无限制【可选】<br>     -O:SSH的选项<br>     -P:打印出服务器返回信息<br>     -v:详细模式</p>
+<h6 id="pssh示例"><a href="#pssh示例" class="headerlink" title="pssh示例"></a>pssh示例</h6><p>通过pssh批量关闭seLinux</p>
+<p>pssh -H <a href="mailto:root@192.168.1.10">root@192.168.1.10</a> -i “sed -i “s/SELINUX=enforcing/SELINUX=disabled/“  /etc/selinux/config”</p>
+<p>批量发送指令:<br>    pssh -H <a href="mailto:root@192.168.1.10">root@192.168.1.10</a> -i setenforce 0<br>    pssh -H <a href="mailto:xuewb@192.168.1.10">xuewb@192.168.1.10</a> -i hostname<br>当不支持ssh的key认证时,通过 -A选项,使用密码认证批量执行指令<br>    pssh -H <a href="mailto:xuewb@192.168.1.10">xuewb@192.168.1.10</a> -A -i hostname<br>将标准错误和标准正确重定向都保存至/app目录下<br>    pssh -H 192.168.1.10 -o /app -e /app -i “hostname”</p>
+<h5 id="PSCP-PSSH"><a href="#PSCP-PSSH" class="headerlink" title="PSCP.PSSH"></a>PSCP.PSSH</h5><p>pscp.pssh功能是将本地文件批量复制到远程主机<br>    pscp [-vAr][-h hosts_file] [-H [user@]host[:port]][-l user] [-p par][-o outdir] [-e errdir][-t timeout] [-O options][-x args] [-X arg] local remote</p>
+<p>Pscp-pssh选项<br>    -v 显示复制过程<br>    -r 递归复制目录<br>将本地curl.sh 复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 /root/test/curl.sh /app/<br>    pscp.pssh -h host.txt /root/test/curl.sh /app/<br>将本地多个文件批量复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 /root/f1.sh /root/f2.sh /app/<br>将本地目录批量复制到/app/目录<br>    pscp.pssh -H 192.168.1.10 -r /root/test/ /app/</p>
+<h5 id="PSLURP"><a href="#PSLURP" class="headerlink" title="PSLURP"></a>PSLURP</h5><p>pslurp功能是将远程主机的文件批量复制到本地<br>    pslurp [-vAr][-h hosts_file] [-H [user@]host[:port]][-l user] [-p par][-o outdir] [-e errdir][-t timeout][-O options][-x args][-X arg][-L localdir]</p>
+<p>remote local(本地名)<br>Pslurp选项<br>    -L 指定从远程主机下载到本机的存储的目录,local是下载到本地后的名称<br>    -r 递归复制目录<br>批量下载目标服务器的passwd文件至/app下,并更名为user<br>    pslurp -H 192.168.1.10 -L /app/ /etc/passwd user</p>
+<h4 id="SSH端口转发"><a href="#SSH端口转发" class="headerlink" title="SSH端口转发"></a>SSH端口转发</h4><h5 id="本地转发"><a href="#本地转发" class="headerlink" title="本地转发:"></a>本地转发:</h5><p><code>-L localport:remotehost:remotehostport sshserver</code></p>
+<p>选项:<br>    -f 后台启用<br>    -N 不打开远程shell,处于等待状态<br>    -g 启用网关功能<br>示例<br>    ssh –L 9527:telnetsrv:23 -N sshsrv<br>    telnet 127.0.0.1 9527<br>    当访问本机的9527的端口时,被加密后转发到sshsrv的ssh服务,再解密被转发到telnetsrv:23<br>data &lt;- -&gt; localhost:9527 &lt;- -&gt; localhost:XXXXX &lt;- -&gt; sshsrv:22  &lt;- -&gt; sshsrv:YYYYY &lt;- -&gt; telnetsrv:23</p>
+<h5 id="远程转发"><a href="#远程转发" class="headerlink" title="远程转发:"></a>远程转发:</h5><p><code>-R sshserverport:remotehost:remotehostport sshserver</code></p>
+<p>示例:<br>    ssh –R 9527:telnetsrv:23 –N sshsrv<br>    让sshsrv侦听9527端口的访问,如有访问,就加密后通过ssh服务转发请求到本机ssh客户端,再由本机解密后转发到telnetsrv:23<br>Data &lt;- -&gt; sshsrv:9527 &lt;- -&gt; sshsrv:22 &lt;- -&gt; localhost:XXXXX &lt;- -&gt; localhost:YYYYY &lt;- -&gt; telnetsrv:23</p>
+<h5 id="动态端口转发"><a href="#动态端口转发" class="headerlink" title="动态端口转发:"></a>动态端口转发:</h5><p>当用firefox访问internet时,本机的1080端口做为代理服务器,firefox的访问请求被转发到sshserver上,由sshserver替之访问internet<br>    ssh -D 1080 root@sshserver<br>在本机firefox设置代理socket proxy:127.0.0.1:1080<br>    curl –socks5 127.0.0.1:1080 <a href="http://www.qq.com" target="_blank" rel="noopener">http://www.qq.com</a></p>
+<h5 id="X-协议转发"><a href="#X-协议转发" class="headerlink" title="X 协议转发"></a>X 协议转发</h5><p>所有图形化应用程序都是X客户程序<br>    • 能够通过tcp/ip连接远程X服务器<br>    • 数据没有加密机,但是它通过ssh连接隧道安全进行<br>ssh -X user@remotehost gedit<br>    remotehost主机上的gedit工具,将会显示在本机的X服务器上传输的数据将通过ssh连接加密</p>
+<h4 id="ssh服务器"><a href="#ssh服务器" class="headerlink" title="ssh服务器"></a>ssh服务器</h4><p>服务器端:sshd, 配置文件: /etc/ssh/sshd_config<br>常用参数:<br>    Port<br>    ListenAddress ip<br>    LoginGraceTime 2m<br>    PermitRootLogin yes<br>    StrictModes yes 检查.ssh/文件的所有者,权限等<br>    MaxAuthTries 6<br>    MaxSessions 10 同一个连接最大会话<br>    PubkeyAuthentication yes<br>    PermitEmptyPasswords no<br>    PasswordAuthentication yes</p>
+<pre><code>GatewayPorts no
+
+ClientAliveInterval:单位:秒
+
+ClientAliveCountMax:默认3
+
+UseDNS yes
+
+GSSAPIAuthentication yes 提高速度可改为no
+
+MaxStartups 未认证连接最大值,默认值10
+
+Banner /path/file
+
+限制可登录用户的办法:
+
+    AllowUsers user1 user2 user3
+
+        DenyUsers
+
+        AllowGroups
+
+        DenyGroups    </code></pre><h4 id="ssh服务的最佳实践"><a href="#ssh服务的最佳实践" class="headerlink" title="ssh服务的最佳实践"></a>ssh服务的最佳实践</h4><p>建议使用非默认端口<br>禁止使用protocol version 1<br>限制可登录用户<br>设定空闲会话超时时长<br>利用防火墙设置ssh访问策略<br>仅监听特定的IP地址<br>基于口令认证时,使用强密码策略<br>    tr -dc A-Za-z0-9_ &lt; /dev/urandom | head -c 30| xargs<br>使用基于密钥的认证<br>禁止使用空密码<br>禁止root用户直接登录<br>限制ssh的访问频度和并发在线数<br>经常分析日志</p>
+<h4 id="编译安装dropbear示例"><a href="#编译安装dropbear示例" class="headerlink" title="编译安装dropbear示例"></a>编译安装dropbear示例</h4><p>ssh协议的另一个实现:dropbear<br>源码编译安装:<br>• 1、安装开发包组:yum groupinstall “Development tools”<br>• 2、下载dropbear-2017.75.tar.bz2<br>• 3、tar xf dropbear-2017.75.tar.bz2<br>• 4、less INSTALL README<br>• 5、./configure<br>• 6、make PROGRAMS=”dropbear dbclient dropbearkey dropbearconvert scp”<br>• 7、make PROGRAMS=”dropbear dbclient dropbearkey dropbearconvert scp” install</p>
+<p>启动ssh服务:<br>• 8、ls /usr/local/sbin/ /usr/local/bin/<br>• 9、/usr/local/sbin/dropbear -h<br>• 10、mkdir /etc/dropbear<br>• 11、dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key -s 2048<br>• 12、dropbearkey -t dss -f /etc/dropbear/dropbear_dsa_host_key<br>• 13、运行dropbear:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dropbear -p :2222 -F –E 	#前台运行</span><br><span class="line">dropbear -p :2222 		#后台运行</span><br></pre></td></tr></table></figure>
+
+<p>客户端访问:<br>• 14、ssh -p 2222 <a href="mailto:root@127.0.0.1">root@127.0.0.1</a><br>• 15、dbclient -p 2222 <a href="mailto:root@127.0.0.1">root@127.0.0.1</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E5%8A%A0%E5%AF%86%E4%B8%8E%E5%AE%89%E5%85%A8-%E4%BA%8C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -507,418 +912,10 @@ CRL分发点
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%B8%80/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/AWK-%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-%E4%B8%80/" class="post-title-link" itemprop="url">AWK 工具的使用(一)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 13:18:12 / 修改时间：16:46:22" itemprop="dateCreated datePublished" datetime="2018-09-11T13:18:12+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="AWK介绍"><a href="#AWK介绍" class="headerlink" title="AWK介绍"></a>AWK介绍</h3><p>awk:Aho, Weinberger, Kernighan,报告生成器,格式化文本输出<br> 有多种版本:New awk(nawk),GNU awk( gawk)<br> gawk:模式扫描和处理语言<br> 基本用法:<br>    awk [options] ‘program’ var=value file…<br>    awk [options] -f programfile var=value file…<br>    awk [options] ‘BEGIN{ action;… } pattern{ action;… } END{ action;… }’ file …<br>    awk 程序通常由:BEGIN语句块、能够使用模式匹配的通用语句块、END语句块,共3部分组成<br>    program通常是被单引号或双引号中<br> 选项:<br>    -F 指明输入时用到的字段分隔符<br>    -v var=value: 自定义变量</p>
-<h3 id="awk语言"><a href="#awk语言" class="headerlink" title="awk语言"></a>awk语言</h3><p>基本格式:awk [options] ‘program’ file…<br>program:pattern{action statements;..}<br>pattern和action:<br>• pattern部分决定动作语句何时触发及触发事件<br>    BEGIN,END<br>• action statements对数据进行处理,放在{}内指明<br>    print, printf<br>分割符、域和记录<br>• awk执行时,由分隔符分隔的字段(域)标记$1,$2..$n称为域标识.$0为所有域,注意:和shell中变量$符含义不同<br>• 文件的每一行称为记录<br>• 省略action,则默认执行 print $0 的操作</p>
-<h3 id="awk工作原理"><a href="#awk工作原理" class="headerlink" title="awk工作原理"></a>awk工作原理</h3><p>第一步:执行BEGIN{action;… }语句块中的语句</p>
-<p>第二步:从文件或标准输入(stdin)读取一行,然后执行pattern{ action;… }语句块,它逐行扫描文件,从第一行到最后一行重复这个过程,直到文件全部被读取完毕.</p>
-<p>第三步:当读至输入流末尾时,执行END{action;…}语句块</p>
-<p>BEGIN语句块在awk开始从输入流中读取行之前被执行,这是一个可选的语句块,比如变量初始化、打印输出表格的表头等语句通常可以写在BEGIN语句块中</p>
-<p>END语句块在awk从输入流中读取完所有的行之后即被执行,比如打印所有行的分析结果这类信息汇总都是在END语句块中完成,它也是一个可选语句块</p>
-<p>pattern语句块中的通用命令是最重要的部分,也是可选的.如果没有提供pattern语句块,则默认执行{ print },即打印每一个读取到的行,awk读取的每一行都会执行该语句块</p>
-<h3 id="awk格式与示例"><a href="#awk格式与示例" class="headerlink" title="awk格式与示例"></a>awk格式与示例</h3><p>print格式: print item1, item2, …<br> 要点:<br>    (1) 逗号分隔符<br>    (2) 输出的各item可以字符串,也可以是数值；当前记录的字段、变量或awk的表达式<br>    (3) 如省略item,相当于print $0<br> 示例:<br>    awk ‘{print “hello,awk”}’<br>    awk –F: ‘{print}’ /etc/passwd<br>    awk –F: ‘{print “wang”}’ /etc/passwd<br>    awk –F: ‘{print $1}’ /etc/passwd<br>    awk –F: ‘{print $0}’ /etc/passwd<br>    awk –F: ‘{print $1”\t”$3}’ /etc/passwd<br>    tail –3 /etc/fstab |awk ‘{print $2,$4}’</p>
-<h3 id="awk变量与参数"><a href="#awk变量与参数" class="headerlink" title="awk变量与参数"></a>awk变量与参数</h3><p>变量:内置和自定义变量<br> FS:输入字段分隔符,默认为空白字符<br>    awk -v FS=’:’ ‘{print $1,FS,$3}’ /etc/passwd<br>    awk –F: ‘{print $1,$3,$7}’ /etc/passwd<br> OFS:输出字段分隔符,默认为空白字符<br>    awk -v FS=‘:’ -v OFS=‘:’ ‘{print $1,$3,$7}’ /etc/passwd<br> RS:输入记录分隔符,指定输入时的换行符<br>    awk -v RS=’ ‘ ‘{print }’ /etc/passwd<br> ORS:输出记录分隔符,输出时用指定符号代替换行符<br>    awk -v RS=’ ‘ -v ORS=’###’‘{print }’ /etc/passwd<br> NF:字段数量<br>    awk -F: ‘{print NF}’ /etc/fstab,引用内置变量不用$<br>    awk -F: ‘{print $(NF-1)}’ /etc/passwd<br> NR:记录号<br>    awk ‘{print NR}’ /etc/fstab ; awk END’{print NR}’ /etc/fstab</p>
-<p>FNR:各文件分别计数,记录号<br>    awk ‘{print FNR}’ /etc/fstab /etc/inittab<br>FILENAME:当前文件名<br>    awk ‘{print FILENAME}’ /etc/fstab<br>ARGC:命令行参数的个数<br>    awk ‘{print ARGC}’ /etc/fstab /etc/inittab<br>    awk ‘BEGIN {print ARGC}’ /etc/fstab /etc/inittab<br>ARGV:数组,保存的是命令行所给定的各参数<br>    awk ‘BEGIN {print ARGV[0]}’ /etc/fstab /etc/inittab<br>    awk ‘BEGIN {print ARGV[1]}’ /etc/fstab /etc/inittab</p>
-<p>自定义变量(区分字符大小写)<br>    (1) -v var=value<br>    (2) 在program中直接定义<br>示例:<br>    awk -v test=’hello gawk’ ‘{print test}’ /etc/fstab<br>    awk -v test=’hello gawk’ ‘BEGIN{print test}’<br>    awk ‘BEGIN{test=”hello,gawk”;print test}’<br>    awk –F:‘{sex=“male”;print $1,sex,age;age=18}’    /etc/passwd<br>    cat awkscript<br>    {print script,$1,$2}<br>    awk -F: -f awkscript script=“awk” /etc/passwd</p>
-<h3 id="printf命令"><a href="#printf命令" class="headerlink" title="printf命令"></a>printf命令</h3><p>格式化输出:printf “FORMAT”, item1, item2, …<br>    (1) 必须指定FORMAT<br>    (2) 不会自动换行,需要显式给出换行控制符,\n<br>    (3) FORMAT中需要分别为后面每个item指定格式符<br> 格式符:与item一一对应<br>    %c: 显示字符的ASCII码<br>    %d, %i: 显示十进制整数<br>    %e, %E:显示科学计数法数值<br>    %f:显示为浮点数<br>    %g, %G:以科学计数法或浮点形式显示数值<br>    %s:显示字符串<br>    %u:无符号整数<br>    %%: 显示%自身<br> 修饰符:<br>    #[.#]:第一个数字控制显示的宽度；第二个#表示小数点后精度,%3.1f<br>    -: 左对齐(默认右对齐) %-15s<br>    +:显示数值的正负符号 %+d</p>
-<h3 id="printf示例"><a href="#printf示例" class="headerlink" title="printf示例"></a>printf示例</h3><p>awk -F: ‘{printf “%s”,$1}’ /etc/passwd<br>awk -F: ‘{printf “%s\n”,$1}’ /etc/passwd<br>awk -F: ‘{printf “%-20s %10d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %s\n”,$1}’ /etc/passwd<br>awk -F: ‘{printf “Username: %s,UID:%d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %15s,UID:%d\n”,$1,$3}’ /etc/passwd<br>awk -F: ‘{printf “Username: %-15s,UID:%d\n”,$1,$3}’ /etc/passwd</p>
-<h3 id="操作符"><a href="#操作符" class="headerlink" title="操作符"></a>操作符</h3><p>算术操作符:<br>    x+y, x-y, x*y, x/y, x^y, x%y<br>    -x: 转换为负数<br>    +x: 转换为数值<br>字符串操作符:没有符号的操作符,字符串连接<br>赋值操作符:<br>    =, +=, -=, *=, /=, %=, ^=<br>    ++, –<br>比较操作符:<br>    ==, !=, &gt;, &gt;=, &lt;, &lt;=<br>模式匹配符:<br>    <del>:左边是否和右边匹配包含 !</del>:是否不匹配<br>示例:<br>    awk –F: ‘$0 ~ /root/{print $1}‘ /etc/passwd<br>    awk ‘$0<del>“^root”‘ /etc/passwd<br>    awk ‘$0 !</del> /root/‘ /etc/passwd<br>    awk –F: ‘$3==0’ /etc/passwd</p>
-<p>逻辑操作符:与&amp;&amp;,或||,非!<br> 示例:<br>• awk –F: ‘$3&gt;=0 &amp;&amp; $3&lt;=1000 {print $1}’ /etc/passwd<br>• awk -F: ‘$3==0 || $3&gt;=1000 {print $1}’ /etc/passwd<br>• awk -F: ‘!($3==0) {print $1}’ /etc/passwd<br>• awk -F: ‘!($3&gt;=500) {print $3}’ /etc/passwd<br> 函数调用: function_name(argu1, argu2, …)<br> 条件表达式(三目表达式):<br>    selector?if-true-expression:if-false-expression<br>• 示例:<br>    awk -F: ‘{$3&gt;=1000?usertype=”Common User”:usertype=”Sysadmin or SysUser”;printf<br>“%15s:%-s\n”,$1,usertype}’ /etc/passwd</p>
-<h3 id="awk-PATTERN"><a href="#awk-PATTERN" class="headerlink" title="awk PATTERN"></a>awk PATTERN</h3><p>PATTERN:根据pattern条件,过滤匹配的行,再做处理<br>(1)如果未指定:空模式,匹配每一行<br>(2) /regular expression/:仅处理能够模式匹配到的行,需要用/ /括起来<br>    awk ‘/^UUID/{print $1}’ /etc/fstab<br>    awk ‘!/^UUID/{print $1}’ /etc/fstab<br>(3) relational expression: 关系表达式,结果为“真”才会被处理<br>    真:结果为非0值,非空字符串<br>    假:结果为空字符串或0值<br> 示例:<br>• awk -F: ‘i=1;j=1{print i,j}’ /etc/passwd<br>• awk ‘!0’ /etc/passwd ; awk ‘!1’ /etc/passwd<br>• awk –F: ‘$3&gt;=1000{print $1,$3}’ /etc/passwd<br>• awk -F: ‘$3&lt;1000{print $1,$3}’ /etc/passwd<br>• awk -F: ‘$NF==”/bin/bash”{print $1,$NF}’ /etc/passwd<br>• awk -F: ‘$NF ~ /bash$/{print $1,$NF}’ /etc/passwd</p>
-<p>4) line ranges:行范围<br>    startline,endline:/pat1/,/pat2/ 不支持直接给出数字格式<br>    awk -F: ‘/^root&gt;/,/^nobody&gt;/{print $1}’ /etc/passwd<br>    awk -F: ‘(NR&gt;=10&amp;&amp;NR&lt;=20){print NR,$1}’ /etc/passwd<br>(5) BEGIN/END模式<br>    BEGIN{}: 仅在开始处理文件中的文本之前执行一次<br>    END{}:仅在文本处理完成之后执行一次</p>
-<p>awk例程</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">awk -F : 'BEGIN &#123;print "USER USERID"&#125; &#123;print $1":"$3&#125; END&#123;print "end file"&#125;'</span><br><span class="line">/etc/passwd</span><br><span class="line">awk -F : '&#123;print "USER USERID“;print $1":"$3&#125; END&#123;print "end file"&#125;' /etc/passwd</span><br><span class="line">awk -F: 'BEGIN&#123;print " USER UID \n--------------- "&#125;&#123;print $1,$3&#125;' /etc/passwd</span><br><span class="line">awk -F: 'BEGIN&#123;print " USER UID \n--------------- "&#125;&#123;print $1,$3&#125;'END&#123;print</span><br><span class="line">"=============="&#125; /etc/passwd</span><br><span class="line">seq 10 |awk ‘i=0’</span><br><span class="line">seq 10 |awk ‘i=1’</span><br><span class="line">seq 10 | awk 'i=!i‘</span><br><span class="line">seq 10 | awk '&#123;i=!i;print i&#125;‘</span><br><span class="line">seq 10 | awk ‘!(i=!i)’</span><br><span class="line">seq 10 |awk -v i=1 'i=!i'</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="awk-action"><a href="#awk-action" class="headerlink" title="awk action"></a>awk action</h3><p>常用的action分类<br>• (1) Expressions:算术,比较表达式等<br>• (2) Control statements:if, while等<br>• (3) Compound statements:组合语句<br>• (4) input statements<br>• (5) output statements:print等</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/SELinux-%E7%AE%80%E4%BB%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/SELinux-%E7%AE%80%E4%BB%8B/" class="post-title-link" itemprop="url">SELinux 简介</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 13:17:49 / 修改时间：16:09:27" itemprop="dateCreated datePublished" datetime="2018-09-11T13:17:49+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="SELinux介绍"><a href="#SELinux介绍" class="headerlink" title="SELinux介绍"></a>SELinux介绍</h3><p>SELinux: Secure Enhanced Linux, 是美国国家安全局(NSA=The National Security Agency)和SCC(Secure Computing Corporation)开发的 Linux的一个强制访问控制的安全模块.2000年以GNU GPL发布,Linux内核2.6版本后集成在内核中<br>DAC:Discretionary Access Control自由访问控制<br>MAC:Mandatory Access Control 强制访问控制<br>• DAC环境下进程是无束缚的<br>• MAC环境下策略的规则决定控制的严格程度<br>• MAC环境下进程可以被限制的<br>• 策略被用来定义被限制的进程能够使用那些资源(文件和端口)<br>• 默认情况下,没有被明确允许的行为将被拒绝</p>
-<h3 id="SELinux工作类型"><a href="#SELinux工作类型" class="headerlink" title="SELinux工作类型"></a>SELinux工作类型</h3><p>SELinux有四种工作类型:<br>    strict: centos5,每个进程都受到selinux的控制<br>    targeted: 用来保护常见的网络服务,仅有限进程受到selinux控制,只监控容易被入侵的进程,centos4只保护13个服务,centos5保护88个服务<br>    minimum:centos7,修改的targeted,只对选择的网络服务<br>    mls:提供MLS(多级安全)机制的安全性<br>targeted为默认类型,minimum和mls稳定性不足,未加以应用,strict已不再使用</p>
-<h3 id="SELinux安全上下文"><a href="#SELinux安全上下文" class="headerlink" title="SELinux安全上下文"></a>SELinux安全上下文</h3><p>传统Linux,一切皆文件,由用户,组,权限控制访问<br>在SELinux中,一切皆对象(object),由存放在inode的扩展属性域的安全元素所控制其访问<br>所有文件和端口资源和进程都具备安全标签:安全上下文(security context)<br>安全上下文有五个元素组成:<br>    user:role:type:sensitivity:category<br>    user_u:object_r:tmp_t:s0:c0<br> 实际上下文:存放在文件系统中,ls –Z;ps –Z<br>期望(默认)上下文:存放在二进制的SELinux策略库(映射目录和期望安全上下<br>文)中<br>    semanage fcontext –l</p>
-<h3 id="五个安全元素"><a href="#五个安全元素" class="headerlink" title="五个安全元素"></a>五个安全元素</h3><p>User:指示登录系统的用户类型,进程:如system_u为系统服务进程,是受到管制的,unconfined_u为不管制的进程,用户自己开启的,如 bash,文件:system_u系统进程创建的文件, unconfined_u为用户自已创建的文件<br>Role:定义文件,进程和用户的用途:进程:system_r为系统服务进程,受到管制.unconfined_r 为不管制进程,通常都是用户自己开启的,如 bash,文件:object_r<br>Type:指定数据类型,规则中定义何种进程类型访问何种文件Target策略基于type实现,多服务共用:public_content_t<br>Sensitivity:限制访问的需要,由组织定义的分层安全级别,如<br>unclassified,secret,top,secret, 一个对象有且只有一个sensitivity,分0-15级,s0最低,Target策略默认使用s0<br>Category:对于特定组织划分不分层的分类,如FBI Secret,NSA secret, 一个对象可以有多个categroy, c0-c1023共1024个分类, Target 策略不使用category</p>
-<h3 id="SELinux策略"><a href="#SELinux策略" class="headerlink" title="SELinux策略"></a>SELinux策略</h3><p>对象(object):所有可以读取的对象,包括文件、目录和进程,端口等<br>主体:进程称为主体(subject)<br>SELinux中对所有的文件都赋予一个type的文件类型标签,对于所有的进程也赋予各自的一个domain的标签.domain标签能够执行的操作由安全策略里定义<br>当一个subject试图访问一个object,Kernel中的策略执行服务器将检查AVC (访问矢量缓存Access Vector Cache), 在AVC中,subject和object的权限被缓存(cached),查找“应用+文件”的安全环境.然后根据查询结果允许或拒绝访问<br>安全策略:定义主体读取对象的规则数据库,规则中记录了哪个类型的主体使用哪个方法读取哪一个对象是允许还是拒绝的,并且定义了哪种行为是充许或拒绝</p>
-<h3 id="设置SELinux"><a href="#设置SELinux" class="headerlink" title="设置SELinux"></a>设置SELinux</h3><p>配置SELinux:<br>    SELinux是否启用<br>    给文件重新打安全标签<br>    给端口设置安全标签<br>    设定某些操作的布尔型开关<br>    SELinux的日志管理<br>SELinux的状态:<br>    enforcing: 强制,每个受限的进程都必然受限<br>    permissive: 允许,每个受限的进程违规操作不会被禁止,但会被记录于审<br>计日志<br>    disabled: 禁用</p>
-<h3 id="配置SELinux"><a href="#配置SELinux" class="headerlink" title="配置SELinux"></a>配置SELinux</h3><p>相关命令:<br>    getenforce: 获取selinux当前状态<br>    sestatus :查看selinux状态<br>    setenforce 0|1<br>        0: 设置为permissive<br>        1: 设置为enforcing<br>配置文件:<br>    /boot/grub/grub.conf<br>        在kernel行使用selinux=0禁用SELinux<br>    /etc/selinux/config<br>    /etc/sysconfig/selinux<br>    SELINUX={disabled|enforcing|permissive}</p>
-<h3 id="修改SELinux安全标签"><a href="#修改SELinux安全标签" class="headerlink" title="修改SELinux安全标签"></a>修改SELinux安全标签</h3><p>给文件重新打安全标签:<br>    chcon [OPTION]… [-u USER][-r ROLE] [-t TYPE] FILE…<br>    chcon [OPTION]… –reference=RFILE FILE…<br>    -R:递归打标<br>恢复目录或文件默认的安全上下文:<br>    restorecon [-R] /path/to/somewhere</p>
-<h3 id="默认安全上下文查询与修改"><a href="#默认安全上下文查询与修改" class="headerlink" title="默认安全上下文查询与修改"></a>默认安全上下文查询与修改</h3><p>semanage:来自policycoreutils-python包<br>查看默认的安全上下文<br>    semanage fcontext –l<br>添加安全上下文<br>    semanage fcontext -a –t httpd_sys_content_t ‘/testdir(/.*)?’</p>
-<pre><code>restorecon –Rv /testdir</code></pre><p>删除安全上下文<br>    semanage fcontext -d –t httpd_sys_content_t ‘/testdir(/.*)?’</p>
-<h3 id="SElinux端口标签"><a href="#SElinux端口标签" class="headerlink" title="SElinux端口标签"></a>SElinux端口标签</h3><p>查看端口标签<br>    semanage port –l<br>添加端口<br>    semanage port -a -t port_label -p tcp|udp PORT<br>    semanage port -a -t http_port_t -p tcp 9527<br>删除端口<br>    semanage port -d -t port_label -p tcp|udp PORT<br>    semanage port -d -t http_port_t -p tcp 9527<br>修改现有端口为新标签<br>    semanage port -m -t port_label -p tcp|udp PORT<br>    semanage port -m -t http_port_t -p tcp 9527 </p>
-<h3 id="SELinux布尔值"><a href="#SELinux布尔值" class="headerlink" title="SELinux布尔值"></a>SELinux布尔值</h3><p>布尔型规则:<br>    getsebool<br>    setsebool<br>查看bool命令:<br>    getsebool [-a][boolean]<br>    semanage boolean –l<br>    semanage boolean -l –C 查看修改过的布尔值<br>设置bool值命令:<br>    setsebool [-P] boolean value(on,off)<br>    setsebool [-P] Boolean=value(0,1)</p>
-<h3 id="SELinux日志管理"><a href="#SELinux日志管理" class="headerlink" title="SELinux日志管理"></a>SELinux日志管理</h3><p>yum install setroubleshoot(重启生效)<br>将错误的信息写入/var/log/message<br>    grep setroubleshoot /var/log/messages<br>查看安全事件日志说明<br>    sealert -l UUID<br>扫描并分析日志<br>    sealert -a /var/log/audit/audit.log</p>
-<h3 id="SELinux帮助"><a href="#SELinux帮助" class="headerlink" title="SELinux帮助"></a>SELinux帮助</h3><p>yum –y install selinux-policy-devel ( centos7.2)<br>yum –y install selinux-policy-doc<br>mandb | makewhatis<br>man -k _selinux</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%8C/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%BA%8C/" class="post-title-link" itemprop="url">Linux 启动和内核管理(二)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 13:17:08 / 修改时间：16:52:17" itemprop="dateCreated datePublished" datetime="2018-09-11T13:17:08+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="grub-legacy"><a href="#grub-legacy" class="headerlink" title="grub legacy"></a>grub legacy</h3><p>CentOS 6启动流程：<br>POST –&gt; Boot Sequence(BIOS) –&gt; Boot Loader –&gt; Kernel(ramdisk)<br>–&gt; rootfs –&gt; switchroot –&gt; /sbin/init –&gt;(/etc/inittab, /etc/init/*.conf) –&gt; 设定默认运行级别 –&gt; 系统初始化脚本rc.sysinit –&gt; 关闭或启动对应级别的服务 –&gt; 启动终端<br>grub: GRand Unified Bootloader<br>    grub 0.97: grub legacy<br>    grub 2.x: grub2<br>    grub legacy:<br>        stage1: mbr<br>        stage1_5: mbr之后的扇区,让stage1中的bootloader能识别stage2所在的分区上的文件系统<br>        stage2：磁盘分区(/boot/grub/)</p>
-<p>配置文件：/boot/grub/grub.conf &lt;– /etc/grub.conf<br>stage2及内核等通常放置于一个基本磁盘分区<br>功用：<br>(1) 提供启动菜单、并提供交互式接口<br>    a：内核参数<br>    e: 编辑模式,用于编辑菜单<br>    c: 命令模式,交互式接口<br>(2) 加载用户选择的内核或操作系统<br>    允许传递参数给内核<br>    可隐藏启动菜单<br>(3) 为菜单提供了保护机制<br>    为编辑启动菜单进行认证<br>    为启用内核或操作系统进行认证</p>
-<p>grub的命令行接口<br>    help: 获取帮助列表<br>    help KEYWORD: 详细帮助信息<br>    find (hd#,#)/PATH/TO/SOMEFILE：<br>    root (hd#,#)<br>    kernel /PATH/TO/KERNEL_FILE: 设定本次启动时用到的内核文件；额外还可添加许多内核支持使用的cmdline参数<br>    例如：max_loop=100 selinux=0 init=/path/to/init<br>    initrd /PATH/TO/INITRAMFS_FILE: 设定为选定的内核提供额外文件的ramdisk<br>    boot: 引导启动选定的内核<br> cat /proc/cmdline 内核参数<br> 内核参数文档:/usr/share/doc/kernel-doc-.6.32/Documentation/kernelparameters.txt</p>
-<p>识别硬盘设备<br>    (hd#,#)<br>    hd#: 磁盘编号,用数字表示；从0开始编号<br>    #: 分区编号,用数字表示: 从0开始编号<br>    (hd0,0) 第一块硬盘,第一个分区<br>手动在grub命令行接口启动系统<br>    grub&gt; root (hd#,#)<br>    grub&gt; kernel /vmlinuz-VERSION-RELEASE ro root=/dev/DEVICE<br>    grub&gt; initrd /initramfs-VERSION-RELEASE.img<br>    grub&gt; boot</p>
-<h3 id="grub-安装"><a href="#grub-安装" class="headerlink" title="grub 安装"></a>grub 安装</h3><p>安装grub：<br>    (1) grub-install<br>    安装grub stage1和stage1_5到/dev/DISK磁盘上,并复制GRUB相关文件到 DIR/boot目录下<br>    grub-install –root-directory=DIR /dev/DISK<br>    (2) grub<br>    grub&gt; root (hd#,#)<br>    grub&gt; setup (hd#)</p>
-<h3 id="grub-legacy配置文件"><a href="#grub-legacy配置文件" class="headerlink" title="grub legacy配置文件"></a>grub legacy配置文件</h3><p>配置文件：/boot/grub/grub.conf<br>default=#: 设定默认启动的菜单项；落单项(title)编号从0开始<br>timeout=#：指定菜单项等待选项选择的时长<br>splashimage=(hd#,#)/PATH/XPM_FILE：菜单背景图片文件路径<br>password [–md5] STRING: 启动菜单编辑认证<br>hiddenmenu：隐藏菜单<br>title TITLE：定义菜单项”标题”, 可出现多次<br>root (hd#,#)：查找stage2及kernel文件所在设备分区；为grub的根<br>kernel /PATH/TO/VMLINUZ_FILE [PARAMETERS]：启动的内核<br>initrd /PATH/TO/INITRAMFS_FILE: 内核匹配的ramfs文件<br>password [–md5|–encrypted ] STRING: 启动选定的内核或操作系统时进行认证</p>
-<h3 id="自制linux系统"><a href="#自制linux系统" class="headerlink" title="自制linux系统"></a>自制linux系统</h3><p>分区并创建文件系统<br>    fdisk /dev/sdb<br>    分两个必要的分区<br>    /dev/sdb1对应/boot /dev/sdb2对应根 /<br>    mkfs.ext4 /dev/sdb1<br>    mkfs.ext4 /dev/sdb2<br>挂载boot<br>    mkdir /mnt/boot 子目录必须为boot<br>    mount /dev/sdb1 /mnt/boot<br>安装grub<br>    grub-install –root-directory=/mnt /dev/sdb</p>
-<p>恢复内核和initramfs文件<br>    cp /boot/vmlinuz-2.6.32-642.el6.x86_64 /mnt/boot/<br>    cp /boot/initramfs-2.6.32-642.el6.x86_64.img /mnt/boot<br>建立grub.conf<br>    vim /mnt/boot/grub.conf<br>        title wanglinux<br>        root (hd0,0)<br>        kernel /vmlinuz-2.6.32-642.el6.x86_64 root=/dev/sda2 selinux=0 init=/bin/bash<br>        initrd /initramfs-2.6.32-642.el6.x86_64.img<br>chroot /mnt/sysroot</p>
-<p>创建一级目录<br>    mkdir /mnt/sysroot<br>    mount /dev/sdb2 /mnt/sysroot<br>    mkdir –pv<br>/mnt/sysroot/{etc,lib,lib64,bin,sbin,tmp,var,usr,sys,proc,opt,home,root,boot,dev,mnt,media}<br>复制bash和相关库文件<br>复制相关命令及相关库文件<br>    如：ifconfig,insmod,ping,mount,ls,cat,df,lsblk,blkid等</p>
-<h3 id="救援环境"><a href="#救援环境" class="headerlink" title="救援环境"></a>救援环境</h3><p>在根文件系统无法使用时需要,如/bin/mount删除<br>对系统没有特殊要求<br>从光盘引导（boot.iso或者安装光盘#1）<br>从USB盘（可由boot.iso制作）引导</p>
-<p>文件系统重组<br>Anaconda将会询问是否应该挂载文件系统<br>/mnt/sysimage/*<br>/mnt/stage2<br>$PATH包括硬盘的目录<br>文件系统节点<br>提供系统特定的设备文件<br>mknod了解major/minor </p>
-<h3 id="系统配置文件丢失修复"><a href="#系统配置文件丢失修复" class="headerlink" title="系统配置文件丢失修复"></a>系统配置文件丢失修复</h3><p>系统在引导期间,很重要的一个过程就是init进程读取其配置文件/etc/inittab,启动系统基本服务程序及默认运行级别的服务程序完成系统引导,如果/etc/inittab误删除或修改错误,Linux将无法正常启动.此时,只有通过救援模式才可以解决此类问题.<br>• 有备份文件的回复方法<br>• 没有备份文件的恢复办法</p>
-<h4 id="有备份文件的恢复办法："><a href="#有备份文件的恢复办法：" class="headerlink" title="有备份文件的恢复办法："></a>有备份文件的恢复办法：</h4><p>进入救援模式,执行chroot命令后,如果有此文件的备份（强烈建议系统中的重要数据目录,如/etc、/boot等要进行备份）,直接将备份文件拷贝回去,退出重启即可.如果是配置文件修改错误,如比较典型的/boot/grub/grub.conf及/etc/passwd的文件修改错误,也可以直接修正恢复.假设有备份文件/etc/inittab.bak,则在救援模式下执行：<br>    chroot /mnt/sysimage<br>    cp /etc/inittab.bak /etc/inittab</p>
-<h4 id="没有备份文件的恢复办法"><a href="#没有备份文件的恢复办法" class="headerlink" title="没有备份文件的恢复办法"></a>没有备份文件的恢复办法</h4><p>如果一些配置文件丢失或软件误删除,且无备份,可以通过重新安装软件包来恢复,首先查找到/etc/inittab属于哪一个RPM包<br>    chroot /mnt/sysimage</p>
-<pre><code>rpm -qf /etc/inittab 查询到此文件来自initscripts包
-
-exit 退出chroot模式
-
-mount /dev/sr0 /mnt/source 挂载存放RPM包的安装光盘
-
-rpm -ivh --replacepkgs | force /mnt/source/Packages/</code></pre><p>initscripts-9.03.49-1.el6.centos.x86_64.rpm CentOS6系统的要修复的硬盘系统的根目录在/mnt/sysimage下,需要使用–root选项指定其位置.覆盖安装/etc/inittab文件所在的RPM包,使用选项”—replacepkgs 或—force 表示覆盖安装</p>
-<p>如果想只提取RPM包中的/etc/inittab文件进行恢复,可以在进入救援模式后,执行命令：</p>
-<pre><code>rpm2cpio /mnt/source/Packages/initscripts-9.03.49-1.el6.centos.x86_64.rpm| cpio -idv ./etc/inittab
-
-cp etc/inittab /mnt/sysimage/etc</code></pre><p>注意此命令执行时不能将文件直接恢复至/etc目录,只能提取到当前目录下,且恢复的文件名称所在路径要写完整的路径.提取文件成功后,将其复制到根分区所在的/mnt/sysimage目录下相应位置即可</p>
-<h3 id="proc-目录"><a href="#proc-目录" class="headerlink" title="/proc 目录"></a>/proc 目录</h3><p>/proc目录：</p>
-<p>内核把自己内部状态信息及统计信息,以及可配置参数通过proc伪文件系统加以输出</p>
-<p>参数：</p>
-<pre><code>只读：输出信息
-
-可写：可接受用户指定&quot;新值&quot;来实现对内核某功能或特性的配置</code></pre><p>/proc/sys<br>    (1) sysctl命令用于查看或设定此目录中诸多参数</p>
-<pre><code>sysctl -w path.to.parameter=VALUE
-
-sysctl -w kernel.hostname=mail.magedu.com
-
-(2) echo命令通过重定向方式也可以修改大多数参数的值
-
-echo &quot;VALUE&quot; &gt; /proc/sys/path/to/parameter
-
-echo &quot;websrv&quot; &gt; /proc/sys/kernel/hostname</code></pre><h3 id="sysctl命令"><a href="#sysctl命令" class="headerlink" title="sysctl命令"></a>sysctl命令</h3><p>sysctl命令：<br>    默认配置文件：/etc/sysctl.conf<br>    (1) 设置某参数<br>        sysctl -w parameter=VALUE<br>    (2) 通过读取配置文件设置参数<br>        sysctl -p [/path/to/conf_file]<br>    (3) 查看所有生效参数<br>        sysctl -a<br>常用的几个参数：<br>    net.ipv4.ip_forward<br>    net.ipv4.icmp_echo_ignore_all<br>    vm.drop_caches</p>
-<h3 id="sys-目录"><a href="#sys-目录" class="headerlink" title="/sys 目录"></a>/sys 目录</h3><p>/sys目录：<br>    sysfs：为用户使用的伪文件系统,输出内核识别出的各硬件设备的相关属性信息,也有内核对硬件特性的设定信息；有些参数是可以修改的,用于调整硬件工作特性<br>    udev通过此路径下输出的信息动态为各设备创建所需要设备文件,udev是运行用户空间程序<br>    专用工具：udevadmin, hotplug<br>    udev为设备创建设备文件时,会读取其事先定义好的规则文件,一般在/etc/udev/rules.d及/usr/lib/udev/rules.d目录下</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%80/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/mark_avatar.png">
-      <meta itemprop="name" content="Mark">
-      <meta itemprop="description" content="半吊子民工 英特纳雄耐尔就一定要实现">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Mark blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/Linux-%E5%90%AF%E5%8A%A8%E5%92%8C%E5%86%85%E6%A0%B8%E7%AE%A1%E7%90%86-%E4%B8%80/" class="post-title-link" itemprop="url">Linux 启动和内核管理(一)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2018-09-11 13:16:31 / 修改时间：16:55:07" itemprop="dateCreated datePublished" datetime="2018-09-11T13:16:31+08:00">2018-09-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AD%A6%E6%B5%B7%E6%8B%BE%E8%B4%9D/" itemprop="url" rel="index"><span itemprop="name">学海拾贝</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="Linux组成"><a href="#Linux组成" class="headerlink" title="Linux组成"></a>Linux组成</h3><p>Linux: kernel+rootfs<br>    kernel: 进程管理、内存管理、网络管理、驱动程序、文件系统、安全功能<br>    rootfs:程序和glibc<br>    库：函数集合, function, 调用接口（头文件负责描述）<br>        过程调用：procedure,无返回值<br>        函数调用：function<br>    程序：二进制执行文件<br>内核设计流派：<br>    单内核(monolithic kernel)：Linux<br>        把所有功能集成于同一个程序<br>    微内核(micro kernel)：Windows, Solaris<br>        每种功能使用一个单独子系统实现</p>
-<h3 id="内核"><a href="#内核" class="headerlink" title="内核"></a>内核</h3><p>Linux内核特点：<br>    支持模块化：.ko（内核对象）<br>        如：文件系统,硬件驱动,网络协议等<br>    支持内核模块的动态装载和卸载<br>组成部分：<br>核心文件：/boot/vmlinuz-VERSION-release<br>    ramdisk：辅助的伪根系统<br>    CentOS 5: /boot/initrd-VERSION-release.img<br>    CentOS 6,7: /boot/initramfs-VERSION-release.img<br>模块文件：/lib/modules/VERSION-release</p>
-<h3 id="CentOS6启动流程"><a href="#CentOS6启动流程" class="headerlink" title="CentOS6启动流程"></a>CentOS6启动流程</h3><p>1.加载BIOS的硬件信息,获取第一个启动设备<br>2.读取第一个启动设备MBR的引导加载程序(grub)的启动信息<br>3.加载核心操作系统的核心信息,核心开始解压缩,并尝试驱动所有的硬件设备<br>4.核心执行init程序,并获取默认的运行信息<br>5.init程序执行/etc/rc.d/rc.sysinit文件<br>6.启动核心的外挂模块<br>7.init执行运行的各个批处理文件(scripts)<br>8.init执行/etc/rc.d/rc.local<br>9.执行/bin/login程序,等待用户登录<br>10.登录之后开始以Shell控制主机</p>
-<h4 id="详细步骤"><a href="#详细步骤" class="headerlink" title="详细步骤"></a>详细步骤</h4><p> POST：Power-On-Self-Test,加电自检,是BIOS功能的一个主要部分.负责完成对CPU、主板、内存、硬盘子系统、显示子系统、串并行接口、键盘等硬件情况的检测<br>    ROM：BIOS,Basic Input and Output System,保存着有关计算机系统最重要的基本输入输出程序,系统信息设置、开机加电自检程序和系统启动自举程序等<br>    RAM：CMOS互补金属氧化物半导体,保存各项参数的设定<br>    按次序查找引导设备,第一个有引导程序的设备为本次启动设备<br> bootloader: 引导加载器,引导程序<br>    windows: ntloader,仅是启动OS<br>    Linux：功能丰富,提供菜单,允许用户选择要启动系统或不同的内核版本；把用户选定的内核装载到内存中的特定空间中,解压、展开,并把系统控制权移交给内核<br>        LILO：LInux LOader<br>        GRUB: GRand Unified Bootloader<br>            GRUB 0.X: GRUB Legacy, GRUB2</p>
-<p>MBR:<br>    446: bootloader, 64: 分区表, 2: 55AA<br>GRUB:<br>    primary boot loader : 1st stage,1.5 stage<br>    secondary boot loader ：2nd stage,分区文件<br>kernel：<br>自身初始化：<br>    探测可识别到的所有硬件设备<br>    加载硬件驱动程序（借助于ramdisk加载驱动）<br>    以只读方式挂载根文件系统<br>    运行用户空间的第一个应用程序：/sbin/init</p>
-<p>ramdisk：<br>内核中的特性之一：使用缓冲和缓存来加速对磁盘上的文件访问,并加载相应的硬件驱动<br>    ramdisk –&gt; ramfs 提高速度<br>    CentOS 5: initrd<br>        工具程序：mkinitrd<br>    CentOS 6,7: initramfs<br>        工具程序：mkinitrd, dracut<br>系统初始化：<br>POST –&gt; BootSequence (BIOS) –&gt; Bootloader(MBR) –&gt; kernel(ramdisk) –&gt; rootfs(只读) –&gt; init（systemd）</p>
-<h3 id="ramdisk管理"><a href="#ramdisk管理" class="headerlink" title="ramdisk管理"></a>ramdisk管理</h3><p>ramdisk文件的制作：<br>(1) mkinitrd命令<br>    为当前正在使用的内核重新制作ramdisk文件<br>    mkinitrd /boot/initramfs-$(uname -r).img $(uname -r)<br>(2) dracut命令<br>    为当前正在使用的内核重新制作ramdisk文件<br>    dracut /boot/initramfs-$(uname -r).img $(uname -r) </p>
-<h3 id="系统启动流程"><a href="#系统启动流程" class="headerlink" title="系统启动流程"></a>系统启动流程</h3><p>init程序的类型：</p>
-<p>SysV: init, CentOS 5之前</p>
-<pre><code>配置文件：/etc/inittab</code></pre><p>Upstart: init,CentOS 6</p>
-<pre><code>配置文件：/etc/inittab, /etc/init/*.conf</code></pre><p>Systemd：systemd, CentOS 7</p>
-<pre><code>配置文件：
-
-    /usr/lib/systemd/system
-
-    /etc/systemd/system</code></pre><h3 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h3><p>/sbin/init CentOS6之前<br>运行级别：为系统运行或维护等目的而设定；0-6：7个级别<br>    0：关机<br>    1：单用户模式(root自动登录), single, 维护模式<br>    2: 多用户模式,启动网络功能,但不会启动NFS；维护模式<br>    3：多用户模式,正常模式；文本界面<br>    4：预留级别；可同3级别<br>    5：多用户模式,正常模式；图形界面<br>    6：重启<br>默认级别：3, 5<br>切换级别：init #<br>查看级别：runlevel : who -r</p>
-<h3 id="init初始化"><a href="#init初始化" class="headerlink" title="init初始化"></a>init初始化</h3><p>init读取其初始化文件：/etc/inittab<br>初始运行级别(RUN LEVEL)<br>系统初始化脚本<br>对应运行级别的脚本目录<br>捕获某个关键字顺序<br>定义UPS电源终端/恢复脚本<br>在虚拟控制台生成getty<br>在运行级别5初始化X</p>
-<h3 id="CentOS-5-的inittab文件"><a href="#CentOS-5-的inittab文件" class="headerlink" title="CentOS 5 的inittab文件"></a>CentOS 5 的inittab文件</h3><p>配置文件：</p>
-<pre><code>/etc/inittab</code></pre><p> 每一行格式： </p>
-<pre><code>id:runlevel:action:process
-
-id：是惟一标识该项的字符序列
-
-runlevels： 定义了操作所使用的运行级别
-
-action： 指定了要执行的特定操作
-
-    wait: 切换至此级别运行一次</code></pre><p>​        respawn：此process终止,就重新启动之</p>
-<pre><code>    initdefault：设定默认运行级别；process省略
-
-    sysinit：设定系统初始化方式
-
-process：定义了要执行的进程</code></pre><p> 示例：</p>
-<pre><code>id:3:initdefault:
-
-si::sysinit:/etc/rc.d/rc.sysinit
-
-l0:0:wait:/etc/rc.d/rc 0
-
-l1:1:wait:/etc/rc.d/rc 1...
-
-l6:6:wait:/etc/rc.d/rc 6
-
-ca::ctrlaltdel:/sbin/shutdown -t3 -r now</code></pre><p>CentOS 6 /etc/inittab和相关文件</p>
-<p>/etc/inittab</p>
-<pre><code>设置系统默认的运行级别
-
-id:3:initdefault:</code></pre><p> 示例：</p>
-<pre><code>破解CentOS5和6的root口令</code></pre><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/etc/init/control-alt-delete.conf</span><br><span class="line"></span><br><span class="line">/etc/init/tty.conf</span><br><span class="line"></span><br><span class="line">/etc/init/start-ttys.conf</span><br><span class="line"></span><br><span class="line">/etc/init/rc.conf</span><br><span class="line"></span><br><span class="line">/etc/init/prefdm.conf</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="启动流程-1"><a href="#启动流程-1" class="headerlink" title="启动流程"></a>启动流程</h3><p>/etc/rc.d/rc.sysinit: 系统初始化脚本<br>    (1) 设置主机名<br>    (2) 设置欢迎信息<br>    (3) 激活udev和selinux<br>    (4) 挂载/etc/fstab文件中定义的文件系统<br>    (5) 检测根文件系统,并以读写方式重新挂载根文件系统<br>    (6) 设置系统时钟<br>    (7) 激活swap设备<br>    (8) 根据/etc/sysctl.conf文件设置内核参数<br>    (9) 激活lvm及software raid设备<br>    (10) 加载额外设备的驱动程序<br>    (11) 清理操作</p>
-<p>说明：rc N –&gt; 意味着读取/etc/rc.d/rcN.d/<br>    K<em>: K##*：##运行次序；数字越小,越先运行；数字越小的服务,通常为依赖到别的服务<br>    S</em>: S##<em>：##运行次序；数字越小,越先运行；数字越小的服务,通常为被依赖到的服务<br>    for srv in /etc/rc.d/rcN.d/K</em>: do<br>        $srv stop<br>    done<br>    for srv in /etc/rc.d/rcN.d/S*: do<br>        $srv start<br>    done</p>
-<h3 id="chkconfig命令"><a href="#chkconfig命令" class="headerlink" title="chkconfig命令"></a>chkconfig命令</h3><p>ntsysv命令<br> chkconfig命令<br> 查看服务在所有级别的启动或关闭设定情形：<br>    chkconfig [–list][name]<br> 添加：<br>    SysV的服务脚本放置于/etc/rc.d/init.d (/etc/init.d)<br>    chkconfig –add name<br>        #!/bin/bash</p>
-<p>​        #LLLL 表示初始在哪个级别下启动,-表示都不启动</p>
-<pre><code># chkconfig: LLLL nn nn</code></pre><p> 删除：<br>    chkconfig –del name<br> 修改指定的链接类型<br>    chkconfig [–level levels] name<br>        –level LLLL: 指定要设置的级别；省略时表示2345</p>
-<h3 id="xinetd管理的服务"><a href="#xinetd管理的服务" class="headerlink" title="xinetd管理的服务"></a>xinetd管理的服务</h3><p>service 命令：手动管理服务<br>    service 服务 start|stop|restart<br>    service –status-all<br>瞬态（Transient）服务被xinetd进程所管理<br>进入的请求首先被xinetd代理<br>配置文件：/etc/xinetd.conf、/etc/xinetd.d/<br>与libwrap.so文件链接<br>用chkconfig控制的服务：<br>示例：chkconfig tftp on</p>
-<h3 id="启动流程-2"><a href="#启动流程-2" class="headerlink" title="启动流程"></a>启动流程</h3><p>注意：正常级别下,最后启动一个服务S99local没有链接至/etc/rc.d/init.d一个<br>服务脚本,而是指向了/etc/rc.d/rc.local脚本<br>不便或不需写为服务脚本放置于/etc/rc.d/init.d/目录,且又想开机时自动运行<br>的命令,可直接放置于/etc/rc.d/rc.local文件中<br>• /etc/rc.d/rc.local在指定运行级别脚本后运行<br>• 可以根据情况,进行自定义修改</p>
-<p>1:2345:respawn:/usr/sbin/mingetty tty1<br>2:2345:respawn:/usr/sbin/mingetty tty2<br>…<br>6:2345:respawn:/usr/sbin/mingetty tty6<br>    mingetty会自动调用login程序<br>x:5:respawn:/etc/X11/prefdm -nodaemon</p>
-<h3 id="启动过程"><a href="#启动过程" class="headerlink" title="启动过程"></a>启动过程</h3><p>总结：/sbin/init –&gt; (/etc/inittab) –&gt; 设置默认运行级别 –&gt; 运行系统初始脚本、完成系统初始化 –&gt; (关闭对应下需要关闭的服务)启动需要启动服务 –&gt; 设置登录终端<br>CentOS 6 init程序为: upstart, 其配置文件：<br>/etc/inittab, /etc/init/*.conf,配置文件的语法 遵循 upstart配置文件语法格式,和CentOS5不同</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/5/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/5/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -986,7 +983,7 @@ id:3:initdefault:</code></pre><p> 示例：</p>
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">60</span>
+          <span class="site-state-item-count">64</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -999,7 +996,7 @@ id:3:initdefault:</code></pre><p> 示例：</p>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1035,7 +1032,7 @@ id:3:initdefault:</code></pre><p> 示例：</p>
 <div class="copyright">
   
   &copy; 2015 – 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
